@@ -174,6 +174,7 @@ df_news = carregar_noticias()
 df_comments = carregar_pesquisa_comments()
 df_perf = carregar_pesquisa_performance()
 
+verificar_senha()
 if "aba_sel" not in st.session_state:
     st.session_state.aba_sel = "Reviews"
 
@@ -1042,4 +1043,5 @@ st.markdown(
     'OLIVE GARDEN BRAND INTELLIGENCE © 2026</div>',
     unsafe_allow_html=True
 )
+
 
