@@ -1,4 +1,25 @@
-import streamlit as st
+﻿import streamlit as st
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+def verificar_senha():
+    if "autenticado" not in st.session_state:
+        st.session_state.autenticado = False
+    if not st.session_state.autenticado:
+        col1, col2, col3 = st.columns([1, 1, 1])
+        with col2:
+            st.markdown("<br><br>", unsafe_allow_html=True)
+            st.markdown('<div style="text-align:center; font-size:11px; letter-spacing:0.2em; color:#8B9A2E; text-transform:uppercase; margin-bottom:16px;">Brand Intelligence</div>', unsafe_allow_html=True)
+            senha = st.text_input("Senha de acesso", type="password", key="senha_input")
+            if st.button("Entrar", use_container_width=True):
+                if senha == os.getenv("DASHBOARD_PASSWORD", "olivegarden2026"):
+                    st.session_state.autenticado = True
+                    st.rerun()
+                else:
+                    st.error("Senha incorreta")
+        st.stop()
+
 import psycopg2
 import pandas as pd
 import plotly.express as px
@@ -923,7 +944,7 @@ Sentimento positivo: {pct_pos_social:.1f}%
     if "analise_gerada" not in st.session_state:
         st.session_state.analise_gerada = False
 
-    ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "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")
+    ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
     client_ai = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
     contexto = preparar_contexto()
@@ -1021,3 +1042,4 @@ st.markdown(
     'OLIVE GARDEN BRAND INTELLIGENCE © 2026</div>',
     unsafe_allow_html=True
 )
+
