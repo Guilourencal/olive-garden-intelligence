@@ -1,0 +1,14 @@
+﻿streamlit
+psycopg2-binary
+pandas
+plotly
+python-dotenv
+requests
+newsapi-python
+apify-client
+transformers
+torch
+LeIA
+anthropic
+openpyxl
+numpy
