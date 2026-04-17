@@ -187,7 +187,7 @@ with st.sidebar:
     )
     st.markdown('<div style="height:1px; background:rgba(255,255,255,0.1); margin-bottom:10px;"></div>', unsafe_allow_html=True)
 
-    for aba in ["Reviews", "Social", "Notícias", "Pesquisa", "Insights IA"]:
+    for aba in ["Reviews", "Social", "Notícias", "Pesquisa", "OlivIA"]:
         if st.button(aba, key=f"btn_{aba}", use_container_width=True):
             st.session_state.aba_sel = aba
             st.rerun()
@@ -857,12 +857,17 @@ elif aba_sel == "Pesquisa":
         df_com_tab.columns = ["Data", "Filial", "Avaliação", "Comentário"]
         st.dataframe(df_com_tab.head(30), use_container_width=True, hide_index=True)
 
-elif aba_sel == "Insights IA":
-    st.markdown(
-        '<div style="font-weight:800; font-size:26px; color:#3D2B1F; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:4px;">Insights IA</div>'
-        '<div style="font-size:13px; color:#8B9A2E; letter-spacing:0.1em; margin-bottom:20px;">ANÁLISE INTELIGENTE — POWERED BY CLAUDE</div>',
-        unsafe_allow_html=True
-    )
+elif aba_sel == "OlivIA":
+    with open("assets/olivia.svg", "r", encoding="utf-8") as svg_f:
+        olivia_svg = svg_f.read()
+    col_img, col_txt = st.columns([1, 2])
+    with col_img:
+        st.markdown(olivia_svg, unsafe_allow_html=True)
+    with col_txt:
+        st.markdown(
+            """<div style='font-weight:800;font-size:36px;color:#4D3321;margin-top:40px;margin-bottom:8px;'>Oliv<span style='color:#8B9A2E;font-style:italic;'>IA</span></div><div style='font-size:13px;color:#8B9A2E;margin-bottom:16px;'>AGENTE DE INTELIGENCIA - OLIVE GARDEN BRASIL</div><div style='font-size:13px;color:#7a5c3a;line-height:1.9;'>Ola! Sou a OlivIA.</div>""",
+            unsafe_allow_html=True
+        )
 
     # Prepara contexto com todos os dados
     def preparar_contexto():
@@ -1043,5 +1048,8 @@ st.markdown(
     'OLIVE GARDEN BRAND INTELLIGENCE © 2026</div>',
     unsafe_allow_html=True
 )
+
+
+
 
 
