@@ -858,17 +858,17 @@ elif aba_sel == "Pesquisa":
         st.dataframe(df_com_tab.head(30), use_container_width=True, hide_index=True)
 
 elif aba_sel == "OlivIA":
-    with open("assets/olivia.svg", "r", encoding="utf-8") as svg_f:
-        olivia_svg = svg_f.read()
     st.markdown(
-        f"""<div style="background:#3D2B1F; border-radius:16px; overflow:hidden; display:flex; align-items:stretch; min-height:240px; margin-bottom:24px;">
-        <div style="flex:1; padding:44px 40px 44px 52px; display:flex; flex-direction:column; justify-content:center;">
-        <div style="font-size:10px; letter-spacing:4px; color:#8B9A2E; text-transform:uppercase; margin-bottom:14px;">Agente de inteligencia - Olive Garden Brasil</div>
-        <div style="font-size:52px; font-weight:800; color:#F5F0E8; letter-spacing:2px; line-height:1; margin-bottom:10px; font-family:Georgia,serif;">Oliv<span style='color:#8B9A2E; font-style:italic;'>IA</span></div>
-        <div style="width:52px; height:2px; background:#8B9A2E; margin-bottom:18px;"></div>
-        <div style="font-size:13px; color:#D8CFC0; line-height:1.8; max-width:380px;">Analiso reviews, redes sociais, pesquisa interna e noticias do mercado para gerar insights estrategicos em tempo real.</div>
-        <div style="margin-top:20px; display:flex; gap:8px; flex-wrap:wrap;">
-        <span style="background:rgba(139,154,46,0.2); border:1px solid rgba(139,154,46,0.4); color:#A8BC3A; font-size:10px; letter-spacing:2px; padding:4px 12px; border-radius:20px;">{len(df)} reviews</span>
+        """<div style="background:#3D2B1F; border-radius:16px; padding:52px 60px; margin-bottom:24px;">
+        <div style="font-size:11px; letter-spacing:5px; color:#8B9A2E; text-transform:uppercase; margin-bottom:20px; font-family:Arial,sans-serif;">Agente de inteligencia · Olive Garden Brasil</div>
+        <div style="font-family:Georgia,serif; font-size:72px; font-weight:800; line-height:1; letter-spacing:2px; margin-bottom:0;">
+        <span style="color:#F5F0E8; font-family:Georgia,serif; font-size:72px; font-weight:800;">Oliv</span><span style="color:#8B9A2E; font-family:Georgia,serif; font-size:72px; font-weight:800;">IA</span>
+        </div>
+        <div style="width:64px; height:2px; background:#8B9A2E; margin-top:20px; margin-bottom:20px;"></div>
+        <div style="font-size:14px; color:#D8CFC0; line-height:1.8; max-width:520px; font-family:Arial,sans-serif;">Analiso reviews, redes sociais, pesquisa interna e noticias do mercado para gerar insights estrategicos em tempo real.</div>
+        </div>""",
+        unsafe_allow_html=True
+    )
         <span style="background:rgba(139,154,46,0.2); border:1px solid rgba(139,154,46,0.4); color:#A8BC3A; font-size:10px; letter-spacing:2px; padding:4px 12px; border-radius:20px;">6 filiais</span>
         <span style="background:rgba(139,154,46,0.2); border:1px solid rgba(139,154,46,0.4); color:#A8BC3A; font-size:10px; letter-spacing:2px; padding:4px 12px; border-radius:20px;">powered by Claude</span>
         </div></div>
