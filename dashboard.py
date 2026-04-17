@@ -869,13 +869,6 @@ elif aba_sel == "OlivIA":
         </div>""",
         unsafe_allow_html=True
     )
-        <span style="background:rgba(139,154,46,0.2); border:1px solid rgba(139,154,46,0.4); color:#A8BC3A; font-size:10px; letter-spacing:2px; padding:4px 12px; border-radius:20px;">6 filiais</span>
-        <span style="background:rgba(139,154,46,0.2); border:1px solid rgba(139,154,46,0.4); color:#A8BC3A; font-size:10px; letter-spacing:2px; padding:4px 12px; border-radius:20px;">powered by Claude</span>
-        </div></div>
-        <div style="width:280px; background:#4A3525; display:flex; align-items:flex-end; justify-content:center; flex-shrink:0; overflow:hidden;">{olivia_svg}</div>
-        </div>""",
-        unsafe_allow_html=True
-    )
     st.markdown(
         """<div style="background:white; border-radius:12px; border:1px solid #E8DCC8; padding:24px 28px; margin-bottom:24px; display:flex; align-items:center; gap:24px;">
         <div style="width:48px; height:48px; border-radius:50%; background:#4D3321; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
