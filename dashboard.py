@@ -859,13 +859,13 @@ elif aba_sel == "Pesquisa":
 
 elif aba_sel == "OlivIA":
     st.markdown(
-        """<div style="background:#3D2B1F; border-radius:16px; padding:52px 60px; margin-bottom:24px;">
-        <div style="font-size:11px; letter-spacing:5px; color:#8B9A2E; text-transform:uppercase; margin-bottom:20px; font-family:Arial,sans-serif;">Agente de inteligencia · Olive Garden Brasil</div>
-        <div style="font-family:Georgia,serif; font-size:72px; font-weight:800; line-height:1; letter-spacing:2px; margin-bottom:0;">
-        <span style="color:#F5F0E8; font-family:Georgia,serif; font-size:72px; font-weight:800;">Oliv</span><span style="color:#8B9A2E; font-family:Georgia,serif; font-size:72px; font-weight:800;">IA</span>
+        """<div style="background:#3D2B1F; border-radius:16px; padding:60px; margin-bottom:24px; text-align:center;">
+        <div style="font-size:11px; letter-spacing:5px; color:#8B9A2E; text-transform:uppercase; margin-bottom:24px; font-family:Arial,sans-serif;">Agente de inteligencia · Olive Garden Brasil</div>
+        <div style="font-family:Georgia,serif; font-size:80px; font-weight:800; line-height:1; letter-spacing:3px; margin-bottom:0; display:inline-block;">
+        <span style="color:#F5F0E8; font-family:Georgia,serif; font-size:80px; font-weight:800;">Oliv</span><span style="color:#8B9A2E; font-family:Georgia,serif; font-size:80px; font-weight:800;">IA</span>
         </div>
-        <div style="width:64px; height:2px; background:#8B9A2E; margin-top:20px; margin-bottom:20px;"></div>
-        <div style="font-size:14px; color:#D8CFC0; line-height:1.8; max-width:520px; font-family:Arial,sans-serif;">Analiso reviews, redes sociais, pesquisa interna e noticias do mercado para gerar insights estrategicos em tempo real.</div>
+        <div style="width:64px; height:2px; background:#8B9A2E; margin:24px auto;"></div>
+        <div style="font-size:14px; color:#D8CFC0; line-height:1.8; max-width:520px; font-family:Arial,sans-serif; margin:0 auto;">Analiso reviews, redes sociais, pesquisa interna e noticias do mercado para gerar insights estrategicos em tempo real.</div>
         </div>""",
         unsafe_allow_html=True
     )
