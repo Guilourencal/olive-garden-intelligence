@@ -1,104 +1,54 @@
-﻿<svg width="100%" viewBox="0 0 680 560" role="img">
-<title>OlivIA — agente de IA do Olive Garden</title>
-<desc>Avatar feminino sofisticado da OlivIA com elementos de dados e análise ao redor.</desc>
-<style>
-  .skin { fill: #F5D5B0; }
-  .skin-shadow { fill: #E8C090; }
-  .hair-dark { fill: #3D2416; }
-  .hair-mid { fill: #5C3520; }
-  .blouse { fill: #4D3321; }
-  .blouse-detail { fill: #3A2518; }
-  .og-green { fill: #8B9A2E; }
-  .og-green-light { fill: #A8BC3A; }
-  .og-brown { fill: #4D3321; }
-  .eye-white { fill: #FAFAFA; }
-  .eye-iris { fill: #6B3A1F; }
-  .eye-pupil { fill: #1A0A00; }
-  .lip-color { fill: #C4694A; }
-  .lip-shadow { fill: #A8543A; }
-  .cheek { fill: #EDA080; opacity: 0.3; }
-  .data-line { stroke: #8B9A2E; stroke-width: 1; fill: none; opacity: 0.35; }
-  .data-dot { fill: #8B9A2E; opacity: 0.5; }
-  .data-text { font-family: Courier New, monospace; font-size: 11px; fill: #8B9A2E; opacity: 0.55; }
-  .data-box { fill: none; stroke: #8B9A2E; stroke-width: 0.8; opacity: 0.3; }
-  .name-main { font-family: Georgia, serif; font-size: 34px; fill: #4D3321; letter-spacing: 3px; }
-  .tagline { font-family: Arial, sans-serif; font-size: 11px; fill: #8B9A2E; letter-spacing: 4px; }
-  .divider { stroke: #8B9A2E; stroke-width: 0.8; opacity: 0.4; }
-</style>
-<rect x="60" y="30" width="200" height="90" rx="6" class="data-box"/>
-<text x="75" y="55" class="data-text">SENTIMENT SCORE</text>
-<text x="75" y="75" style="font-family:Georgia,serif; font-size:26px; fill:#8B9A2E; opacity:0.6; font-weight:bold;">94.1%</text>
-<text x="75" y="95" class="data-text">&#9650; +2.3 vs last week</text>
-<polyline points="75,108 95,103 115,106 135,100 155,104 175,97 195,101 215,95 235,98" class="data-line" stroke-width="1.5"/>
-<rect x="420" y="30" width="200" height="90" rx="6" class="data-box"/>
-<text x="435" y="55" class="data-text">REPUTATION INDEX</text>
-<text x="435" y="75" style="font-family:Georgia,serif; font-size:26px; fill:#4D3321; opacity:0.6; font-weight:bold;">78</text>
-<text x="475" y="75" style="font-family:Arial,sans-serif; font-size:11px; fill:#8B9A2E; opacity:0.5;">/100</text>
-<text x="435" y="95" class="data-text">BOA REPUTACAO</text>
-<rect x="435" y="103" width="140" height="6" rx="3" fill="#E8DCC8" opacity="0.5"/>
-<rect x="435" y="103" width="109" height="6" rx="3" fill="#8B9A2E" opacity="0.5"/>
-<rect x="60" y="400" width="180" height="80" rx="6" class="data-box"/>
-<text x="75" y="422" class="data-text">REVIEWS / MES</text>
-<text x="75" y="448" style="font-family:Georgia,serif; font-size:22px; fill:#4D3321; opacity:0.55; font-weight:bold;">1.842</text>
-<polyline points="75,468 95,462 115,465 135,458 155,461 175,455 195,459 215,453" class="data-line"/>
-<rect x="440" y="400" width="180" height="80" rx="6" class="data-box"/>
-<text x="455" y="422" class="data-text">NPS INTERNO</text>
-<text x="455" y="448" style="font-family:Georgia,serif; font-size:22px; fill:#4D3321; opacity:0.55; font-weight:bold;">+67</text>
-<text x="455" y="468" class="data-text">HIGHLY SATISFIED 94%</text>
-<circle cx="60" cy="200" r="4" class="data-dot"/>
-<circle cx="60" cy="250" r="4" class="data-dot"/>
-<circle cx="60" cy="300" r="4" class="data-dot"/>
-<line x1="60" y1="200" x2="60" y2="300" class="data-line"/>
-<line x1="60" y1="200" x2="220" y2="180" class="data-line"/>
-<line x1="60" y1="300" x2="220" y2="330" class="data-line"/>
-<circle cx="620" cy="200" r="4" class="data-dot"/>
-<circle cx="620" cy="250" r="4" class="data-dot"/>
-<circle cx="620" cy="300" r="4" class="data-dot"/>
-<line x1="620" y1="200" x2="620" y2="300" class="data-line"/>
-<line x1="620" y1="200" x2="460" y2="180" class="data-line"/>
-<line x1="620" y1="300" x2="460" y2="330" class="data-line"/>
-<ellipse cx="340" cy="250" rx="130" ry="155" fill="#F0E8DC" opacity="0.4"/>
-<path d="M260 330 Q270 390 340 400 Q410 390 420 330 Q430 360 430 390 Q400 430 340 435 Q280 430 250 390 Q250 360 260 330 Z" class="blouse"/>
-<path d="M305 325 Q340 315 375 325 L380 345 Q340 358 300 345 Z" style="fill:#6B4A2E;"/>
-<path d="M255 295 Q248 340 252 380 Q265 400 280 395 Q268 360 270 310 Z" class="blouse"/>
-<path d="M425 295 Q432 340 428 380 Q415 400 400 395 Q412 360 410 310 Z" class="blouse"/>
-<path d="M270 230 Q275 170 340 155 Q405 170 410 230 Q415 275 410 305 Q385 330 340 335 Q295 330 270 305 Q265 275 270 230 Z" class="skin"/>
-<path d="M270 230 Q275 175 340 160 Q405 175 410 230 Q390 218 340 215 Q290 218 270 230 Z" class="skin-shadow" opacity="0.3"/>
-<path d="M268 228 Q265 270 268 295 Q275 295 278 290 Q272 265 274 225 Z" class="skin-shadow" opacity="0.4"/>
-<path d="M412 228 Q415 270 412 295 Q405 295 402 290 Q408 265 406 225 Z" class="skin-shadow" opacity="0.4"/>
-<path d="M268 228 Q280 155 340 145 Q400 155 412 228 Q400 190 340 185 Q280 190 268 228 Z" class="hair-dark"/>
-<path d="M265 235 Q258 280 262 308 Q272 318 278 312 Q266 282 268 238 Z" class="hair-dark"/>
-<path d="M415 235 Q422 280 418 308 Q408 318 402 312 Q414 282 412 238 Z" class="hair-dark"/>
-<path d="M280 152 Q310 128 340 125 Q370 128 400 152 Q375 138 340 135 Q305 138 280 152 Z" class="hair-dark"/>
-<ellipse cx="340" cy="138" rx="58" ry="16" class="hair-dark"/>
-<path d="M282 145 Q290 115 340 108 Q390 115 398 145 Q370 128 340 125 Q310 128 282 145 Z" class="hair-mid"/>
-<path d="M268 195 Q258 215 256 235 Q262 228 272 225 Z" class="hair-dark"/>
-<path d="M412 195 Q422 215 424 235 Q418 228 408 225 Z" class="hair-dark"/>
-<path d="M308 178 Q318 170 330 173" stroke="#3A2010" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-<path d="M350 173 Q362 170 372 178" stroke="#3A2010" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-<ellipse cx="318" cy="192" rx="11" ry="12" class="eye-white"/>
-<ellipse cx="362" cy="192" rx="11" ry="12" class="eye-white"/>
-<ellipse cx="319" cy="193" rx="8" ry="9" class="eye-iris"/>
-<ellipse cx="363" cy="193" rx="8" ry="9" class="eye-iris"/>
-<ellipse cx="319" cy="193" rx="5" ry="6" class="eye-pupil"/>
-<ellipse cx="363" cy="193" rx="5" ry="6" class="eye-pupil"/>
-<ellipse cx="317" cy="190" rx="2.5" ry="2.5" fill="white" opacity="0.9"/>
-<ellipse cx="361" cy="190" rx="2.5" ry="2.5" fill="white" opacity="0.9"/>
-<ellipse cx="305" cy="222" rx="10" ry="7" class="cheek"/>
-<ellipse cx="375" cy="222" rx="10" ry="7" class="cheek"/>
-<ellipse cx="340" cy="218" rx="5" ry="4" fill="#D4906A" opacity="0.4"/>
-<path d="M323 238 Q340 250 357 238 Q350 256 340 258 Q330 256 323 238 Z" class="lip-color"/>
-<path d="M323 238 Q340 246 357 238" stroke="#A85030" stroke-width="1.2" fill="none"/>
-<circle cx="295" cy="148" r="5" fill="#8B9A2E" opacity="0.7"/>
-<circle cx="308" cy="138" r="4" fill="#6B7A1E" opacity="0.5"/>
-<ellipse cx="296" cy="148" rx="4" ry="7" fill="#8B9A2E" opacity="0.5" transform="rotate(-25 296 148)"/>
-<ellipse cx="308" cy="138" rx="3" ry="6" fill="#8B9A2E" opacity="0.4" transform="rotate(-40 308 138)"/>
-<circle cx="385" cy="148" r="5" fill="#8B9A2E" opacity="0.7"/>
-<circle cx="372" cy="138" r="4" fill="#6B7A1E" opacity="0.5"/>
-<ellipse cx="384" cy="148" rx="4" ry="7" fill="#8B9A2E" opacity="0.5" transform="rotate(25 384 148)"/>
-<ellipse cx="372" cy="138" rx="3" ry="6" fill="#8B9A2E" opacity="0.4" transform="rotate(40 372 138)"/>
-<text x="340" y="466" text-anchor="middle" class="name-main">Oliv<tspan fill="#8B9A2E" font-style="italic">IA</tspan></text>
-<line x1="200" y1="475" x2="480" y2="475" class="divider"/>
-<text x="340" y="494" text-anchor="middle" class="tagline">AGENTE DE INTELIGENCIA · OLIVE GARDEN BRASIL</text>
-<text x="340" y="515" text-anchor="middle" style="font-family:Courier New,monospace; font-size:10px; fill:#8B9A2E; opacity:0.4; letter-spacing:2px;">powered by Claude · Anthropic</text>
+﻿<svg width="100%" viewBox="0 0 560 480" role="img">
+<title>OlivIA</title>
+<desc>Agente de inteligencia do Olive Garden</desc>
+<circle cx="280" cy="200" r="110" fill="#5C3A22" opacity="0.15"/>
+<circle cx="280" cy="200" r="85" fill="#5C3A22" opacity="0.12"/>
+<circle cx="155" cy="130" r="2.5" fill="#8B9A2E" opacity="0.5"/>
+<circle cx="405" cy="110" r="2.5" fill="#8B9A2E" opacity="0.5"/>
+<line x1="155" y1="130" x2="210" y2="165" stroke="#8B9A2E" stroke-width="0.7" opacity="0.2"/>
+<line x1="405" y1="110" x2="350" y2="165" stroke="#8B9A2E" stroke-width="0.7" opacity="0.2"/>
+<rect x="118" y="100" width="78" height="36" rx="5" fill="none" stroke="#8B9A2E" stroke-width="0.8" opacity="0.3"/>
+<text x="124" y="116" font-family="Courier New" font-size="8" fill="#8B9A2E" opacity="0.45">SENTIMENT</text>
+<text x="124" y="130" font-family="Georgia" font-size="12" fill="#8B9A2E" opacity="0.6" font-weight="bold">94.1%</text>
+<rect x="364" y="85" width="78" height="36" rx="5" fill="none" stroke="#8B9A2E" stroke-width="0.8" opacity="0.3"/>
+<text x="370" y="101" font-family="Courier New" font-size="8" fill="#8B9A2E" opacity="0.45">INDEX</text>
+<text x="370" y="115" font-family="Georgia" font-size="12" fill="#F5F0E8" opacity="0.45" font-weight="bold">78/100</text>
+<path d="M185 340 Q195 395 280 408 Q365 395 375 340 Q385 372 385 400 Q348 435 280 440 Q212 435 175 400 Q175 372 185 340Z" fill="#2E1A0E"/>
+<path d="M235 325 Q280 312 325 325 L328 346 Q280 362 232 346Z" fill="#4A2C14"/>
+<path d="M182 295 Q175 338 178 372 Q190 390 205 385 Q192 355 194 308Z" fill="#2E1A0E"/>
+<path d="M378 295 Q385 338 382 372 Q370 390 355 385 Q368 355 366 308Z" fill="#2E1A0E"/>
+<path d="M192 225 Q198 158 280 142 Q362 158 368 225 Q372 272 367 302 Q340 330 280 336 Q220 330 193 302 Q188 272 192 225Z" fill="#F0C896"/>
+<path d="M192 225 Q198 165 280 150 Q362 165 368 225 Q355 205 280 200 Q205 205 192 225Z" fill="#D4986A" opacity="0.3"/>
+<path d="M190 222 Q183 265 186 292 Q196 292 199 287 Q192 262 194 224Z" fill="#D4986A" opacity="0.35"/>
+<path d="M370 222 Q377 265 374 292 Q364 292 361 287 Q368 262 366 224Z" fill="#D4986A" opacity="0.35"/>
+<path d="M190 222 Q200 148 280 135 Q360 148 370 222 Q358 183 280 178 Q202 183 190 222Z" fill="#2A1508"/>
+<path d="M187 230 Q180 274 184 302 Q194 312 202 306 Q189 276 191 234Z" fill="#2A1508"/>
+<path d="M373 230 Q380 274 376 302 Q366 312 358 306 Q371 276 369 234Z" fill="#2A1508"/>
+<ellipse cx="280" cy="128" rx="62" ry="17" fill="#2A1508"/>
+<path d="M218 136 Q230 105 280 98 Q330 105 342 136 Q312 120 280 117 Q248 120 218 136Z" fill="#3D2010"/>
+<path d="M188 195 Q179 216 177 238 Q184 230 194 226Z" fill="#2A1508"/>
+<path d="M372 195 Q381 216 383 238 Q376 230 366 226Z" fill="#2A1508"/>
+<path d="M248 150 Q264 138 276 141" stroke="#1A0808" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+<path d="M284 141 Q296 138 312 150" stroke="#1A0808" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+<ellipse cx="256" cy="186" rx="13" ry="14" fill="white"/>
+<ellipse cx="304" cy="186" rx="13" ry="14" fill="white"/>
+<ellipse cx="257" cy="187" rx="10" ry="11" fill="#8B5A30"/>
+<ellipse cx="305" cy="187" rx="10" ry="11" fill="#8B5A30"/>
+<ellipse cx="257" cy="187" rx="7" ry="8" fill="#1A0808"/>
+<ellipse cx="305" cy="187" rx="7" ry="8" fill="#1A0808"/>
+<ellipse cx="254" cy="184" rx="3" ry="3" fill="white" opacity="0.92"/>
+<ellipse cx="302" cy="184" rx="3" ry="3" fill="white" opacity="0.92"/>
+<ellipse cx="238" cy="218" rx="13" ry="8" fill="#E8956A" opacity="0.22"/>
+<ellipse cx="322" cy="218" rx="13" ry="8" fill="#E8956A" opacity="0.22"/>
+<ellipse cx="280" cy="213" rx="6" ry="5" fill="#C87848" opacity="0.3"/>
+<path d="M262 233 Q280 247 298 233 Q291 253 280 255 Q269 253 262 233Z" fill="#C05840"/>
+<path d="M262 233 Q280 243 298 233" stroke="#943820" stroke-width="1.3" fill="none"/>
+<circle cx="238" cy="136" r="7" fill="#8B9A2E" opacity="0.9"/>
+<circle cx="254" cy="122" r="5.5" fill="#6B7A1E" opacity="0.7"/>
+<ellipse cx="239" cy="136" rx="5.5" ry="10" fill="#8B9A2E" opacity="0.6" transform="rotate(-20 239 136)"/>
+<ellipse cx="254" cy="122" rx="4.5" ry="8" fill="#8B9A2E" opacity="0.5" transform="rotate(-35 254 122)"/>
+<circle cx="322" cy="136" r="7" fill="#8B9A2E" opacity="0.9"/>
+<circle cx="306" cy="122" r="5.5" fill="#6B7A1E" opacity="0.7"/>
+<ellipse cx="321" cy="136" rx="5.5" ry="10" fill="#8B9A2E" opacity="0.6" transform="rotate(20 321 136)"/>
+<ellipse cx="306" cy="122" rx="4.5" ry="8" fill="#8B9A2E" opacity="0.5" transform="rotate(35 306 122)"/>
 </svg>
