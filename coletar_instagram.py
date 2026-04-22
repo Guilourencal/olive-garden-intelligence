@@ -15,7 +15,7 @@ def coletar_posts():
     run_input = {
         "directUrls": ["https://www.instagram.com/olivegardenbr/"],
         "resultsType": "posts",
-        "resultsLimit": 20,
+        "resultsLimit": 100,
         "addParentData": False,
     }
     run = client.actor("apify/instagram-scraper").call(run_input=run_input)
@@ -31,9 +31,9 @@ def coletar_comentarios(posts):
         return []
 
     run_input = {
-        "directUrls": urls_posts[:20],
+        "directUrls": urls_posts[:100],
         "resultsType": "comments",
-        "resultsLimit": 50,
+        "resultsLimit": 200,
         "addParentData": True,
     }
     run = client.actor("apify/instagram-scraper").call(run_input=run_input)
