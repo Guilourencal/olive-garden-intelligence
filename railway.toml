@@ -1,0 +1,7 @@
+﻿[deploy]
+startCommand = "python atualizar_tudo.py"
+
+[[cronjobs]]
+name = "Atualizacao diaria"
+schedule = "0 9 * * *"
+command = "python atualizar_tudo.py"
