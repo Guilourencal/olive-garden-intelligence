@@ -1,3 +1,6 @@
+import sys
+print("Pipeline pausado temporariamente.")
+sys.exit(0)
 import subprocess
 import sys
 import os
