@@ -64,6 +64,7 @@ processamentos = [
     ("Unificando dados...", "unificar_dados.py"),
     ("Classificando sentimento...", "classificar_sentimento.py"),
     ("Atualizando banco local...", "criar_banco.py"),
+    ("Coletando Instagram...", "coletar_instagram.py"),
     ("Classificando social...", "classificar_social.py"),
     ("Salvando notícias...", "salvar_noticias.py"),
 ]
