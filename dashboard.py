@@ -527,7 +527,6 @@ elif aba_sel == "Social":
 
     with col_s2:
         with st.container(border=True):
-        with st.container(border=True):
             st.markdown('<div class="section-title">Top 10 Posts por Comentários</div>', unsafe_allow_html=True)
             post_engagement = df_social.groupby("post_url").agg(
                 comentarios=("texto", "count"),
