@@ -527,20 +527,21 @@ elif aba_sel == "Social":
 
     with col_s2:
         with st.container(border=True):
-            st.markdown('<div class="section-title">Comentários por Post</div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown('<div class="section-title">Top 10 Posts por Comentários</div>', unsafe_allow_html=True)
             post_engagement = df_social.groupby("post_url").agg(
                 comentarios=("texto", "count"),
                 likes_total=("likes", "sum")
             ).reset_index().reset_index()
             post_engagement["label"] = post_engagement["index"].apply(lambda i: f"Post {i+1}")
-            post_engagement = post_engagement.sort_values("comentarios", ascending=False)
+            post_engagement = post_engagement.sort_values("comentarios", ascending=False).head(10)
             html_posts = ""
             for _, row in post_engagement.iterrows():
                 pct = int(row["comentarios"] / post_engagement["comentarios"].max() * 100)
-                html_posts += f"""<div style="margin-bottom:12px;">
+                html_posts += f"""<div style="margin-bottom:10px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                         <a href="{row['post_url']}" target="_blank" style="font-size:12px; font-weight:700; color:#5C3D1E; text-decoration:none;">{row['label']} ↗</a>
-                        <span style="font-size:12px; font-weight:700; color:#3D2B1F;">{int(row['comentarios'])} comentários</span>
+                        <span style="font-size:12px; font-weight:700; color:#3D2B1F;">{int(row['comentarios'])} comentarios</span>
                     </div>
                     <div style="background:#e8ddc8; border-radius:4px; height:8px;">
                         <div style="background:#8B9A2E; width:{pct}%; height:8px; border-radius:4px;"></div>
