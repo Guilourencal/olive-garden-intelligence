@@ -866,7 +866,7 @@ elif aba_sel == "OlivIA":
         <div style="flex:1; padding:52px 40px 52px 56px; display:flex; flex-direction:column; justify-content:center;">
         <div style="font-size:10px; letter-spacing:5px; color:#8B9A2E; text-transform:uppercase; margin-bottom:16px; font-family:Arial,sans-serif;">Agente de inteligencia - Olive Garden Brasil</div>
         <div style="margin-bottom:12px; line-height:1;">
-        <span style="font-family:Georgia,serif; font-size:72px; font-weight:800; color:#F5F0E8; letter-spacing:2px;">Oliv</span><span style="font-family:Georgia,serif; font-size:72px; font-weight:800; color:#8B9A2E; letter-spacing:2px;">IA</span>
+        <span style="font-family:Georgia,serif; font-size:72px; font-weight:800; letter-spacing:2px;"><span style="color:#F5F0E8;">Oliv</span><span style="color:#8B9A2E;">IA</span></span>
         </div>
         <div style="width:64px; height:2px; background:#8B9A2E; margin-bottom:20px;"></div>
         <div style="font-size:14px; color:#D8CFC0; line-height:1.8; max-width:420px; font-family:Arial,sans-serif;">Analiso reviews, redes sociais, pesquisa interna e noticias do mercado para gerar insights estrategicos em tempo real.</div>
