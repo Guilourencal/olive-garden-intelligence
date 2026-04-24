@@ -858,29 +858,30 @@ elif aba_sel == "Pesquisa":
         st.dataframe(df_com_tab.head(30), use_container_width=True, hide_index=True)
 
 elif aba_sel == "OlivIA":
+    import base64 as b64
+    with open("assets/Olivia_Fundo_Branco_Header.png", "rb") as img_f:
+        olivia_img = b64.b64encode(img_f.read()).decode("utf-8")
     st.markdown(
-        """<div style="background:#3D2B1F; border-radius:16px; padding:60px; margin-bottom:24px; text-align:center;">
-        <div style="font-size:11px; letter-spacing:5px; color:#8B9A2E; text-transform:uppercase; margin-bottom:24px; font-family:Arial,sans-serif;">Agente de inteligencia · Olive Garden Brasil</div>
-        <div style="font-family:Georgia,serif; font-size:80px; font-weight:800; line-height:1; letter-spacing:3px; margin-bottom:0; display:inline-block;">
-        <span style="color:#F5F0E8; font-family:Georgia,serif; font-size:80px; font-weight:800;">Oliv</span><span style="color:#8B9A2E; font-family:Georgia,serif; font-size:80px; font-weight:800;">IA</span>
+        f"""<div style="background:#3D2B1F; border-radius:16px; overflow:hidden; display:flex; align-items:stretch; min-height:260px; margin-bottom:24px; position:relative;">
+        <div style="flex:1; padding:48px 48px 48px 56px; display:flex; flex-direction:column; justify-content:center; position:relative; z-index:1;">
+        <div style="font-size:10px; letter-spacing:5px; color:#8B9A2E; text-transform:uppercase; margin-bottom:16px; font-family:Arial,sans-serif;">Agente de inteligencia - Olive Garden Brasil</div>
+        <div style="margin-bottom:12px; line-height:1;">
+        <span style="font-family:Georgia,serif; font-size:72px; font-weight:800; color:#F5F0E8; letter-spacing:2px;">Oliv</span><span style="font-family:Georgia,serif; font-size:72px; font-weight:800; color:#8B9A2E; letter-spacing:2px;">IA</span>
         </div>
-        <div style="width:64px; height:2px; background:#8B9A2E; margin:24px auto;"></div>
-        <div style="font-size:14px; color:#D8CFC0; line-height:1.8; max-width:520px; font-family:Arial,sans-serif; margin:0 auto;">Analiso reviews, redes sociais, pesquisa interna e noticias do mercado para gerar insights estrategicos em tempo real.</div>
+        <div style="width:64px; height:2px; background:#8B9A2E; margin-bottom:20px;"></div>
+        <div style="font-size:14px; color:#D8CFC0; line-height:1.8; max-width:400px; font-family:Arial,sans-serif; margin-bottom:28px;">Analiso reviews, redes sociais, pesquisa interna e noticias do mercado para gerar insights estrategicos em tempo real.</div>
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <div style="background:rgba(139,154,46,0.15); border:1px solid rgba(139,154,46,0.35); border-radius:10px; padding:10px 18px;"><div style="font-size:10px; color:#8B9A2E; letter-spacing:2px; text-transform:uppercase; font-family:Arial,sans-serif; margin-bottom:2px;">Reviews</div><div style="font-size:18px; font-weight:700; color:#F5F0E8; font-family:Georgia,serif;">{len(df)}</div></div>
+        <div style="background:rgba(139,154,46,0.15); border:1px solid rgba(139,154,46,0.35); border-radius:10px; padding:10px 18px;"><div style="font-size:10px; color:#8B9A2E; letter-spacing:2px; text-transform:uppercase; font-family:Arial,sans-serif; margin-bottom:2px;">Filiais</div><div style="font-size:18px; font-weight:700; color:#F5F0E8; font-family:Georgia,serif;">6</div></div>
+        <div style="background:rgba(139,154,46,0.15); border:1px solid rgba(139,154,46,0.35); border-radius:10px; padding:10px 18px;"><div style="font-size:10px; color:#8B9A2E; letter-spacing:2px; text-transform:uppercase; font-family:Arial,sans-serif; margin-bottom:2px;">Social</div><div style="font-size:18px; font-weight:700; color:#F5F0E8; font-family:Georgia,serif;">{len(df_social)}</div></div>
+        <div style="background:rgba(139,154,46,0.15); border:1px solid rgba(139,154,46,0.35); border-radius:10px; padding:10px 18px;"><div style="font-size:10px; color:#8B9A2E; letter-spacing:2px; text-transform:uppercase; font-family:Arial,sans-serif; margin-bottom:2px;">Powered by</div><div style="font-size:18px; font-weight:700; color:#F5F0E8; font-family:Georgia,serif;">Claude</div></div>
+        </div></div>
+        <div style="width:280px; flex-shrink:0; display:flex; align-items:flex-end; justify-content:center; overflow:hidden; background:linear-gradient(to right, #3D2B1F, #4A3525);">
+        <img src="data:image/png;base64,{olivia_img}" style="height:260px; object-fit:contain; object-position:bottom;"/>
+        </div>
         </div>""",
         unsafe_allow_html=True
     )
-    st.markdown(
-        """<div style="background:white; border-radius:12px; border:1px solid #E8DCC8; padding:24px 28px; margin-bottom:24px; display:flex; align-items:center; gap:24px;">
-        <div style="width:48px; height:48px; border-radius:50%; background:#4D3321; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-        <svg width='20' height='20' viewBox='0 0 24 24' fill='none'><circle cx='12' cy='12' r='10' stroke='#8B9A2E' stroke-width='1.5'/><path d='M8 12h8M12 8v8' stroke='#8B9A2E' stroke-width='1.5' stroke-linecap='round'/></svg>
-        </div>
-        <div style="flex:1;">
-        <div style="font-size:11px; color:#8B9A2E; letter-spacing:2px; text-transform:uppercase; margin-bottom:4px;">Pronto para analisar</div>
-        <div style="font-size:13px; color:#5C3D1E; line-height:1.5;">Clique em <strong style='color:#4D3321;'>Gerar Briefing Executivo</strong> para uma analise completa, ou faca uma pergunta no chat abaixo.</div>
-        </div></div>""",
-        unsafe_allow_html=True
-    )
-    # Prepara contexto com todos os dados
     def preparar_contexto():
         total_reviews = len(df)
         nota_media = df["nota"].mean()
