@@ -862,22 +862,17 @@ elif aba_sel == "OlivIA":
     with open("assets/Olivia_Fundo_Branco_Header.png", "rb") as img_f:
         olivia_img = b64.b64encode(img_f.read()).decode("utf-8")
     st.markdown(
-        f"""<div style="background:#3D2B1F; border-radius:16px; overflow:hidden; display:flex; align-items:stretch; min-height:260px; margin-bottom:24px; position:relative;">
-        <div style="flex:1; padding:48px 48px 48px 56px; display:flex; flex-direction:column; justify-content:center; position:relative; z-index:1;">
+        f"""<div style="background:#3D2B1F; border-radius:16px; overflow:hidden; display:flex; align-items:stretch; min-height:280px; margin-bottom:24px;">
+        <div style="flex:1; padding:52px 40px 52px 56px; display:flex; flex-direction:column; justify-content:center;">
         <div style="font-size:10px; letter-spacing:5px; color:#8B9A2E; text-transform:uppercase; margin-bottom:16px; font-family:Arial,sans-serif;">Agente de inteligencia - Olive Garden Brasil</div>
         <div style="margin-bottom:12px; line-height:1;">
         <span style="font-family:Georgia,serif; font-size:72px; font-weight:800; color:#F5F0E8; letter-spacing:2px;">Oliv</span><span style="font-family:Georgia,serif; font-size:72px; font-weight:800; color:#8B9A2E; letter-spacing:2px;">IA</span>
         </div>
         <div style="width:64px; height:2px; background:#8B9A2E; margin-bottom:20px;"></div>
-        <div style="font-size:14px; color:#D8CFC0; line-height:1.8; max-width:400px; font-family:Arial,sans-serif; margin-bottom:28px;">Analiso reviews, redes sociais, pesquisa interna e noticias do mercado para gerar insights estrategicos em tempo real.</div>
-        <div style="display:flex; gap:12px; flex-wrap:wrap;">
-        <div style="background:rgba(139,154,46,0.15); border:1px solid rgba(139,154,46,0.35); border-radius:10px; padding:10px 18px;"><div style="font-size:10px; color:#8B9A2E; letter-spacing:2px; text-transform:uppercase; font-family:Arial,sans-serif; margin-bottom:2px;">Reviews</div><div style="font-size:18px; font-weight:700; color:#F5F0E8; font-family:Georgia,serif;">{len(df)}</div></div>
-        <div style="background:rgba(139,154,46,0.15); border:1px solid rgba(139,154,46,0.35); border-radius:10px; padding:10px 18px;"><div style="font-size:10px; color:#8B9A2E; letter-spacing:2px; text-transform:uppercase; font-family:Arial,sans-serif; margin-bottom:2px;">Filiais</div><div style="font-size:18px; font-weight:700; color:#F5F0E8; font-family:Georgia,serif;">6</div></div>
-        <div style="background:rgba(139,154,46,0.15); border:1px solid rgba(139,154,46,0.35); border-radius:10px; padding:10px 18px;"><div style="font-size:10px; color:#8B9A2E; letter-spacing:2px; text-transform:uppercase; font-family:Arial,sans-serif; margin-bottom:2px;">Social</div><div style="font-size:18px; font-weight:700; color:#F5F0E8; font-family:Georgia,serif;">{len(df_social)}</div></div>
-        <div style="background:rgba(139,154,46,0.15); border:1px solid rgba(139,154,46,0.35); border-radius:10px; padding:10px 18px;"><div style="font-size:10px; color:#8B9A2E; letter-spacing:2px; text-transform:uppercase; font-family:Arial,sans-serif; margin-bottom:2px;">Powered by</div><div style="font-size:18px; font-weight:700; color:#F5F0E8; font-family:Georgia,serif;">Claude</div></div>
-        </div></div>
-        <div style="width:280px; flex-shrink:0; display:flex; align-items:flex-end; justify-content:center; overflow:hidden; background:linear-gradient(to right, #3D2B1F, #4A3525);">
-        <img src="data:image/png;base64,{olivia_img}" style="height:260px; object-fit:contain; object-position:bottom;"/>
+        <div style="font-size:14px; color:#D8CFC0; line-height:1.8; max-width:420px; font-family:Arial,sans-serif;">Analiso reviews, redes sociais, pesquisa interna e noticias do mercado para gerar insights estrategicos em tempo real.</div>
+        </div>
+        <div style="width:320px; flex-shrink:0; display:flex; align-items:flex-end; justify-content:center; overflow:hidden;">
+        <img src="data:image/png;base64,{olivia_img}" style="height:300px; object-fit:contain; object-position:bottom; margin-bottom:-4px;"/>
         </div>
         </div>""",
         unsafe_allow_html=True
