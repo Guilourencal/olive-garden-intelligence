@@ -809,6 +809,81 @@ elif aba_sel == "Pesquisa":
 
     st.markdown("<br>", unsafe_allow_html=True)
 
+    # Opcao A — Evolucao por dimensao com filtro
+    with st.container(border=True):
+        st.markdown('<div class="section-title">Evolucao por Dimensao e Filial</div>', unsafe_allow_html=True)
+        if len(df_perf) > 1:
+            df_perf_ev = df_perf[df_perf["restaurant"] != "nan"].copy()
+            df_perf_ev["filial_curta"] = df_perf_ev["restaurant"].str.replace("Olive Garden - ", "")
+            df_perf_ev["periodo_curto"] = df_perf_ev["periodo"].str.extract(r"(FW\d+ to FW\d+)")
+            metricas_ev = {"overall_experience": "Experiencia Geral", "value": "Valor", "service": "Atendimento", "taste": "Sabor", "speed_of_service": "Velocidade", "clean": "Limpeza", "soup_salad_refill": "Refil Sopa/Salada", "breadstick_refill": "Refil Breadstick"}
+            dim_sel = st.selectbox("Selecione a dimensao:", list(metricas_ev.values()), key="dim_sel")
+            col_sel = [k for k, v in metricas_ev.items() if v == dim_sel][0]
+            fig_ev = go.Figure()
+            cores_filiais = ["#8B9A2E", "#B8923A", "#3D7A5C", "#7A3D3D", "#3D5A7A", "#7A5C3D"]
+            for idx, filial in enumerate(df_perf_ev["filial_curta"].unique()):
+                df_fil = df_perf_ev[df_perf_ev["filial_curta"] == filial].sort_values("periodo_curto")
+                fig_ev.add_trace(go.Scatter(
+                    x=df_fil["periodo_curto"],
+                    y=df_fil[col_sel],
+                    mode="lines+markers+text",
+                    name=filial,
+                    line=dict(color=cores_filiais[idx % len(cores_filiais)], width=2.5),
+                    marker=dict(size=10),
+                    text=df_fil[col_sel].round(1).astype(str) + "%",
+                    textposition="top center",
+                    textfont=dict(family="Nunito", size=11),
+                ))
+            fig_ev.update_layout(
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                margin=dict(t=20, b=10, l=10, r=10),
+                legend=dict(font=dict(family="Nunito", size=11, color=MARROM), orientation="h", yanchor="bottom", y=1.02),
+                xaxis=dict(title="", tickfont=dict(family="Nunito", size=11, color=MARROM)),
+                yaxis=dict(title="% Topbox", range=[60, 105], showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=11, color=MARROM)),
+                font=dict(family="Nunito"),
+                height=400,
+            )
+            st.plotly_chart(fig_ev, use_container_width=True, key="fig_ev")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Opcao C — Small multiples por filial
+    with st.container(border=True):
+        st.markdown('<div class="section-title">Evolucao por Filial — Todas as Dimensoes</div>', unsafe_allow_html=True)
+        if len(df_perf) > 1:
+            df_perf_sm = df_perf[df_perf["restaurant"] != "nan"].copy()
+            df_perf_sm["filial_curta"] = df_perf_sm["restaurant"].str.replace("Olive Garden - ", "")
+            df_perf_sm["periodo_curto"] = df_perf_sm["periodo"].str.extract(r"(FW\d+ to FW\d+)")
+            metricas_sm = ["overall_experience", "value", "service", "taste", "speed_of_service", "clean", "soup_salad_refill", "breadstick_refill"]
+            labels_sm = ["Exp. Geral", "Valor", "Atend.", "Sabor", "Velocidade", "Limpeza", "Refil Sopa", "Refil Bread"]
+            filiais_sm = sorted(df_perf_sm["filial_curta"].unique())
+            cols_sm = st.columns(3)
+            for idx, filial in enumerate(filiais_sm):
+                df_fil = df_perf_sm[df_perf_sm["filial_curta"] == filial].sort_values("periodo_curto")
+                fig_sm = go.Figure()
+                for m, lbl in zip(metricas_sm, labels_sm):
+                    fig_sm.add_trace(go.Scatter(
+                        x=df_fil["periodo_curto"],
+                        y=df_fil[m],
+                        mode="lines+markers",
+                        name=lbl,
+                        line=dict(width=1.8),
+                        marker=dict(size=6),
+                    ))
+                fig_sm.update_layout(
+                    title=dict(text=filial, font=dict(family="Nunito", size=13, color=MARROM), x=0.5),
+                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                    margin=dict(t=40, b=10, l=10, r=10),
+                    legend=dict(font=dict(family="Nunito", size=9, color=MARROM), orientation="h", yanchor="bottom", y=-0.5),
+                    xaxis=dict(tickfont=dict(family="Nunito", size=9, color=MARROM)),
+                    yaxis=dict(range=[60, 105], showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=9, color=MARROM)),
+                    height=280,
+                    font=dict(family="Nunito"),
+                )
+                with cols_sm[idx % 3]:
+                    st.plotly_chart(fig_sm, use_container_width=True, key=f"fig_sm_{idx}")
+    st.markdown("<br>", unsafe_allow_html=True)
+
     with st.container(border=True):
         st.markdown('<div class="section-title">Satisfação por Filial (% Highly Satisfied)</div>', unsafe_allow_html=True)
         sat_filial = df_comments_f.groupby("filial").apply(
