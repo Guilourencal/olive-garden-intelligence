@@ -1,6 +1,3 @@
-import sys
-print("Pipeline pausado - investigando runs excessivos.")
-sys.exit(0)
 import subprocess
 import sys
 import os
