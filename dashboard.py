@@ -597,7 +597,7 @@ elif aba_sel == "Notícias":
     dias = {"Últimos 30 dias": 30, "Últimos 15 dias": 15, "Últimos 7 dias": 7}
     dias_sel = dias[periodo_sel]
     data_corte = (datetime.now() - timedelta(days=dias_sel)).strftime("%Y-%m-%d")
-    df_news_f = df_news_f[df_news_f["publicado_em"] >= data_corte]
+    df_news_f = df_news_f[pd.to_datetime(df_news_f["publicado_em"], errors="coerce", utc=True) >= pd.Timestamp(data_corte, tz="UTC")]
     if idioma_sel == "Português":
         df_news_f = df_news_f[df_news_f["categoria"].str.contains("Brasil", na=False)]
     elif idioma_sel == "Inglês":
