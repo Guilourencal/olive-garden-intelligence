@@ -147,7 +147,7 @@ def carregar_social():
     conn.close()
     return df
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=1)
 def carregar_noticias():
     conn = get_conn()
     df = pd.read_sql("SELECT * FROM noticias ORDER BY publicado_em DESC", conn)
