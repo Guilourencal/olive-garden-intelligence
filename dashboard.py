@@ -187,7 +187,7 @@ with st.sidebar:
     )
     st.markdown('<div style="height:1px; background:rgba(255,255,255,0.1); margin-bottom:10px;"></div>', unsafe_allow_html=True)
 
-    for aba in ["Reviews", "Social", "Noticias", "Pesquisa", "Correlacoes", "OlivIA"]:
+    for aba in ["Reviews", "Social", "Pesquisa", "Correlacoes", "OlivIA"]:
         if st.button(aba, key=f"btn_{aba}", use_container_width=True):
             st.session_state.aba_sel = aba
             st.rerun()
