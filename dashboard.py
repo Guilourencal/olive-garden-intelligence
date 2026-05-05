@@ -219,7 +219,7 @@ with st.sidebar:
     )
     st.markdown('<div style="height:1px; background:rgba(255,255,255,0.1); margin-bottom:10px;"></div>', unsafe_allow_html=True)
 
-    for aba in ["Reviews", "Social", "Pesquisa", "Correlacoes", "importar_ifood_vendas.py$", "OlivIA"]:
+    for aba in ["Reviews", "Social", "Pesquisa", "Correlacoes", "Vendas", "OlivIA"]:
         if st.button(aba, key=f"btn_{aba}", use_container_width=True):
             st.session_state.aba_sel = aba
             st.rerun()
@@ -964,7 +964,7 @@ elif aba_sel == "Pesquisa":
         df_com_tab.columns = ["Data", "Filial", "Avaliação", "Comentário"]
         st.dataframe(df_com_tab.head(30), use_container_width=True, hide_index=True)
 
-elif aba_sel == "fix_ifood_calls.py$":
+elif aba_sel == "Vendas":
     st.markdown(
         '''<div style="font-weight:800; font-size:26px; color:#3D2B1F; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:4px;">fix_ifood_calls.py$</div>
         <div style="font-size:13px; color:#8B9A2E; letter-spacing:0.1em; margin-bottom:20px;">PERFORMANCE FINANCEIRA — iFOOD</div>''',
