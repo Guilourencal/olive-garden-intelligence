@@ -1002,24 +1002,76 @@ elif aba_sel == "Vendas":
     periodo_sel_v = st.selectbox("Periodo:", periodos, index=len(periodos)-1, key="periodo_v")
     df_vp = df_v[df_v["periodo"] == periodo_sel_v]
 
-    # Ranking por filial
+    # Ranking por filial com projecao
     with st.container(border=True):
         st.markdown('<div class="section-title">Faturamento por Filial</div>', unsafe_allow_html=True)
         df_rank = df_vp.groupby("filial_curta").agg(faturamento=("faturamento","sum"), pedidos=("pedidos","sum"), novos_clientes=("novos_clientes","sum")).reset_index()
         df_rank["ticket_medio"] = (df_rank["faturamento"] / df_rank["pedidos"]).round(0)
         df_rank = df_rank.sort_values("faturamento", ascending=True)
         df_rank["fat_fmt"] = df_rank["faturamento"].apply(lambda v: f"R$ {v:,.0f}".replace(",","."))
+
+        # Detectar se e parcial e calcular projecao
+        import calendar
+        from datetime import datetime
+        is_parcial = False
+        fat_projetado = None
+        try:
+            partes = periodo_sel_v.split("-")
+            data_ini = partes[0].strip()
+            data_fim = partes[1].strip()
+            d_ini = datetime.strptime(data_ini, "%d/%m/%Y")
+            d_fim = datetime.strptime(data_fim, "%d/%m/%Y")
+            dias_decorridos = (d_fim - d_ini).days + 1
+            dias_no_mes = calendar.monthrange(d_ini.year, d_ini.month)[1]
+            if dias_decorridos < dias_no_mes:
+                is_parcial = True
+                df_rank["faturamento_projetado"] = (df_rank["faturamento"] / dias_decorridos * dias_no_mes).round(0)
+                df_rank["proj_fmt"] = df_rank["faturamento_projetado"].apply(lambda v: f"R$ {v:,.0f}".replace(",","."))
+        except:
+            pass
+
         fig_rank = go.Figure()
+
+        if is_parcial:
+            fig_rank.add_trace(go.Bar(
+                y=df_rank["filial_curta"],
+                x=df_rank["faturamento_projetado"],
+                orientation="h",
+                name=f"Projetado ({dias_no_mes} dias)",
+                marker_color="#B8923A",
+                opacity=0.5,
+                text=df_rank["proj_fmt"],
+                textposition="outside",
+                textfont=dict(family="Nunito", size=11, color="#B8923A"),
+            ))
+
         fig_rank.add_trace(go.Bar(
             y=df_rank["filial_curta"],
             x=df_rank["faturamento"],
             orientation="h",
+            name=f"Realizado ({dias_decorridos if is_parcial else dias_no_mes} dias)" if is_parcial else "Faturamento",
             marker_color=VERDE,
             text=df_rank["fat_fmt"],
-            textposition="outside",
-            textfont=dict(family="Nunito", size=12, color=MARROM),
+            textposition="inside",
+            textfont=dict(family="Nunito", size=11, color="white"),
         ))
-        fig_rank.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=150), xaxis=dict(showgrid=False, tickfont=dict(family="Nunito", size=11, color=MARROM)), yaxis=dict(tickfont=dict(family="Nunito", size=12, color=MARROM)), font=dict(family="Nunito"), height=280)
+
+        if is_parcial:
+            fig_rank.add_annotation(
+                text=f"Parcial: {dias_decorridos} de {dias_no_mes} dias | Projecao linear",
+                xref="paper", yref="paper", x=0, y=1.08, showarrow=False,
+                font=dict(family="Nunito", size=11, color="#B8923A"),
+            )
+
+        fig_rank.update_layout(
+            barmode="overlay",
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            margin=dict(t=30,b=10,l=10,r=160),
+            xaxis=dict(showgrid=False, tickfont=dict(family="Nunito", size=11, color=MARROM)),
+            yaxis=dict(tickfont=dict(family="Nunito", size=12, color=MARROM)),
+            legend=dict(font=dict(family="Nunito", size=11, color=MARROM), orientation="h", yanchor="bottom", y=1.02),
+            font=dict(family="Nunito"), height=300
+        )
         st.plotly_chart(fig_rank, use_container_width=True, key="fig_rank_v")
 
     st.markdown("<br>", unsafe_allow_html=True)
