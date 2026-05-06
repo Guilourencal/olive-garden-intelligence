@@ -1,8 +1,25 @@
-import streamlit as st
-def check_password():
+﻿import streamlit as st
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+def verificar_senha():
     if "autenticado" not in st.session_state:
         st.session_state.autenticado = False
-    return st.session_state.autenticado
+    if not st.session_state.autenticado:
+        col1, col2, col3 = st.columns([1, 1, 1])
+        with col2:
+            st.markdown("<br><br>", unsafe_allow_html=True)
+            st.markdown('<div style="text-align:center; font-size:11px; letter-spacing:0.2em; color:#8B9A2E; text-transform:uppercase; margin-bottom:16px;">Brand Intelligence</div>', unsafe_allow_html=True)
+            senha = st.text_input("Senha de acesso", type="password", key="senha_input")
+            if st.button("Entrar", use_container_width=True):
+                if senha == os.getenv("DASHBOARD_PASSWORD", "olivegarden2026"):
+                    st.session_state.autenticado = True
+                    st.rerun()
+                else:
+                    st.error("Senha incorreta")
+        st.stop()
+
 import psycopg2
 import pandas as pd
 import plotly.express as px
@@ -108,13 +125,12 @@ STOPWORDS_PT = {
 }
 
 def get_conn():
-    import os
     return psycopg2.connect(
-        host=os.getenv("SUPABASE_HOST", "aws-1-sa-east-1.pooler.supabase.com"),
-        port=int(os.getenv("SUPABASE_PORT", "6543")),
-        user=os.getenv("SUPABASE_USER", "postgres.rvauallshhozpruvusrr"),
-        password=os.getenv("SUPABASE_PASSWORD", "olivegarden2233@"),
-        database=os.getenv("SUPABASE_DB", "postgres")
+        host="aws-1-sa-east-1.pooler.supabase.com",
+        port=6543,
+        user="postgres.rvauallshhozpruvusrr",
+        password="olivegarden2233@",
+        database="postgres"
     )
 
 @st.cache_data(ttl=300)
@@ -131,7 +147,7 @@ def carregar_social():
     conn.close()
     return df
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=1)
 def carregar_noticias():
     conn = get_conn()
     df = pd.read_sql("SELECT * FROM noticias ORDER BY publicado_em DESC", conn)
@@ -158,6 +174,7 @@ df_news = carregar_noticias()
 df_comments = carregar_pesquisa_comments()
 df_perf = carregar_pesquisa_performance()
 
+verificar_senha()
 if "aba_sel" not in st.session_state:
     st.session_state.aba_sel = "Reviews"
 
@@ -170,7 +187,7 @@ with st.sidebar:
     )
     st.markdown('<div style="height:1px; background:rgba(255,255,255,0.1); margin-bottom:10px;"></div>', unsafe_allow_html=True)
 
-    for aba in ["Reviews", "Social", "Pesquisa", "Vendas", "OlivIA"]:
+    for aba in ["Reviews", "Social", "Pesquisa", "Correlacoes", "OlivIA"]:
         if st.button(aba, key=f"btn_{aba}", use_container_width=True):
             st.session_state.aba_sel = aba
             st.rerun()
@@ -204,11 +221,6 @@ with st.sidebar:
         st.markdown('<div class="sidebar-label">Post</div>', unsafe_allow_html=True)
         posts_unicos = ["Todos"] + [f"Post {i+1}" for i in range(df_social["post_url"].nunique())]
         post_sel = st.selectbox("Post", posts_unicos, key="post_sel", label_visibility="collapsed")
-
-    elif aba_sel == "Vendas":
-        st.markdown('<div class="sidebar-label">Filial</div>', unsafe_allow_html=True)
-        filiais_ifood = ["Todas"] + sorted(df["filial"].dropna().unique().tolist())
-        filial_vendas_sel = st.selectbox("Filial", filiais_ifood, key="filial_vendas", label_visibility="collapsed")
 
     elif aba_sel == "Notícias":
         st.markdown('<div class="sidebar-label">Categoria</div>', unsafe_allow_html=True)
@@ -515,20 +527,20 @@ elif aba_sel == "Social":
 
     with col_s2:
         with st.container(border=True):
-            st.markdown('<div class="section-title">Comentários por Post</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">Top 10 Posts por Comentários</div>', unsafe_allow_html=True)
             post_engagement = df_social.groupby("post_url").agg(
                 comentarios=("texto", "count"),
                 likes_total=("likes", "sum")
             ).reset_index().reset_index()
             post_engagement["label"] = post_engagement["index"].apply(lambda i: f"Post {i+1}")
-            post_engagement = post_engagement.sort_values("comentarios", ascending=False)
+            post_engagement = post_engagement.sort_values("comentarios", ascending=False).head(10)
             html_posts = ""
             for _, row in post_engagement.iterrows():
                 pct = int(row["comentarios"] / post_engagement["comentarios"].max() * 100)
-                html_posts += f"""<div style="margin-bottom:12px;">
+                html_posts += f"""<div style="margin-bottom:10px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                         <a href="{row['post_url']}" target="_blank" style="font-size:12px; font-weight:700; color:#5C3D1E; text-decoration:none;">{row['label']} ↗</a>
-                        <span style="font-size:12px; font-weight:700; color:#3D2B1F;">{int(row['comentarios'])} comentários</span>
+                        <span style="font-size:12px; font-weight:700; color:#3D2B1F;">{int(row['comentarios'])} comentarios</span>
                     </div>
                     <div style="background:#e8ddc8; border-radius:4px; height:8px;">
                         <div style="background:#8B9A2E; width:{pct}%; height:8px; border-radius:4px;"></div>
@@ -585,7 +597,7 @@ elif aba_sel == "Notícias":
     dias = {"Últimos 30 dias": 30, "Últimos 15 dias": 15, "Últimos 7 dias": 7}
     dias_sel = dias[periodo_sel]
     data_corte = (datetime.now() - timedelta(days=dias_sel)).strftime("%Y-%m-%d")
-    df_news_f = df_news_f[df_news_f["publicado_em"] >= data_corte]
+    df_news_f = df_news_f[pd.to_datetime(df_news_f["publicado_em"], errors="coerce", utc=True) >= pd.Timestamp(data_corte, tz="UTC")]
     if idioma_sel == "Português":
         df_news_f = df_news_f[df_news_f["categoria"].str.contains("Brasil", na=False)]
     elif idioma_sel == "Inglês":
@@ -797,6 +809,81 @@ elif aba_sel == "Pesquisa":
 
     st.markdown("<br>", unsafe_allow_html=True)
 
+    # Opcao A — Evolucao por dimensao com filtro
+    with st.container(border=True):
+        st.markdown('<div class="section-title">Evolucao por Dimensao e Filial</div>', unsafe_allow_html=True)
+        if len(df_perf) > 1:
+            df_perf_ev = df_perf[df_perf["restaurant"] != "nan"].copy()
+            df_perf_ev["filial_curta"] = df_perf_ev["restaurant"].str.replace("Olive Garden - ", "")
+            df_perf_ev["periodo_curto"] = df_perf_ev["periodo"].str.extract(r"(FW\d+ to FW\d+)")
+            metricas_ev = {"overall_experience": "Experiencia Geral", "value": "Valor", "service": "Atendimento", "taste": "Sabor", "speed_of_service": "Velocidade", "clean": "Limpeza", "soup_salad_refill": "Refil Sopa/Salada", "breadstick_refill": "Refil Breadstick"}
+            dim_sel = st.selectbox("Selecione a dimensao:", list(metricas_ev.values()), key="dim_sel")
+            col_sel = [k for k, v in metricas_ev.items() if v == dim_sel][0]
+            fig_ev = go.Figure()
+            cores_filiais = ["#8B9A2E", "#B8923A", "#3D7A5C", "#7A3D3D", "#3D5A7A", "#7A5C3D"]
+            for idx, filial in enumerate(df_perf_ev["filial_curta"].unique()):
+                df_fil = df_perf_ev[df_perf_ev["filial_curta"] == filial].sort_values("periodo_curto")
+                fig_ev.add_trace(go.Scatter(
+                    x=df_fil["periodo_curto"],
+                    y=df_fil[col_sel],
+                    mode="lines+markers+text",
+                    name=filial,
+                    line=dict(color=cores_filiais[idx % len(cores_filiais)], width=2.5),
+                    marker=dict(size=10),
+                    text=df_fil[col_sel].round(1).astype(str) + "%",
+                    textposition="top center",
+                    textfont=dict(family="Nunito", size=11),
+                ))
+            fig_ev.update_layout(
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                margin=dict(t=20, b=10, l=10, r=10),
+                legend=dict(font=dict(family="Nunito", size=11, color=MARROM), orientation="h", yanchor="bottom", y=1.02),
+                xaxis=dict(title="", tickfont=dict(family="Nunito", size=11, color=MARROM)),
+                yaxis=dict(title="% Topbox", range=[60, 105], showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=11, color=MARROM)),
+                font=dict(family="Nunito"),
+                height=400,
+            )
+            st.plotly_chart(fig_ev, use_container_width=True, key="fig_ev")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Opcao C — Small multiples por filial
+    with st.container(border=True):
+        st.markdown('<div class="section-title">Evolucao por Filial — Todas as Dimensoes</div>', unsafe_allow_html=True)
+        if len(df_perf) > 1:
+            df_perf_sm = df_perf[df_perf["restaurant"] != "nan"].copy()
+            df_perf_sm["filial_curta"] = df_perf_sm["restaurant"].str.replace("Olive Garden - ", "")
+            df_perf_sm["periodo_curto"] = df_perf_sm["periodo"].str.extract(r"(FW\d+ to FW\d+)")
+            metricas_sm = ["overall_experience", "value", "service", "taste", "speed_of_service", "clean", "soup_salad_refill", "breadstick_refill"]
+            labels_sm = ["Exp. Geral", "Valor", "Atend.", "Sabor", "Velocidade", "Limpeza", "Refil Sopa", "Refil Bread"]
+            filiais_sm = sorted(df_perf_sm["filial_curta"].unique())
+            cols_sm = st.columns(3)
+            for idx, filial in enumerate(filiais_sm):
+                df_fil = df_perf_sm[df_perf_sm["filial_curta"] == filial].sort_values("periodo_curto")
+                fig_sm = go.Figure()
+                for m, lbl in zip(metricas_sm, labels_sm):
+                    fig_sm.add_trace(go.Scatter(
+                        x=df_fil["periodo_curto"],
+                        y=df_fil[m],
+                        mode="lines+markers",
+                        name=lbl,
+                        line=dict(width=1.8),
+                        marker=dict(size=6),
+                    ))
+                fig_sm.update_layout(
+                    title=dict(text=filial, font=dict(family="Nunito", size=13, color=MARROM), x=0.5),
+                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                    margin=dict(t=40, b=10, l=10, r=10),
+                    legend=dict(font=dict(family="Nunito", size=9, color=MARROM), orientation="h", yanchor="bottom", y=-0.5),
+                    xaxis=dict(tickfont=dict(family="Nunito", size=9, color=MARROM)),
+                    yaxis=dict(range=[60, 105], showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=9, color=MARROM)),
+                    height=280,
+                    font=dict(family="Nunito"),
+                )
+                with cols_sm[idx % 3]:
+                    st.plotly_chart(fig_sm, use_container_width=True, key=f"fig_sm_{idx}")
+    st.markdown("<br>", unsafe_allow_html=True)
+
     with st.container(border=True):
         st.markdown('<div class="section-title">Satisfação por Filial (% Highly Satisfied)</div>', unsafe_allow_html=True)
         sat_filial = df_comments_f.groupby("filial").apply(
@@ -845,161 +932,26 @@ elif aba_sel == "Pesquisa":
         df_com_tab.columns = ["Data", "Filial", "Avaliação", "Comentário"]
         st.dataframe(df_com_tab.head(30), use_container_width=True, hide_index=True)
 
-
-elif aba_sel == "Vendas":
-    import psycopg2
-
-    @st.cache_data(ttl=300)
-    def carregar_ifood_vendas():
-        conn = get_conn()
-        df1 = pd.read_sql("SELECT * FROM ifood_vendas", conn)
-        df2 = pd.read_sql("SELECT * FROM ifood_dias", conn)
-        df3 = pd.read_sql("SELECT * FROM ifood_horarios", conn)
-        df4 = pd.read_sql("SELECT * FROM ifood_pagamentos", conn)
-        conn.close()
-        return df1, df2, df3, df4
-
-    df_v, df_dias, df_hor, df_pag = carregar_ifood_vendas()
-
-    if filial_vendas_sel != "Todas":
-        df_v   = df_v[df_v["filial"] == filial_vendas_sel]
-        df_dias = df_dias[df_dias["filial"] == filial_vendas_sel]
-        df_hor  = df_hor[df_hor["filial"] == filial_vendas_sel]
-        df_pag  = df_pag[df_pag["filial"] == filial_vendas_sel]
-
+elif aba_sel == "OlivIA":
+    import base64 as b64
+    with open("assets/Olivia_Fundo_Branco_Header.png", "rb") as img_f:
+        olivia_img = b64.b64encode(img_f.read()).decode("utf-8")
     st.markdown(
-        '<div style="font-weight:800; font-size:26px; color:#3D2B1F; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:4px;">Vendas iFood</div>'
-        '<div style="font-size:13px; color:#8B9A2E; letter-spacing:0.1em; margin-bottom:20px;">DESEMPENHO DE DELIVERY — DADOS INTERNOS</div>',
+        f"""<div style="background:#3D2B1F; border-radius:16px; overflow:hidden; display:flex; align-items:stretch; min-height:280px; margin-bottom:24px;">
+        <div style="flex:1; padding:52px 40px 52px 56px; display:flex; flex-direction:column; justify-content:center;">
+        <div style="font-size:10px; letter-spacing:5px; color:#8B9A2E; text-transform:uppercase; margin-bottom:16px; font-family:Arial,sans-serif;">Agente de inteligencia - Olive Garden Brasil</div>
+        <div style="margin-bottom:12px; line-height:1;">
+        <span style="font-family:Georgia,serif; font-size:72px; font-weight:800; letter-spacing:2px; color:#F5F0E8;">Oliv<span style="color:#8B9A2E;">ia</span></span>
+        </div>
+        <div style="width:64px; height:2px; background:#8B9A2E; margin-bottom:20px;"></div>
+        <div style="font-size:14px; color:#D8CFC0; line-height:1.8; max-width:420px; font-family:Arial,sans-serif;">Analiso reviews, redes sociais, pesquisa interna e noticias do mercado para gerar insights estrategicos em tempo real.</div>
+        </div>
+        <div style="width:320px; flex-shrink:0; display:flex; align-items:flex-end; justify-content:center; overflow:hidden;">
+        <img src="data:image/png;base64,{olivia_img}" style="height:300px; object-fit:contain; object-position:bottom; margin-bottom:-4px;"/>
+        </div>
+        </div>""",
         unsafe_allow_html=True
     )
-
-    total_pedidos = int(df_v["pedidos"].sum())
-    faturamento   = df_v["faturamento"].sum()
-    ticket_medio  = df_v["ticket_medio"].mean()
-    novos_clientes = int(df_v["novos_clientes"].sum())
-
-    c1, c2, c3, c4 = st.columns(4)
-    with c1:
-        st.metric("Total de Pedidos", f"{total_pedidos:,}")
-    with c2:
-        st.metric("Faturamento", f"R$ {faturamento:,.2f}")
-    with c3:
-        st.metric("Ticket Médio", f"R$ {ticket_medio:.2f}")
-    with c4:
-        st.metric("Novos Clientes", f"{novos_clientes:,}")
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        with st.container(border=True):
-            st.markdown('<div class="section-title">Faturamento por Filial</div>', unsafe_allow_html=True)
-            fat_filial = df_v.groupby("filial")["faturamento"].sum().reset_index()
-            fat_filial["filial"] = fat_filial["filial"].str.replace("Olive Garden - ", "")
-            fat_filial = fat_filial.sort_values("faturamento", ascending=True)
-            fig_fat = px.bar(fat_filial, x="faturamento", y="filial", orientation="h",
-                color="faturamento", color_continuous_scale=[[0, "#D8CFC0"], [1, "#8B9A2E"]],
-                text=fat_filial["faturamento"].apply(lambda x: f"R$ {x:,.0f}"))
-            fig_fat.update_traces(textposition="outside", textfont=dict(family="Nunito", size=11, color="#3D2B1F"))
-            fig_fat.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                margin=dict(t=10, b=10, l=10, r=80), coloraxis_showscale=False,
-                xaxis=dict(showgrid=False, zeroline=False, title=""),
-                yaxis=dict(title="", tickfont=dict(family="Nunito", size=11, color="#3D2B1F")),
-                font=dict(family="Nunito"))
-            st.plotly_chart(fig_fat, use_container_width=True, key="fig_fat_v")
-
-    with col2:
-        with st.container(border=True):
-            st.markdown('<div class="section-title">Pedidos por Filial</div>', unsafe_allow_html=True)
-            ped_filial = df_v.groupby("filial")["pedidos"].sum().reset_index()
-            ped_filial["filial"] = ped_filial["filial"].str.replace("Olive Garden - ", "")
-            ped_filial = ped_filial.sort_values("pedidos", ascending=True)
-            fig_ped = px.bar(ped_filial, x="pedidos", y="filial", orientation="h",
-                color="pedidos", color_continuous_scale=[[0, "#D8CFC0"], [1, "#4D3321"]],
-                text="pedidos")
-            fig_ped.update_traces(textposition="outside", textfont=dict(family="Nunito", size=11, color="#3D2B1F"))
-            fig_ped.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                margin=dict(t=10, b=10, l=10, r=40), coloraxis_showscale=False,
-                xaxis=dict(showgrid=False, zeroline=False, title=""),
-                yaxis=dict(title="", tickfont=dict(family="Nunito", size=11, color="#3D2B1F")),
-                font=dict(family="Nunito"))
-            st.plotly_chart(fig_ped, use_container_width=True, key="fig_ped_v")
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    col3, col4 = st.columns(2)
-
-    with col3:
-        with st.container(border=True):
-            st.markdown('<div class="section-title">Pedidos por Dia da Semana</div>', unsafe_allow_html=True)
-            ordem_dias = ["Segunda", "Terca", "Quarta", "Quinta", "Sexta", "Sabado", "Domingo"]
-            dias_count = df_dias.groupby("dia_semana")["pedidos"].sum().reset_index()
-            dias_count["ordem"] = dias_count["dia_semana"].apply(lambda d: next((i for i, x in enumerate(ordem_dias) if x.lower() in d.lower()), 99))
-            dias_count = dias_count.sort_values("ordem")
-            fig_dias = px.bar(dias_count, x="dia_semana", y="pedidos",
-                color="pedidos", color_continuous_scale=[[0, "#D8CFC0"], [1, "#8B9A2E"]],
-                text="pedidos")
-            fig_dias.update_traces(textposition="outside", textfont=dict(family="Nunito", size=11, color="#3D2B1F"))
-            fig_dias.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                margin=dict(t=10, b=10, l=10, r=10), coloraxis_showscale=False,
-                xaxis=dict(title="", tickfont=dict(family="Nunito", size=11, color="#3D2B1F")),
-                yaxis=dict(title="", showgrid=False),
-                font=dict(family="Nunito"))
-            st.plotly_chart(fig_dias, use_container_width=True, key="fig_dias_v")
-
-    with col4:
-        with st.container(border=True):
-            st.markdown('<div class="section-title">Forma de Pagamento</div>', unsafe_allow_html=True)
-            pag_count = df_pag.groupby("forma_pagamento")["pedidos"].sum().reset_index()
-            pag_count = pag_count.sort_values("pedidos", ascending=False)
-            fig_pag = px.pie(pag_count, values="pedidos", names="forma_pagamento", hole=0.5,
-                color_discrete_sequence=["#8B9A2E", "#4D3321", "#B8923A", "#D8CFC0", "#8B2E2E"])
-            fig_pag.update_traces(textfont_family="Nunito", textfont_size=12)
-            fig_pag.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                margin=dict(t=10, b=10, l=10, r=10),
-                legend=dict(font=dict(family="Nunito", size=11, color="#3D2B1F")),
-                font=dict(family="Nunito"))
-            st.plotly_chart(fig_pag, use_container_width=True, key="fig_pag_v")
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    with st.container(border=True):
-        st.markdown('<div class="section-title">Pedidos por Horário</div>', unsafe_allow_html=True)
-        hor_count = df_hor.groupby(["horario", "periodo_semana"])["pedidos"].sum().reset_index()
-        fig_hor = px.bar(hor_count, x="horario", y="pedidos", color="periodo_semana",
-            barmode="group",
-            color_discrete_map={"Durante a semana": "#8B9A2E", "Fim de semana": "#4D3321"},
-            text="pedidos")
-        fig_hor.update_traces(textposition="outside", textfont=dict(family="Nunito", size=10, color="#3D2B1F"))
-        fig_hor.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-            margin=dict(t=10, b=10, l=10, r=10),
-            legend=dict(title="", font=dict(family="Nunito", size=11, color="#3D2B1F"), orientation="h", yanchor="bottom", y=1.02),
-            xaxis=dict(title="", tickfont=dict(family="Nunito", size=10, color="#3D2B1F")),
-            yaxis=dict(title="", showgrid=False),
-            font=dict(family="Nunito"))
-        st.plotly_chart(fig_hor, use_container_width=True, key="fig_hor_v")
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    with st.container(border=True):
-        st.markdown('<div class="section-title">Logística de Entrega</div>', unsafe_allow_html=True)
-        log_count = df_v.groupby("logistica").agg(pedidos=("pedidos","sum"), faturamento=("faturamento","sum")).reset_index()
-        fig_log = px.bar(log_count, x="logistica", y="faturamento", color="logistica",
-            color_discrete_sequence=["#8B9A2E", "#4D3321", "#B8923A"],
-            text=log_count["faturamento"].apply(lambda x: f"R$ {x:,.0f}"))
-        fig_log.update_traces(textposition="outside", textfont=dict(family="Nunito", size=11, color="#3D2B1F"))
-        fig_log.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-            margin=dict(t=10, b=10, l=10, r=10), showlegend=False,
-            xaxis=dict(title="", tickfont=dict(family="Nunito", size=11, color="#3D2B1F")),
-            yaxis=dict(title="", showgrid=False),
-            font=dict(family="Nunito"))
-        st.plotly_chart(fig_log, use_container_width=True, key="fig_log_v")
-elif aba_sel == "Insights IA":
-    st.markdown(
-        '<div style="font-weight:800; font-size:26px; color:#3D2B1F; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:4px;">Insights IA</div>'
-        '<div style="font-size:13px; color:#8B9A2E; letter-spacing:0.1em; margin-bottom:20px;">ANÁLISE INTELIGENTE — POWERED BY CLAUDE</div>',
-        unsafe_allow_html=True
-    )
-
-    # Prepara contexto com todos os dados
     def preparar_contexto():
         total_reviews = len(df)
         nota_media = df["nota"].mean()
@@ -1011,8 +963,8 @@ elif aba_sel == "Insights IA":
             total=("nota", "count"),
             pct_pos=("sentimento", lambda x: (x == "Positivo").sum() / len(x) * 100)
         ).reset_index()
-        ranking["indice"] = (((ranking["nota_media"] - 1) / 4) * 40 + ranking["pct_pos"] * 0.6).clip(0, 100).round(0).astype(int)
-        ranking = ranking.sort_values("indice", ascending=False).reset_index(drop=True)
+        ranking["indice"] = (((ranking["nota_media"] - 1) / 4) * 40 + ranking["pct_pos"] * 0.6).clip(0, 100).round(1)
+        ranking = ranking.sort_values("indice", ascending=False)
 
         temas = df["tema"].dropna().str.split(", ").explode()
         temas = temas[~temas.isin(["Sem tema", "Geral"])]
@@ -1029,7 +981,7 @@ elif aba_sel == "Insights IA":
         if len(df_perf) > 0:
             df_perf_ctx = df_perf[df_perf["restaurant"] != "nan"].copy()
             for _, row in df_perf_ctx.iterrows():
-                perf_data += f"\n- {row['restaurant']}: Experiencia {row['overall_experience']:.1f}% | Sabor {row['taste']:.1f}% | Atendimento {row['service']:.1f}% | Valor {row['value']:.1f}% | Velocidade {row['speed_of_service']:.1f}%"
+                perf_data += f"\n- {row['restaurant']}: Experiência {row['overall_experience']:.1f}% | Sabor {row['taste']:.1f}% | Atendimento {row['service']:.1f}% | Valor {row['value']:.1f}% | Velocidade {row['speed_of_service']:.1f}%"
 
         pesquisa_data = ""
         if len(df_comments) > 0:
@@ -1042,25 +994,25 @@ elif aba_sel == "Insights IA":
                 pesquisa_data += f"\n- {row['filial']}: {row['pct_hs']:.1f}% Highly Satisfied"
 
         contexto = f"""
-Voce e um consultor especialista em brand intelligence e gestao de restaurantes.
-Analise os dados abaixo do Olive Garden Brasil e forneca insights estrategicos profissionais.
+Você é um consultor especialista em brand intelligence e gestão de restaurantes. 
+Analise os dados abaixo do Olive Garden Brasil e forneça insights estratégicos profissionais.
 
-=== DADOS DE REVIEWS PUBLICOS ===
+=== DADOS DE REVIEWS PÚBLICOS ===
 Total de reviews: {total_reviews}
-Nota media geral: {nota_media:.2f}/5
+Nota média geral: {nota_media:.2f}/5
 Sentimento positivo: {pct_pos:.1f}%
 Sentimento negativo: {pct_neg:.1f}%
 
-Ranking de filiais por Indice de Reputacao:
-{ranking[["filial", "indice", "nota_media", "pct_pos"]].to_string(index=False)}
+Ranking de filiais por Índice de Reputação:
+{ranking[['filial', 'indice', 'nota_media', 'pct_pos']].to_string(index=False)}
 
 Temas mais citados: {top_temas}
 
-Exemplos de comentarios negativos recentes:
-{chr(10).join([f"- {t[:150]}" for t in negativos[:5]])}
+Exemplos de comentários negativos recentes:
+{chr(10).join([f'- {t[:150]}' for t in negativos[:5]])}
 
 === DADOS DE REDES SOCIAIS (Instagram) ===
-Total de comentarios: {total_social}
+Total de comentários: {total_social}
 Sentimento positivo: {pct_pos_social:.1f}%
 
 === DADOS DE PESQUISA INTERNA (% Highly Satisfied) ===
@@ -1068,7 +1020,7 @@ Sentimento positivo: {pct_pos_social:.1f}%
 
 === PERFORMANCE INTERNA (% Topbox) ==={perf_data}
 
-=== NOTICIAS RECENTES ===
+=== NOTÍCIAS RECENTES ===
 {chr(10).join([f'[{n["categoria"]}] {n["titulo"]}' for n in noticias_recentes])}
 """
         return contexto
@@ -1140,7 +1092,7 @@ Seja direto como um consultor sênior apresentando para o CEO. Use dados reais, 
             )
         else:
             with st.container(border=True):
-                st.markdown(f'<div style="font-size:12px; line-height:1.7; color:#3D2B1F; font-family:Nunito,sans-serif;">{msg["content"]}</div>', unsafe_allow_html=True)  
+                st.markdown(f'<div style="font-size:12px; line-height:1.7; color:#3D2B1F; font-family:Nunito,sans-serif;">{msg["content"]}</div>', unsafe_allow_html=True)
 
     # Input do chat
     st.markdown("<br>", unsafe_allow_html=True)
@@ -1173,8 +1125,113 @@ Seja direto como um consultor sênior apresentando para o CEO. Use dados reais, 
             st.session_state.chat_history = []
             st.rerun()
 
+elif aba_sel == "Correlacoes":
+    st.markdown(
+        '''<div style="font-weight:800; font-size:26px; color:#3D2B1F; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:4px;">Correlacoes & Tendencias</div>
+        <div style="font-size:13px; color:#8B9A2E; letter-spacing:0.1em; margin-bottom:20px;">LEITURAS RAPIDAS E DIRETAS</div>''',
+        unsafe_allow_html=True
+    )
+
+    # Prepara dados base
+    df_perf_c = df_perf[df_perf["restaurant"] != "nan"].copy()
+    df_perf_c["filial_curta"] = df_perf_c["restaurant"].str.replace("Olive Garden - ", "")
+    df_perf_c["periodo_curto"] = df_perf_c["periodo"].str.extract(r"(FW\d+ to FW\d+)")
+    gss_atual = df_perf_c.sort_values("periodo_curto").groupby("filial_curta").last().reset_index() if len(df_perf_c) > 0 else pd.DataFrame()
+    rep_pub = df.groupby("filial").agg(nota_media=("nota", "mean"), pct_pos=("sentimento", lambda x: (x == "Positivo").sum() / len(x) * 100)).reset_index()
+    rep_pub["score_externo"] = (((rep_pub["nota_media"] - 1) / 4) * 40 + rep_pub["pct_pos"] * 0.6).clip(0, 100).round(1)
+    rep_pub["filial_curta"] = rep_pub["filial"].str.replace("Olive Garden - ", "")
+
+    # 1. Ranking de Saude por Filial
+    with st.container(border=True):
+        st.markdown('<div class="section-title">Ranking de Saude por Filial</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Indice combinado de GSS interno + Reputacao publica. Identifica qual filial precisa de atencao agora.</div>', unsafe_allow_html=True)
+        if len(gss_atual) > 0:
+            saude = rep_pub.merge(gss_atual[["filial_curta", "overall_experience"]], on="filial_curta", how="left")
+            saude["indice_saude"] = (saude["score_externo"] * 0.5 + saude["overall_experience"].fillna(80) * 0.5).round(1)
+            saude = saude.sort_values("indice_saude", ascending=False)
+            for _, row in saude.iterrows():
+                v = row["indice_saude"]
+                cor = VERDE if v >= 80 else "#B8923A" if v >= 70 else VERMELHO
+                status = "SAUDAVEL" if v >= 80 else "ATENCAO" if v >= 70 else "CRITICO"
+                pct = int((v / 100) * 100)
+                st.markdown(f'''<div style="margin-bottom:14px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <span style="font-size:13px; font-weight:700; color:#3D2B1F;">{row["filial_curta"]}</span>
+                    <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-size:11px; font-weight:700; color:{cor}; background:rgba(0,0,0,0.05); padding:2px 10px; border-radius:20px;">{status}</span>
+                    <span style="font-size:13px; font-weight:700; color:{cor};">{v:.1f}</span>
+                    </div></div>
+                    <div style="background:#e8ddc8; border-radius:4px; height:8px;">
+                    <div style="background:{cor}; width:{pct}%; height:8px; border-radius:4px;"></div>
+                    </div></div>''', unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # 2. Divergencias GSS vs Reputacao
+    with st.container(border=True):
+        st.markdown('<div class="section-title">Divergencias — Percepcao Interna vs Externa</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Onde o cliente esta saindo diferente do que a pesquisa interna indica. Divergencia alta = risco de reputacao.</div>', unsafe_allow_html=True)
+        if len(gss_atual) > 0:
+            div_df = rep_pub.merge(gss_atual[["filial_curta", "overall_experience"]], on="filial_curta", how="left").dropna()
+            div_df["divergencia"] = (div_df["overall_experience"] - div_df["score_externo"]).round(1)
+            div_df = div_df.sort_values("divergencia", ascending=False)
+            for _, row in div_df.iterrows():
+                div = row["divergencia"]
+                if div > 10:
+                    cor = "#2e6b3e"; icone = "Interno ACIMA do publico"; msg = "Oportunidade de amplificar reputacao"
+                elif div < -10:
+                    cor = VERMELHO; icone = "Publico ACIMA do interno"; msg = "Atencao — cliente insatisfeito nao aparece na pesquisa?"
+                else:
+                    cor = "#B8923A"; icone = "Alinhado"; msg = "Percepcao interna e externa consistentes"
+                st.markdown(f'<div style="padding:10px 0; border-bottom:1px solid #e8ddc8;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:13px; font-weight:700; color:#3D2B1F;">{row["filial_curta"]}</span>
+                    <span style="font-size:12px; color:{cor}; font-weight:700;">{div:+.1f} pts — {icone}</span>
+                    </div>
+                    <div style="font-size:11px; color:#8B7A5A; margin-top:3px;">GSS: {row["overall_experience"]:.1f}% | Reputacao: {row["score_externo"]:.1f} | {msg}</div>
+                    </div>', unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # 3. Evolucao do Sentimento Publico
+    with st.container(border=True):
+        st.markdown('<div class="section-title">Sentimento Publico por Plataforma</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Distribuicao do sentimento em cada plataforma. Identifica onde a percepcao e mais critica.</div>', unsafe_allow_html=True)
+        sent_plat = df.groupby(["plataforma", "sentimento"]).size().reset_index(name="total")
+        sent_pct = sent_plat.copy()
+        sent_pct["pct"] = sent_pct.groupby("plataforma")["total"].transform(lambda x: x / x.sum() * 100).round(1)
+        fig_sent = go.Figure()
+        cores_sent = {"Positivo": VERDE, "Neutro": "#B8923A", "Negativo": VERMELHO}
+        for sent in ["Positivo", "Neutro", "Negativo"]:
+            df_s = sent_pct[sent_pct["sentimento"] == sent]
+            fig_sent.add_trace(go.Bar(
+                name=sent,
+                x=df_s["plataforma"],
+                y=df_s["pct"],
+                marker_color=cores_sent[sent],
+                text=df_s["pct"].apply(lambda x: f"{x:.0f}%"),
+                textposition="inside",
+                textfont=dict(family="Nunito", size=12, color="white"),
+            ))
+        fig_sent.update_layout(
+            barmode="stack",
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            margin=dict(t=10, b=10, l=10, r=10),
+            legend=dict(font=dict(family="Nunito", size=11, color=MARROM), orientation="h", yanchor="bottom", y=1.02),
+            xaxis=dict(tickfont=dict(family="Nunito", size=12, color=MARROM)),
+            yaxis=dict(title="% do total", showgrid=False, tickfont=dict(family="Nunito", size=11, color=MARROM)),
+            font=dict(family="Nunito"),
+            height=320,
+        )
+        st.plotly_chart(fig_sent, use_container_width=True, key="fig_sent_plat")
+
 st.markdown(
     '<div style="text-align:center; font-size:10px; color:#B8A898; letter-spacing:0.1em; padding-top:20px;">'
     'OLIVE GARDEN BRAND INTELLIGENCE © 2026</div>',
     unsafe_allow_html=True
 )
+
+
+
+
+
