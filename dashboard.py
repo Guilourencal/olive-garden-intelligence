@@ -966,6 +966,8 @@ elif aba_sel == "Vendas":
     periodos = sorted(df_v["periodo"].unique())
 
     # Cards executivos
+    import calendar
+    from datetime import datetime
     with st.container(border=True):
         st.markdown('<div class="section-title">Visao Executiva</div>', unsafe_allow_html=True)
         cols_v = st.columns(len(periodos))
@@ -981,8 +983,32 @@ elif aba_sel == "Vendas":
             mes_label = mes_map.get(mes, periodo)
             delta_txt = f" (+{((fat/prev_fat-1)*100):.1f}%)" if prev_fat and prev_fat > 0 else ""
             prev_fat = fat
-            fat_fmt = f"R$ {fat:,.0f}".replace(",", ".")
+            fat_fmt = f"R$ {fat:,.0f}".replace(",",".")
             tkt_fmt = f"R$ {tkt:.0f}"
+            # Detectar parcial e calcular projecao
+            proj_html = ""
+            try:
+                partes = periodo.split("-")
+                d_ini = datetime.strptime(partes[0].strip(), "%d/%m/%Y")
+                d_fim = datetime.strptime(partes[1].strip(), "%d/%m/%Y")
+                dias_dec = (d_fim - d_ini).days + 1
+                dias_mes = calendar.monthrange(d_ini.year, d_ini.month)[1]
+                if dias_dec < dias_mes:
+                    fat_proj = fat / dias_dec * dias_mes
+                    fat_proj_fmt = f"R$ {fat_proj:,.0f}".replace(",",".")
+                    ped_proj = int(ped / dias_dec * dias_mes)
+                    proj_html = f'''<div style="margin-top:12px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1);">
+                        <div style="font-size:9px; color:#B8923A; letter-spacing:2px; margin-bottom:6px;">PROJECAO MES COMPLETO ({dias_mes} dias)</div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:2px;">FATURAMENTO</div>
+                        <div style="font-size:14px; font-weight:700; color:#B8923A;">{fat_proj_fmt}</div></div>
+                        <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:2px;">PEDIDOS</div>
+                        <div style="font-size:14px; font-weight:700; color:#B8923A;">{ped_proj:,}</div></div>
+                        </div>
+                        <div style="font-size:9px; color:#8B7A5A; margin-top:4px;">Parcial: {dias_dec} de {dias_mes} dias</div>
+                        </div>'''
+            except:
+                pass
             with cols_v[idx]:
                 st.markdown(f'''<div style="background:#3D2B1F; border-radius:12px; padding:20px; color:#F5F0E8; margin-bottom:8px;">
                     <div style="font-size:10px; letter-spacing:3px; color:#8B9A2E; text-transform:uppercase; margin-bottom:14px;">{mes_label}{delta_txt}</div>
@@ -995,7 +1021,7 @@ elif aba_sel == "Vendas":
                     <div style="font-size:16px; font-weight:700; color:#8B9A2E;">{tkt_fmt}</div></div>
                     <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">NOVOS CLIENTES</div>
                     <div style="font-size:16px; font-weight:700; color:#8B9A2E;">{nov:,}</div></div>
-                    </div></div>''', unsafe_allow_html=True)
+                    </div>{proj_html}</div>''', unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
