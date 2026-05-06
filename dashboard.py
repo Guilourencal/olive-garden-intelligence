@@ -656,13 +656,6 @@ elif aba_sel == "Notícias":
             for _, row in df_cat.iterrows():
                 data = row["publicado_em"][:10] if row["publicado_em"] else ""
                 st.markdown(
-                    f'<div style="padding:10px 0; border-bottom:1px solid #e8ddc8;">'
-                    f'<div style="display:flex; justify-content:space-between; align-items:flex-start;">'
-                    f'<a href="{row["url"]}" target="_blank" style="font-size:13px; font-weight:700; color:#3D2B1F; text-decoration:none; flex:1; margin-right:12px;">{row["titulo"]} ↗</a>'
-                    f'<span style="font-size:10px; color:#b0a090; white-space:nowrap;">{data}</span>'
-                    f'</div>'
-                    f'<div style="font-size:12px; color:#7a5c3a; margin-top:4px;">{row["descricao"] or ""}</div>'
-                    f'<div style="font-size:10px; color:#8B9A2E; margin-top:4px; font-weight:700;">{row["fonte"]}</div>'
                     f'</div>',
                     unsafe_allow_html=True
                 )
@@ -1183,13 +1176,7 @@ elif aba_sel == "Correlacoes":
                     cor = VERMELHO; icone = "Publico ACIMA do interno"; msg = "Atencao — cliente insatisfeito nao aparece na pesquisa?"
                 else:
                     cor = "#B8923A"; icone = "Alinhado"; msg = "Percepcao interna e externa consistentes"
-                st.markdown(f'<div style="padding:10px 0; border-bottom:1px solid #e8ddc8;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-size:13px; font-weight:700; color:#3D2B1F;">{row["filial_curta"]}</span>
-                    <span style="font-size:12px; color:{cor}; font-weight:700;">{div:+.1f} pts — {icone}</span>
-                    </div>
-                    <div style="font-size:11px; color:#8B7A5A; margin-top:3px;">GSS: {row["overall_experience"]:.1f}% | Reputacao: {row["score_externo"]:.1f} | {msg}</div>
-                    </div>', unsafe_allow_html=True)
+                st.markdown(f'<div style="padding:10px 0; border-bottom:1px solid #e8ddc8;"><div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:13px; font-weight:700; color:#3D2B1F;">{row["filial_curta"]}</span><span style="font-size:12px; color:{cor}; font-weight:700;">{div:+.1f} pts</span></div><div style="font-size:11px; color:#8B7A5A; margin-top:3px;">GSS: {row["overall_experience"]:.1f}% | Rep: {row["score_externo"]:.1f} | {msg}</div></div>', unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
