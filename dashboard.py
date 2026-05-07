@@ -1067,8 +1067,8 @@ elif aba_sel == "Vendas":
                 marker_color="#B8923A",
                 opacity=0.4,
                 text=df_rank["proj_fmt"],
-                textposition="outside",
-                textfont=dict(family="Nunito", size=13, color="#8B6914"),
+                textposition="inside",
+                textfont=dict(family="Nunito", size=12, color="white"),
             ))
 
         fig_rank.add_trace(go.Bar(
@@ -1085,7 +1085,7 @@ elif aba_sel == "Vendas":
         if is_parcial:
             fig_rank.add_annotation(
                 text=f"Parcial: {dias_decorridos} de {dias_no_mes} dias | Projecao linear",
-                xref="paper", yref="paper", x=0, y=1.12, showarrow=False,
+                xref="paper", yref="paper", x=0.5, y=-0.08, showarrow=False,
                 font=dict(family="Nunito", size=11, color="#B8923A"),
             )
 
@@ -1192,7 +1192,7 @@ elif aba_sel == "Vendas":
             df_dias_ord = [d for d in ordem_dias if d in df_dias_g["dia_norm"].values]
             df_dias_g = df_dias_g.set_index("dia_norm").reindex(df_dias_ord).reset_index()
             if len(df_dias_g) > 0:
-                fig_dias = go.Figure(go.Bar(x=df_dias_g["dia_norm"], y=df_dias_g["pedidos"], marker_color=VERDE, text=df_dias_g["pedidos"], textposition="outside", textfont=dict(family="Nunito", size=12, color=MARROM)))
+                textposition="inside",
                 fig_dias.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), xaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM)), yaxis=dict(showgrid=False, tickfont=dict(family="Nunito", size=11, color=MARROM)), font=dict(family="Nunito"), height=380)
                 st.plotly_chart(fig_dias, use_container_width=True, key="fig_dias_v")
 
