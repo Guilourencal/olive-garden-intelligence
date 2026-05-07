@@ -1092,7 +1092,7 @@ elif aba_sel == "Vendas":
         fig_rank.update_layout(
             barmode="overlay",
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-            margin=dict(t=40,b=10,l=10,r=200),
+            margin=dict(t=40,b=10,l=10,r=250),
             xaxis=dict(showgrid=False, tickfont=dict(family="Nunito", size=11, color=MARROM)),
             yaxis=dict(tickfont=dict(family="Nunito", size=12, color=MARROM)),
             legend=dict(font=dict(family="Nunito", size=11, color=MARROM), orientation="h", yanchor="bottom", y=1.04),
