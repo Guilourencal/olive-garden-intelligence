@@ -535,10 +535,9 @@ if aba_sel == "Reviews":
             with col_sel2:
                 filiais_tags = ["Todas"] + sorted(df_ifood_tags["filial"].str.replace("Olive Garden - ", "", regex=False).unique().tolist())
                 filial_tag_sel = st.selectbox("Filial:", filiais_tags, key="filial_tags")
+            df_tags_f = df_ifood_tags[df_ifood_tags["periodo"] == periodo_tag_sel]
             if filial_tag_sel != "Todas":
                 df_tags_f = df_tags_f[df_tags_f["filial"].str.contains(filial_tag_sel, regex=False)]
-            df_tags_f = df_ifood_tags[df_ifood_tags["periodo"] == periodo_tag_sel]
-
             col_tp, col_tn = st.columns(2)
 
             with col_tp:
