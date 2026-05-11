@@ -38,7 +38,7 @@ print("-" * 40)
 
 coletas_apify = [
     ("Coletando TripAdvisor...", "coletar_tripadvisor.py"),
-    ("Coletando iFood...", "coletar_ifood.py"),
+    # iFood agora via relatorio oficial — ver importar_ifood_reviews.py
 ]
 
 apify_ok = True
