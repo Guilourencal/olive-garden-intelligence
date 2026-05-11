@@ -1400,98 +1400,144 @@ Seja direto como um consultor sênior apresentando para o CEO. Use dados reais, 
             st.rerun()
 
 elif aba_sel == "Correlacoes":
-    st.markdown(
-        '''<div style="font-weight:800; font-size:26px; color:#3D2B1F; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:4px;">Correlacoes & Tendencias</div>
-        <div style="font-size:13px; color:#8B9A2E; letter-spacing:0.1em; margin-bottom:20px;">LEITURAS RAPIDAS E DIRETAS</div>''',
-        unsafe_allow_html=True
-    )
+    import calendar
+    from datetime import datetime
+    st.markdown('''<div style="font-weight:800; font-size:26px; color:#3D2B1F; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:4px;">Correlacoes & Inteligencia</div>
+    <div style="font-size:13px; color:#8B9A2E; letter-spacing:0.1em; margin-bottom:20px;">PADROES, TENDENCIAS, AMEACAS E CAUSALIDADES</div>''', unsafe_allow_html=True)
 
     # Prepara dados base
     df_perf_c = df_perf[df_perf["restaurant"] != "nan"].copy()
-    df_perf_c["filial_curta"] = df_perf_c["restaurant"].str.replace("Olive Garden - ", "")
+    df_perf_c["filial_curta"] = df_perf_c["restaurant"].str.replace("Olive Garden - ", "", regex=False)
     df_perf_c["periodo_curto"] = df_perf_c["periodo"].str.extract(r"(FW\d+ to FW\d+)")
     gss_atual = df_perf_c.sort_values("periodo_curto").groupby("filial_curta").last().reset_index() if len(df_perf_c) > 0 else pd.DataFrame()
     rep_pub = df.groupby("filial").agg(nota_media=("nota", "mean"), pct_pos=("sentimento", lambda x: (x == "Positivo").sum() / len(x) * 100)).reset_index()
     rep_pub["score_externo"] = (((rep_pub["nota_media"] - 1) / 4) * 40 + rep_pub["pct_pos"] * 0.6).clip(0, 100).round(1)
-    rep_pub["filial_curta"] = rep_pub["filial"].str.replace("Olive Garden - ", "")
+    rep_pub["filial_curta"] = rep_pub["filial"].str.replace("Olive Garden - ", "", regex=False)
+    df_v_c = df_ifood_vendas[df_ifood_vendas["logistica"] == "Entrega parceira"].copy()
+    df_v_c["filial_curta"] = df_v_c["filial"].str.replace("Olive Garden - ", "", regex=False)
 
-    # 1. Ranking de Saude por Filial
+    # BLOCO 1 — Radar de Saude da Rede
     with st.container(border=True):
-        st.markdown('<div class="section-title">Ranking de Saude por Filial</div>', unsafe_allow_html=True)
-        st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Indice combinado de GSS interno + Reputacao publica. Identifica qual filial precisa de atencao agora.</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Radar de Saude da Rede</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Semaforo por filial cruzando GSS interno + Reputacao publica + Sentimento iFood. Identifica quem esta bem, em risco ou em queda.</div>', unsafe_allow_html=True)
         if len(gss_atual) > 0:
-            saude = rep_pub.merge(gss_atual[["filial_curta", "overall_experience"]], on="filial_curta", how="left")
-            saude["indice_saude"] = (saude["score_externo"] * 0.5 + saude["overall_experience"].fillna(80) * 0.5).round(1)
+            saude = rep_pub.merge(gss_atual[["filial_curta", "overall_experience", "service", "taste", "speed_of_service"]], on="filial_curta", how="left")
+            sent_ifood = df[df["plataforma"] == "iFood"].groupby("filial").agg(pct_pos_if=("sentimento", lambda x: (x=="Positivo").sum()/len(x)*100)).reset_index()
+            sent_ifood["filial_curta"] = sent_ifood["filial"].str.replace("Olive Garden - ", "", regex=False)
+            saude = saude.merge(sent_ifood[["filial_curta","pct_pos_if"]], on="filial_curta", how="left")
+            saude["indice_saude"] = (saude["score_externo"].fillna(70) * 0.4 + saude["overall_experience"].fillna(80) * 0.4 + saude["pct_pos_if"].fillna(70) * 0.2).round(1)
             saude = saude.sort_values("indice_saude", ascending=False)
-            for _, row in saude.iterrows():
+            cols_radar = st.columns(len(saude))
+            for idx, (_, row) in enumerate(saude.iterrows()):
                 v = row["indice_saude"]
-                cor = VERDE if v >= 80 else "#B8923A" if v >= 70 else VERMELHO
+                cor = "#2e6b3e" if v >= 80 else "#B8923A" if v >= 70 else VERMELHO
                 status = "SAUDAVEL" if v >= 80 else "ATENCAO" if v >= 70 else "CRITICO"
-                pct = int((v / 100) * 100)
-                st.markdown(f'''<div style="margin-bottom:14px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                    <span style="font-size:13px; font-weight:700; color:#3D2B1F;">{row["filial_curta"]}</span>
-                    <div style="display:flex; align-items:center; gap:12px;">
-                    <span style="font-size:11px; font-weight:700; color:{cor}; background:rgba(0,0,0,0.05); padding:2px 10px; border-radius:20px;">{status}</span>
-                    <span style="font-size:13px; font-weight:700; color:{cor};">{v:.1f}</span>
-                    </div></div>
-                    <div style="background:#e8ddc8; border-radius:4px; height:8px;">
-                    <div style="background:{cor}; width:{pct}%; height:8px; border-radius:4px;"></div>
-                    </div></div>''', unsafe_allow_html=True)
+                icone = "●" if v >= 80 else "▲" if v >= 70 else "■"
+                with cols_radar[idx]:
+                    st.markdown(f'''<div style="background:#3D2B1F; border-radius:10px; padding:16px; text-align:center; border-top:4px solid {cor};">
+                        <div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:8px;">{row["filial_curta"].upper()}</div>
+                        <div style="font-size:28px; color:{cor}; margin-bottom:4px;">{icone}</div>
+                        <div style="font-size:11px; font-weight:700; color:{cor}; margin-bottom:12px;">{status}</div>
+                        <div style="font-size:10px; color:#D8CFC0; text-align:left;">
+                        <div style="margin-bottom:4px;">GSS: <span style="color:#F5F0E8; font-weight:700;">{row["overall_experience"]:.0f}%</span></div>
+                        <div style="margin-bottom:4px;">Reputacao: <span style="color:#F5F0E8; font-weight:700;">{row["score_externo"]:.0f}</span></div>
+                        <div>iFood: <span style="color:#F5F0E8; font-weight:700;">{row["pct_pos_if"]:.0f}%</span></div>
+                        </div></div>''', unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # 2. Divergencias GSS vs Reputacao
+    # BLOCO 2 — Tendencias e Alertas GSS
+    with st.container(border=True):
+        st.markdown('<div class="section-title">Tendencias GSS — Alertas por Dimensao</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Evolucao de cada dimensao ao longo dos periodos. Dimensoes em queda consistente requerem acao imediata.</div>', unsafe_allow_html=True)
+        if len(df_perf_c["periodo_curto"].dropna().unique()) > 1:
+            metricas_t = {"overall_experience": "Exp. Geral", "value": "Valor", "service": "Atendimento", "taste": "Sabor", "speed_of_service": "Velocidade", "clean": "Limpeza", "soup_salad_refill": "Refil Sopa", "breadstick_refill": "Refil Bread"}
+            trend_df = df_perf_c.groupby("periodo_curto")[list(metricas_t.keys())].mean().reset_index().sort_values("periodo_curto")
+            alertas = []
+            for col, lbl in metricas_t.items():
+                if len(trend_df) >= 2:
+                    delta = trend_df[col].iloc[-1] - trend_df[col].iloc[0]
+                    delta_recente = trend_df[col].iloc[-1] - trend_df[col].iloc[-2]
+                    if delta < -2 or delta_recente < -1.5:
+                        alertas.append({"dim": lbl, "delta": delta, "delta_rec": delta_recente, "tipo": "ALERTA"})
+                    elif delta > 2:
+                        alertas.append({"dim": lbl, "delta": delta, "delta_rec": delta_recente, "tipo": "POSITIVO"})
+                    else:
+                        alertas.append({"dim": lbl, "delta": delta, "delta_rec": delta_recente, "tipo": "ESTAVEL"})
+            col_a1, col_a2 = st.columns([1, 2])
+            with col_a1:
+                for a in sorted(alertas, key=lambda x: x["delta"]):
+                    cor_a = VERMELHO if a["tipo"] == "ALERTA" else "#2e6b3e" if a["tipo"] == "POSITIVO" else "#B8923A"
+                    icone_a = "▼" if a["tipo"] == "ALERTA" else "▲" if a["tipo"] == "POSITIVO" else "—"
+                    st.markdown(f'<div style="padding:8px 0; border-bottom:1px solid #e8ddc8; display:flex; justify-content:space-between; align-items:center;"><span style="font-size:12px; color:#3D2B1F; font-weight:600;">{a["dim"]}</span><span style="font-size:12px; color:{cor_a}; font-weight:700;">{icone_a} {a["delta"]:+.1f}%</span></div>', unsafe_allow_html=True)
+            with col_a2:
+                fig_trend = go.Figure()
+                for col, lbl in metricas_t.items():
+                    delta = trend_df[col].iloc[-1] - trend_df[col].iloc[0] if len(trend_df) > 1 else 0
+                    cor_line = VERMELHO if delta < -2 else "#2e6b3e" if delta > 2 else "#B8923A"
+                    fig_trend.add_trace(go.Scatter(x=trend_df["periodo_curto"], y=trend_df[col].round(1), mode="lines+markers", name=f"{lbl} ({delta:+.1f}%)", line=dict(color=cor_line, width=2), marker=dict(size=6)))
+                fig_trend.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), xaxis=dict(tickfont=dict(family="Nunito", size=10, color=MARROM)), yaxis=dict(range=[60,105], showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=10, color=MARROM)), legend=dict(font=dict(family="Nunito", size=9, color=MARROM), orientation="h", yanchor="bottom", y=1.02), font=dict(family="Nunito"), height=320)
+                st.plotly_chart(fig_trend, use_container_width=True, key="fig_trend_c")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # BLOCO 3 — Padroes de Causalidade
+    with st.container(border=True):
+        st.markdown('<div class="section-title">Padroes de Causalidade</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Correlacoes entre dimensoes internas e percepcao publica. Identifica o que mais impacta a reputacao.</div>', unsafe_allow_html=True)
+        if len(gss_atual) > 0 and len(rep_pub) > 0:
+            caus_df = rep_pub.merge(gss_atual[["filial_curta","overall_experience","service","taste","speed_of_service","value"]], on="filial_curta", how="left").dropna()
+            col_c1, col_c2, col_c3 = st.columns(3)
+            dims = [("service","Atendimento vs Reputacao","Atendimento GSS"),("taste","Sabor vs Reputacao","Sabor GSS"),("speed_of_service","Velocidade vs Reputacao","Velocidade GSS")]
+            for col_c, (dim, titulo, xlabel) in zip([col_c1,col_c2,col_c3], dims):
+                with col_c:
+                    fig_c = go.Figure(go.Scatter(x=caus_df[dim], y=caus_df["score_externo"], mode="markers+text", text=caus_df["filial_curta"], textposition="top center", textfont=dict(family="Nunito", size=9, color=MARROM), marker=dict(size=12, color=VERDE, opacity=0.8)))
+                    fig_c.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=30,b=10,l=10,r=10), title=dict(text=titulo, font=dict(family="Nunito", size=11, color=MARROM), x=0.5), xaxis=dict(title=xlabel, tickfont=dict(family="Nunito", size=9, color=MARROM), gridcolor="#E8DCC8"), yaxis=dict(title="Reputacao Publica", tickfont=dict(family="Nunito", size=9, color=MARROM), gridcolor="#E8DCC8"), font=dict(family="Nunito"), height=280)
+                    st.plotly_chart(fig_c, use_container_width=True, key=f"fig_caus_{dim}")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # BLOCO 4 — Sazonalidade iFood
+    with st.container(border=True):
+        st.markdown('<div class="section-title">Sazonalidade iFood</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Padroes de demanda por dia da semana e horario. Identifica concentracao operacional e oportunidades.</div>', unsafe_allow_html=True)
+        col_s1, col_s2 = st.columns(2)
+        with col_s1:
+            ordem_dias = ["Segunda","Terca","Quarta","Quinta","Sexta","Sabado","Domingo"]
+            df_dias_c = df_ifood_dias.copy()
+            df_dias_c["dia_norm"] = df_dias_c["dia_semana"].str.normalize("NFKD").str.encode("ascii","ignore").str.decode("ascii").str.strip()
+            df_dias_agg = df_dias_c.groupby("dia_norm")["pedidos"].sum().reset_index()
+            df_dias_agg = df_dias_agg.set_index("dia_norm").reindex([d for d in ordem_dias if d in df_dias_agg["dia_norm"].values]).reset_index()
+            fig_dias_c = go.Figure(go.Bar(x=df_dias_agg["dia_norm"], y=df_dias_agg["pedidos"], marker_color=[VERDE if v == df_dias_agg["pedidos"].max() else "#B8923A" if v >= df_dias_agg["pedidos"].quantile(0.7) else "#D8CFC0" for v in df_dias_agg["pedidos"]], text=df_dias_agg["pedidos"], textposition="outside", textfont=dict(family="Nunito", size=11, color=MARROM)))
+            fig_dias_c.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=30,b=10,l=10,r=10), title=dict(text="Pedidos por Dia da Semana (acumulado)", font=dict(family="Nunito", size=11, color=MARROM), x=0.5), xaxis=dict(tickfont=dict(family="Nunito", size=10, color=MARROM)), yaxis=dict(showgrid=False), font=dict(family="Nunito"), height=280)
+            st.plotly_chart(fig_dias_c, use_container_width=True, key="fig_dias_c")
+        with col_s2:
+            df_hor_c = df_ifood_horarios.groupby(["periodo_semana","horario"])["pedidos"].sum().reset_index()
+            if len(df_hor_c) > 0:
+                df_hor_piv_c = df_hor_c.pivot(index="horario", columns="periodo_semana", values="pedidos").fillna(0)
+                fig_hor_c = go.Figure(data=go.Heatmap(z=df_hor_piv_c.values, x=df_hor_piv_c.columns.tolist(), y=df_hor_piv_c.index.tolist(), colorscale=[[0,"#F5F0E8"],[0.5,"#B8923A"],[1,VERDE]], texttemplate="%{z:.0f}", textfont=dict(family="Nunito", size=10)))
+                fig_hor_c.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=30,b=10,l=10,r=10), title=dict(text="Horario de Pico Acumulado", font=dict(family="Nunito", size=11, color=MARROM), x=0.5), xaxis=dict(tickfont=dict(family="Nunito", size=10, color=MARROM)), yaxis=dict(tickfont=dict(family="Nunito", size=10, color=MARROM)), font=dict(family="Nunito"), height=280, coloraxis_showscale=False)
+                st.plotly_chart(fig_hor_c, use_container_width=True, key="fig_hor_c")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # BLOCO 5 — Divergencias Internas vs Externas
     with st.container(border=True):
         st.markdown('<div class="section-title">Divergencias — Percepcao Interna vs Externa</div>', unsafe_allow_html=True)
-        st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Onde o cliente esta saindo diferente do que a pesquisa interna indica. Divergencia alta = risco de reputacao.</div>', unsafe_allow_html=True)
-        if len(gss_atual) > 0:
-            div_df = rep_pub.merge(gss_atual[["filial_curta", "overall_experience"]], on="filial_curta", how="left").dropna()
+        st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Onde a experiencia interna e a reputacao publica divergem. Sinal de alerta estrategico — o cliente esta saindo diferente do que a pesquisa indica.</div>', unsafe_allow_html=True)
+        if len(gss_atual) > 0 and len(rep_pub) > 0:
+            div_df = rep_pub.merge(gss_atual[["filial_curta","overall_experience"]], on="filial_curta", how="left").dropna()
             div_df["divergencia"] = (div_df["overall_experience"] - div_df["score_externo"]).round(1)
             div_df = div_df.sort_values("divergencia", ascending=False)
             for _, row in div_df.iterrows():
                 div = row["divergencia"]
                 if div > 10:
-                    cor = "#2e6b3e"; icone = "Interno ACIMA do publico"; msg = "Oportunidade de amplificar reputacao"
+                    cor = "#2e6b3e"; icone = "▲ Interno ACIMA do publico"; msg = "Oportunidade: amplificar reputacao publica"
                 elif div < -10:
-                    cor = VERMELHO; icone = "Publico ACIMA do interno"; msg = "Atencao — cliente insatisfeito nao aparece na pesquisa?"
+                    cor = VERMELHO; icone = "▼ Publico ACIMA do interno"; msg = "Alerta: cliente insatisfeito nao aparece na pesquisa?"
                 else:
-                    cor = "#B8923A"; icone = "Alinhado"; msg = "Percepcao interna e externa consistentes"
-                st.markdown(f'<div style="padding:10px 0; border-bottom:1px solid #e8ddc8;"><div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:13px; font-weight:700; color:#3D2B1F;">{row["filial_curta"]}</span><span style="font-size:12px; color:{cor}; font-weight:700;">{div:+.1f} pts</span></div><div style="font-size:11px; color:#8B7A5A; margin-top:3px;">GSS: {row["overall_experience"]:.1f}% | Rep: {row["score_externo"]:.1f} | {msg}</div></div>', unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # 3. Evolucao do Sentimento Publico
-    with st.container(border=True):
-        st.markdown('<div class="section-title">Sentimento Publico por Plataforma</div>', unsafe_allow_html=True)
-        st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Distribuicao do sentimento em cada plataforma. Identifica onde a percepcao e mais critica.</div>', unsafe_allow_html=True)
-        sent_plat = df.groupby(["plataforma", "sentimento"]).size().reset_index(name="total")
-        sent_pct = sent_plat.copy()
-        sent_pct["pct"] = sent_pct.groupby("plataforma")["total"].transform(lambda x: x / x.sum() * 100).round(1)
-        fig_sent = go.Figure()
-        cores_sent = {"Positivo": VERDE, "Neutro": "#B8923A", "Negativo": VERMELHO}
-        for sent in ["Positivo", "Neutro", "Negativo"]:
-            df_s = sent_pct[sent_pct["sentimento"] == sent]
-            fig_sent.add_trace(go.Bar(
-                name=sent,
-                x=df_s["plataforma"],
-                y=df_s["pct"],
-                marker_color=cores_sent[sent],
-                text=df_s["pct"].apply(lambda x: f"{x:.0f}%"),
-                textposition="inside",
-                textfont=dict(family="Nunito", size=12, color="white"),
-            ))
-        fig_sent.update_layout(
-            barmode="stack",
-            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-            margin=dict(t=10, b=10, l=10, r=10),
-            legend=dict(font=dict(family="Nunito", size=11, color=MARROM), orientation="h", yanchor="bottom", y=1.02),
-            xaxis=dict(tickfont=dict(family="Nunito", size=12, color=MARROM)),
-            yaxis=dict(title="% do total", showgrid=False, tickfont=dict(family="Nunito", size=11, color=MARROM)),
-            font=dict(family="Nunito"),
-            height=320,
-        )
-        st.plotly_chart(fig_sent, use_container_width=True, key="fig_sent_plat")
+                    cor = "#B8923A"; icone = "— Alinhado"; msg = "Percepcao interna e externa consistentes"
+                st.markdown(f'<div style="padding:10px 0; border-bottom:1px solid #e8ddc8;"><div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:13px; font-weight:700; color:#3D2B1F;">{row["filial_curta"]}</span><span style="font-size:12px; color:{cor}; font-weight:700;">{div:+.1f} pts — {icone}</span></div><div style="font-size:11px; color:#8B7A5A; margin-top:3px;">GSS: {row["overall_experience"]:.1f}% | Reputacao: {row["score_externo"]:.1f} | {msg}</div></div>', unsafe_allow_html=True)
 
 st.markdown(
     '<div style="text-align:center; font-size:10px; color:#B8A898; letter-spacing:0.1em; padding-top:20px;">'
