@@ -529,7 +529,14 @@ if aba_sel == "Reviews":
             st.markdown('<div class="section-title">Qualidade iFood — Analise por Tags</div>', unsafe_allow_html=True)
             st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Percentual de clientes que avaliaram positivamente cada atributo. Baseado nas tags do relatorio oficial iFood.</div>', unsafe_allow_html=True)
             periodos_tags = sorted(df_ifood_tags["periodo"].unique())
-            periodo_tag_sel = st.selectbox("Periodo:", periodos_tags, index=len(periodos_tags)-1, key="periodo_tags")
+            col_sel1, col_sel2 = st.columns(2)
+            with col_sel1:
+                periodo_tag_sel = st.selectbox("Periodo:", periodos_tags, index=len(periodos_tags)-1, key="periodo_tags")
+            with col_sel2:
+                filiais_tags = ["Todas"] + sorted(df_ifood_tags["filial"].str.replace("Olive Garden - ", "", regex=False).unique().tolist())
+                filial_tag_sel = st.selectbox("Filial:", filiais_tags, key="filial_tags")
+            if filial_tag_sel != "Todas":
+                df_tags_f = df_tags_f[df_tags_f["filial"].str.contains(filial_tag_sel, regex=False)]
             df_tags_f = df_ifood_tags[df_ifood_tags["periodo"] == periodo_tag_sel]
 
             col_tp, col_tn = st.columns(2)
