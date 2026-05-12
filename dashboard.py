@@ -1172,11 +1172,20 @@ elif aba_sel == "Vendas":
                 # Ultima semana fechada
                 hoje = df_dow_base["data"].max()
                 semanas = df_dow_base["semana"].dropna().unique()
-                ultima_sem = sorted(semanas)[-1] if len(semanas) > 0 else None
-                df_ult = df_dow_base[df_dow_base["semana"] == ultima_sem] if ultima_sem else pd.DataFrame()
+                # Ultima semana fechada (seg a dom)
+                from datetime import timedelta
+                df_dow_base["data_dt"] = pd.to_datetime(df_dow_base["data"])
+                hoje_dt = df_dow_base["data_dt"].max()
+                # Encontrar o ultimo domingo fechado
+                dias_desde_dom = (hoje_dt.weekday() + 1) % 7
+                ultimo_dom = hoje_dt - timedelta(days=dias_desde_dom)
+                ultima_seg = ultimo_dom - timedelta(days=6)
+                df_ult = df_dow_base[(df_dow_base["data_dt"] >= ultima_seg) & (df_dow_base["data_dt"] <= ultimo_dom)]
                 # Mesma semana ano anterior
-                sem_ano1 = sorted(semanas)[-53] if len(semanas) > 52 else (sorted(semanas)[0] if len(semanas) > 0 else None)
-                df_ano1 = df_dow_base[df_dow_base["semana"] == sem_ano1] if sem_ano1 else pd.DataFrame()
+                seg_ano1 = ultima_seg - timedelta(days=364)
+                dom_ano1 = ultimo_dom - timedelta(days=364)
+                df_ano1 = df_dow_base[(df_dow_base["data_dt"] >= seg_ano1) & (df_dow_base["data_dt"] <= dom_ano1)]
+                sem_label = f"{ultima_seg.strftime('%d/%m')} - {ultimo_dom.strftime('%d/%m/%Y')}"
                 if len(df_ult) > 0:
                     g_ult = df_ult.groupby("dia_norm")["venda_salao"].sum().reset_index()
                     g_ult = g_ult.set_index("dia_norm").reindex([d for d in ordem_dias if d in g_ult["dia_norm"].values]).reset_index()
@@ -1186,8 +1195,8 @@ elif aba_sel == "Vendas":
                         g_ano1 = df_ano1.groupby("dia_norm")["venda_salao"].sum().reset_index()
                         g_ano1 = g_ano1.set_index("dia_norm").reindex([d for d in ordem_dias if d in g_ano1["dia_norm"].values]).reset_index()
                         g_ano1["label"] = g_ano1["dia_norm"].map(dict(zip(ordem_dias, labels_dias)))
-                        fig_dow.add_trace(go.Bar(x=g_ano1["label"], y=g_ano1["venda_salao"], name="Ano Anterior", marker_color="#8B7A5A", opacity=0.6, text=g_ano1["venda_salao"].apply(lambda v: f"R$ {v/1000:.0f}k"), textposition="outside", textfont=dict(family="Nunito", size=10, color="#8B7A5A")))
-                    fig_dow.add_trace(go.Bar(x=g_ult["label"], y=g_ult["venda_salao"], name=f"Semana atual", marker_color=VERDE, text=g_ult["venda_salao"].apply(lambda v: f"R$ {v/1000:.0f}k"), textposition="outside", textfont=dict(family="Nunito", size=10, color=MARROM)))
+                        fig_dow.add_trace(go.Bar(x=g_ano1["label"], y=g_ano1["venda_salao"], name="Ano Anterior", marker_color="#8B7A5A", opacity=0.6, text=g_ano1["venda_salao"].apply(lambda v: f"R$ {v/1000:.0f}k"), textposition="auto", textfont=dict(family="Nunito", size=9, color="white")))
+                    fig_dow.add_trace(go.Bar(x=g_ult["label"], y=g_ult["venda_salao"], name=f"Semana atual", marker_color=VERDE, text=g_ult["venda_salao"].apply(lambda v: f"R$ {v/1000:.0f}k"), textposition="auto", textfont=dict(family="Nunito", size=9, color="white")))
                     sem_label = str(ultima_sem)[:20] if ultima_sem else ""
                     fig_dow.update_layout(barmode="group", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=30,b=10,l=10,r=10), title=dict(text=f"Semana: {sem_label}", font=dict(family="Nunito", size=10, color="#8B7A5A"), x=0), xaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM)), yaxis=dict(showgrid=False), legend=dict(font=dict(family="Nunito", size=10, color=MARROM), orientation="h", yanchor="bottom", y=1.02), font=dict(family="Nunito"), height=280)
                     st.plotly_chart(fig_dow, use_container_width=True, key="fig_dow_vd")
