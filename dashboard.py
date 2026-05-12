@@ -1173,7 +1173,7 @@ elif aba_sel == "Vendas":
                 df_dow_g = df_dow_g.set_index("dia_norm").reindex([d for d in ordem_dias if d in df_dow_g["dia_norm"].values]).reset_index()
                 df_dow_g["label"] = df_dow_g["dia_norm"].map(dict(zip(ordem_dias, labels_dias)))
                 if len(df_dow_g) > 0:
-                    fig_dow = go.Figure(go.Bar(x=df_dow_g["label"], y=df_dow_g["venda_salao"], marker_color=[VERDE if v == df_dow_g["venda_salao"].max() else "#B8923A" if v >= df_dow_g["venda_salao"].quantile(0.7) else "#D8CFC0" for v in df_dow_g["venda_salao"]], text=df_dow_g["venda_salao"].apply(lambda v: f"Rk"), textposition="outside", textfont=dict(family="Nunito", size=11, color=MARROM)))
+                    fig_dow = go.Figure(go.Bar(x=df_dow_g["label"], y=df_dow_g["venda_salao"], marker_color=[VERDE if v == df_dow_g["venda_salao"].max() else "#B8923A" if v >= df_dow_g["venda_salao"].quantile(0.7) else "#D8CFC0" for v in df_dow_g["venda_salao"]], text=df_dow_g["venda_salao"].apply(lambda v: f"R$ {v/1000:.0f}k"), textposition="outside", textfont=dict(family="Nunito", size=11, color=MARROM)))
                     fig_dow.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), xaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM)), yaxis=dict(showgrid=False), font=dict(family="Nunito"), height=280)
                     st.plotly_chart(fig_dow, use_container_width=True, key="fig_dow_vd")
 
