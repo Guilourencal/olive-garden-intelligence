@@ -1075,99 +1075,138 @@ elif aba_sel == "Vendas":
         if filial_vd_sel != "Todas":
             df_vd_f = df_vd_f[df_vd_f["filial_curta"] == filial_vd_sel]
 
+        # KPIs
+        vt = df_vd_f["venda_salao"].sum()
+        mt = df_vd_f["meta_venda"].sum()
+        va1 = df_vd_f["venda_ano1"].sum()
+        gc = df_vd_f["gc_salao"].sum()
+        tk = vt / gc if gc > 0 else 0
+        pct_meta = (vt/mt - 1)*100 if mt > 0 else 0
+        pct_ano1 = (vt/va1 - 1)*100 if va1 > 0 else 0
+        vt_fmt = f"R$ {vt:,.0f}".replace(",",".")
+        mt_fmt = f"R$ {mt:,.0f}".replace(",",".")
+        va1_fmt = f"R$ {va1:,.0f}".replace(",",".")
+        tk_fmt = f"R$ {tk:.0f}"
+        gc_fmt = f"{int(gc):,}".replace(",",".")
+
         # Cards executivos
         with st.container(border=True):
-            st.markdown('<div class="section-title">Visao Executiva</div>', unsafe_allow_html=True)
-            vt = df_vd_f["venda_total"].sum()
-            mt = df_vd_f["meta_venda"].sum()
-            va1 = df_vd_f["venda_ano1"].sum()
-            gc = df_vd_f["gc_salao"].sum()
-            tk = vt / gc if gc > 0 else 0
-            pct_meta = (vt/mt - 1)*100 if mt > 0 else 0
-            pct_ano1 = (vt/va1 - 1)*100 if va1 > 0 else 0
-            vt_fmt = f"R$ {vt:,.0f}".replace(",",".")
-            mt_fmt = f"R$ {mt:,.0f}".replace(",",".")
-            va1_fmt = f"R$ {va1:,.0f}".replace(",",".")
-            tk_fmt = f"R$ {tk:.0f}"
-            cor_meta = "#2e6b3e" if pct_meta >= 0 else VERMELHO
-            cor_ano1 = "#2e6b3e" if pct_ano1 >= 0 else VERMELHO
+            st.markdown('<div class="section-title">Visao Executiva — Salao</div>', unsafe_allow_html=True)
             cols_c = st.columns(3)
-            gc_fmt = f"{int(gc):,}".replace(",", ".")
-            # Card 1 - Venda Total vs Budget
+            seta_meta = "▲" if pct_meta >= 0 else "▼"
+            cor_meta2 = "#2e6b3e" if pct_meta >= 0 else "#c0392b"
+            seta_ano1 = "▲" if pct_ano1 >= 0 else "▼"
+            cor_ano12 = "#2e6b3e" if pct_ano1 >= 0 else "#c0392b"
             with cols_c[0]:
-                seta_meta = "▲" if pct_meta >= 0 else "▼"
-                cor_meta2 = "#2e6b3e" if pct_meta >= 0 else "#c0392b"
                 st.markdown(f'''<div style="background:#3D2B1F; border-radius:10px; padding:20px; color:#F5F0E8;">
-                    <div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:12px;">VENDA TOTAL</div>
+                    <div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:12px;">VENDA SALAO</div>
                     <div style="font-size:28px; font-weight:800; margin-bottom:8px;">{vt_fmt}</div>
                     <div style="display:flex; justify-content:space-between; align-items:center; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1);">
                     <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:2px;">BUDGET</div>
                     <div style="font-size:12px; color:#D8CFC0;">{mt_fmt}</div></div>
                     <div style="font-size:18px; font-weight:700; color:{cor_meta2};">{seta_meta} {pct_meta:+.1f}%</div>
                     </div></div>''', unsafe_allow_html=True)
-            # Card 2 - Venda vs Ano Anterior
             with cols_c[1]:
-                seta_ano1 = "▲" if pct_ano1 >= 0 else "▼"
-                cor_ano12 = "#2e6b3e" if pct_ano1 >= 0 else "#c0392b"
                 st.markdown(f'''<div style="background:#3D2B1F; border-radius:10px; padding:20px; color:#F5F0E8;">
-                    <div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:12px;">VENDA TOTAL</div>
+                    <div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:12px;">VENDA SALAO</div>
                     <div style="font-size:28px; font-weight:800; margin-bottom:8px;">{vt_fmt}</div>
                     <div style="display:flex; justify-content:space-between; align-items:center; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1);">
                     <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:2px;">ANO ANTERIOR</div>
                     <div style="font-size:12px; color:#D8CFC0;">{va1_fmt}</div></div>
                     <div style="font-size:18px; font-weight:700; color:{cor_ano12};">{seta_ano1} {pct_ano1:+.1f}%</div>
                     </div></div>''', unsafe_allow_html=True)
-            # Card 3 - Guest Count e Ticket
             with cols_c[2]:
+                hdc_medio = df_vd_f["venda_por_hdc"].mean()
+                hdc_fmt = f"R$ {hdc_medio:.0f}" if pd.notna(hdc_medio) else "-"
                 st.markdown(f'''<div style="background:#3D2B1F; border-radius:10px; padding:20px; color:#F5F0E8;">
-                    <div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:12px;">OPERACAO</div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:8px;">
+                    <div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:12px;">OPERACAO SALAO</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
                     <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">GUEST COUNT</div>
                     <div style="font-size:22px; font-weight:800;">{gc_fmt}</div></div>
                     <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">TICKET MEDIO</div>
                     <div style="font-size:22px; font-weight:800; color:#8B9A2E;">{tk_fmt}</div></div>
+                    <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">VENDA/HDC</div>
+                    <div style="font-size:18px; font-weight:700; color:#8B9A2E;">{hdc_fmt}</div></div>
                     </div></div>''', unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # Evolucao diaria
+        # Evolucao acumulada
         with st.container(border=True):
-            st.markdown('<div class="section-title">Evolucao de Venda</div>', unsafe_allow_html=True)
-            df_evo = df_vd_f.groupby("data").agg(venda_total=("venda_total","sum"), meta_venda=("meta_venda","sum"), venda_ano1=("venda_ano1","sum")).reset_index().sort_values("data")
+            st.markdown('<div class="section-title">Evolucao Acumulada — Salao</div>', unsafe_allow_html=True)
+            df_evo = df_vd_f.groupby("data").agg(venda_salao=("venda_salao","sum"), meta_venda=("meta_venda","sum"), venda_ano1=("venda_ano1","sum")).reset_index().sort_values("data")
             fig_evo = go.Figure()
-            fig_evo.add_trace(go.Scatter(x=df_evo["data"], y=df_evo["venda_total"].cumsum(), mode="lines", name="Realizado", line=dict(color=VERDE, width=3)))
+            fig_evo.add_trace(go.Scatter(x=df_evo["data"], y=df_evo["venda_salao"].cumsum(), mode="lines", name="Realizado", line=dict(color=VERDE, width=3)))
             fig_evo.add_trace(go.Scatter(x=df_evo["data"], y=df_evo["meta_venda"].cumsum(), mode="lines", name="Budget", line=dict(color="#B8923A", width=2, dash="dot")))
             if df_evo["venda_ano1"].sum() > 0:
                 fig_evo.add_trace(go.Scatter(x=df_evo["data"], y=df_evo["venda_ano1"].cumsum(), mode="lines", name="Ano Anterior", line=dict(color="#8B7A5A", width=1.5, dash="dash")))
-            fig_evo.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), xaxis=dict(tickfont=dict(family="Nunito", size=10, color=MARROM)), yaxis=dict(showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=10, color=MARROM)), legend=dict(font=dict(family="Nunito", size=11, color=MARROM), orientation="h", yanchor="bottom", y=1.02), font=dict(family="Nunito"), height=320)
+            fig_evo.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), xaxis=dict(tickfont=dict(family="Nunito", size=10, color=MARROM)), yaxis=dict(showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=10, color=MARROM)), legend=dict(font=dict(family="Nunito", size=11, color=MARROM), orientation="h", yanchor="bottom", y=1.02), font=dict(family="Nunito"), height=300)
             st.plotly_chart(fig_evo, use_container_width=True, key="fig_evo_vd")
 
         st.markdown("<br>", unsafe_allow_html=True)
 
         col_r1, col_r2 = st.columns(2)
-        # Ranking por filial
+        # Performance vs Budget por filial
         with col_r1:
             with st.container(border=True):
-                st.markdown('<div class="section-title">Ranking por Filial</div>', unsafe_allow_html=True)
-                df_rank_vd = df_vd_f.groupby("filial_curta").agg(venda_total=("venda_total","sum"), meta_venda=("meta_venda","sum")).reset_index()
-                df_rank_vd["pct_meta"] = ((df_rank_vd["venda_total"]/df_rank_vd["meta_venda"]-1)*100).round(1)
-                df_rank_vd = df_rank_vd.sort_values("venda_total", ascending=True)
-                df_rank_vd["vt_fmt"] = df_rank_vd["venda_total"].apply(lambda v: f"R$ {v:,.0f}".replace(",","."))
-                fig_rank_vd = go.Figure(go.Bar(y=df_rank_vd["filial_curta"], x=df_rank_vd["venda_total"], orientation="h", marker_color=[VERDE if v>=0 else VERMELHO for v in df_rank_vd["pct_meta"]], text=df_rank_vd["vt_fmt"], textposition="inside", textfont=dict(family="Nunito", size=11, color="white")))
-                fig_rank_vd.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), xaxis=dict(showgrid=False), yaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM)), font=dict(family="Nunito"), height=280)
-                st.plotly_chart(fig_rank_vd, use_container_width=True, key="fig_rank_vd2")
+                st.markdown('<div class="section-title">Performance vs Budget por Filial</div>', unsafe_allow_html=True)
+                df_rank_vd = df_vd_f.groupby("filial_curta").agg(venda_salao=("venda_salao","sum"), meta_venda=("meta_venda","sum")).reset_index()
+                df_rank_vd["pct_meta"] = ((df_rank_vd["venda_salao"]/df_rank_vd["meta_venda"]-1)*100).round(1)
+                df_rank_vd = df_rank_vd.sort_values("pct_meta", ascending=True)
+                for _, row in df_rank_vd.iterrows():
+                    cor_b = "#2e6b3e" if row["pct_meta"] >= 0 else "#c0392b"
+                    seta_b = "▲" if row["pct_meta"] >= 0 else "▼"
+                    vd_fmt = f"R$ {row['venda_salao']:,.0f}".replace(",",".")
+                    st.markdown(f'<div style="padding:8px 0; border-bottom:1px solid #e8ddc8; display:flex; justify-content:space-between; align-items:center;"><span style="font-size:12px; font-weight:700; color:#3D2B1F;">{row["filial_curta"]}</span><div style="text-align:right;"><div style="font-size:12px; color:#3D2B1F;">{vd_fmt}</div><div style="font-size:12px; color:{cor_b}; font-weight:700;">{seta_b} {row["pct_meta"]:+.1f}% vs Budget</div></div></div>', unsafe_allow_html=True)
 
-        # Mix de canal
+        # Sazonalidade por dia da semana
         with col_r2:
             with st.container(border=True):
-                st.markdown('<div class="section-title">Mix de Canal</div>', unsafe_allow_html=True)
-                pct_salao = df_vd_f["pct_salao"].mean()*100 if df_vd_f["pct_salao"].notna().any() else 0
-                pct_dlv = df_vd_f["pct_dlv"].mean()*100 if df_vd_f["pct_dlv"].notna().any() else 0
-                pct_togo = df_vd_f["pct_togo"].mean()*100 if df_vd_f["pct_togo"].notna().any() else 0
-                fig_mix = go.Figure(go.Pie(labels=["Salao","Delivery","ToGo"], values=[pct_salao, pct_dlv, pct_togo], hole=0.5, textinfo="label+percent", textfont=dict(family="Nunito", size=12), marker=dict(colors=[VERDE,"#B8923A","#3D7A5C"])))
-                fig_mix.update_layout(paper_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), legend=dict(font=dict(family="Nunito", size=11, color=MARROM)), font=dict(family="Nunito"), height=280)
-                st.plotly_chart(fig_mix, use_container_width=True, key="fig_mix_vd")
+                st.markdown('<div class="section-title">Media de Venda por Dia da Semana</div>', unsafe_allow_html=True)
+                ordem_dias = ["seg","ter","qua","qui","sex","sab","dom"]
+                labels_dias = ["Seg","Ter","Qua","Qui","Sex","Sab","Dom"]
+                df_dow = df_vd[df_vd["ano"] == ano_sel].copy()
+                if filial_vd_sel != "Todas":
+                    df_dow = df_dow[df_dow["filial_curta"] == filial_vd_sel]
+                df_dow["dia_norm"] = df_dow["dia_semana"].str[:3].str.lower()
+                df_dow_g = df_dow.groupby("dia_norm")["venda_salao"].mean().reset_index()
+                df_dow_g = df_dow_g.set_index("dia_norm").reindex([d for d in ordem_dias if d in df_dow_g["dia_norm"].values]).reset_index()
+                df_dow_g["label"] = df_dow_g["dia_norm"].map(dict(zip(ordem_dias, labels_dias)))
+                if len(df_dow_g) > 0:
+                    fig_dow = go.Figure(go.Bar(x=df_dow_g["label"], y=df_dow_g["venda_salao"], marker_color=[VERDE if v == df_dow_g["venda_salao"].max() else "#B8923A" if v >= df_dow_g["venda_salao"].quantile(0.7) else "#D8CFC0" for v in df_dow_g["venda_salao"]], text=df_dow_g["venda_salao"].apply(lambda v: f"Rk"), textposition="outside", textfont=dict(family="Nunito", size=11, color=MARROM)))
+                    fig_dow.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), xaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM)), yaxis=dict(showgrid=False), font=dict(family="Nunito"), height=280)
+                    st.plotly_chart(fig_dow, use_container_width=True, key="fig_dow_vd")
 
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Comparativo mensal 2025 vs 2026
+        with st.container(border=True):
+            st.markdown('<div class="section-title">Comparativo Mensal 2025 vs 2026</div>', unsafe_allow_html=True)
+            df_mensal = df_vd.copy()
+            if filial_vd_sel != "Todas":
+                df_mensal = df_mensal[df_mensal["filial_curta"] == filial_vd_sel]
+            df_mensal["mes_num"] = pd.to_datetime(df_mensal["data"]).dt.month
+            df_mensal["mes_label"] = pd.to_datetime(df_mensal["data"]).dt.strftime("%b")
+            df_2025 = df_mensal[df_mensal["ano"]==2025].groupby(["mes_num","mes_label"])["venda_salao"].sum().reset_index().sort_values("mes_num")
+            df_2026 = df_mensal[df_mensal["ano"]==2026].groupby(["mes_num","mes_label"])["venda_salao"].sum().reset_index().sort_values("mes_num")
+            fig_mens = go.Figure()
+            fig_mens.add_trace(go.Bar(x=df_2025["mes_label"], y=df_2025["venda_salao"], name="2025", marker_color="#8B7A5A", opacity=0.7))
+            fig_mens.add_trace(go.Bar(x=df_2026["mes_label"], y=df_2026["venda_salao"], name="2026", marker_color=VERDE))
+            fig_mens.update_layout(barmode="group", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), xaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM)), yaxis=dict(showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=10, color=MARROM)), legend=dict(font=dict(family="Nunito", size=11, color=MARROM), orientation="h", yanchor="bottom", y=1.02), font=dict(family="Nunito"), height=300)
+            st.plotly_chart(fig_mens, use_container_width=True, key="fig_mens_vd")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # HDC por filial
+        with st.container(border=True):
+            st.markdown('<div class="section-title">Produtividade por Assento — Venda por HDC</div>', unsafe_allow_html=True)
+            st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Media de venda por assento disponivel. Indica eficiencia de ocupacao e produtividade do salao.</div>', unsafe_allow_html=True)
+            df_hdc = df_vd_f.groupby("filial_curta")["venda_por_hdc"].mean().reset_index().sort_values("venda_por_hdc", ascending=False)
+            df_hdc_total = df_hdc["venda_por_hdc"].mean()
+            fig_hdc = go.Figure(go.Bar(x=df_hdc["filial_curta"], y=df_hdc["venda_por_hdc"], marker_color=[VERDE if v >= df_hdc_total else "#B8923A" for v in df_hdc["venda_por_hdc"]], text=df_hdc["venda_por_hdc"].apply(lambda v: f"R$ {v:.0f}"), textposition="outside", textfont=dict(family="Nunito", size=12, color=MARROM)))
+            fig_hdc.add_hline(y=df_hdc_total, line_dash="dot", line_color="#B8923A", annotation_text=f"Media: R$ {df_hdc_total:.0f}", annotation_font=dict(family="Nunito", size=11, color="#B8923A"))
+            fig_hdc.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=40), xaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM)), yaxis=dict(showgrid=False), font=dict(family="Nunito"), height=280)
+            st.plotly_chart(fig_hdc, use_container_width=True, key="fig_hdc_vd")
     elif visao_sel == "iFood":
         import calendar
         from datetime import datetime
