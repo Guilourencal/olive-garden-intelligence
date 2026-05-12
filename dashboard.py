@@ -203,6 +203,13 @@ def carregar_ifood_tags():
     conn.close()
     return df
 
+@st.cache_data(ttl=300)
+def carregar_vendas_diarias():
+    conn = get_conn()
+    df = pd.read_sql("SELECT * FROM vendas_diarias ORDER BY data, filial", conn)
+    conn.close()
+    return df
+
 df = carregar_reviews()
 df_social = carregar_social()
 df_news = carregar_noticias()
@@ -213,6 +220,7 @@ df_ifood_horarios = carregar_ifood_horarios()
 df_ifood_pagamentos = carregar_ifood_pagamentos()
 df_ifood_dias = carregar_ifood_dias()
 df_ifood_tags = carregar_ifood_tags()
+df_vendas_diarias = carregar_vendas_diarias()
 
 verificar_senha()
 if "aba_sel" not in st.session_state:
@@ -1036,253 +1044,270 @@ elif aba_sel == "Pesquisa":
 
 elif aba_sel == "Vendas":
     st.markdown('''<div style="font-weight:800; font-size:26px; color:#3D2B1F; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:4px;">Vendas</div>
-    <div style="font-size:13px; color:#8B9A2E; letter-spacing:0.1em; margin-bottom:20px;">PERFORMANCE FINANCEIRA — iFOOD</div>''', unsafe_allow_html=True)
+    <div style="font-size:13px; color:#8B9A2E; letter-spacing:0.1em; margin-bottom:20px;">PERFORMANCE FINANCEIRA</div>''', unsafe_allow_html=True)
 
-    df_v = df_ifood_vendas[df_ifood_vendas["logistica"] == "Entrega parceira"].copy()
-    df_v["filial_curta"] = df_v["filial"].str.replace("Olive Garden - ", "", regex=False)
-    periodos = sorted(df_v["periodo"].unique())
+    visao_sel = st.radio("", ["Operacao Geral", "iFood"], horizontal=True, key="visao_vendas")
+    st.markdown("<br>", unsafe_allow_html=True)
 
-    # Cards executivos
-    import calendar
-    from datetime import datetime
-    with st.container(border=True):
-        st.markdown('<div class="section-title">Visao Executiva</div>', unsafe_allow_html=True)
-        cols_v = st.columns(len(periodos))
-        prev_fat = None
-        for idx, periodo in enumerate(periodos):
-            df_per = df_v[df_v["periodo"] == periodo]
-            fat = df_per["faturamento"].sum()
-            ped = int(df_per["pedidos"].sum())
-            tkt = fat / ped if ped > 0 else 0
-            nov = int(df_per["novos_clientes"].sum())
-            mes = periodo.split("/")[1].strip()[:2] if "/" in periodo else periodo[:3]
-            mes_map = {"01":"Jan","02":"Fev","03":"Mar","04":"Abr","05":"Mai","06":"Jun","07":"Jul","08":"Ago","09":"Set","10":"Out","11":"Nov","12":"Dez"}
-            mes_label = mes_map.get(mes, periodo)
-            delta_txt = f" (+{((fat/prev_fat-1)*100):.1f}%)" if prev_fat and prev_fat > 0 else ""
-            prev_fat = fat
-            fat_fmt = f"R$ {fat:,.0f}".replace(",",".")
-            tkt_fmt = f"R$ {tkt:.0f}"
-            # Detectar parcial e calcular projecao
-            proj_html = ""
+    if visao_sel == "Operacao Geral":
+        import calendar
+        from datetime import datetime, timedelta
+        df_vd = df_vendas_diarias.copy()
+        df_vd["data"] = pd.to_datetime(df_vd["data"])
+        df_vd["filial_curta"] = df_vd["filial"].str.replace("Olive Garden - ", "", regex=False)
+
+        # Filtros
+        col_f1, col_f2, col_f3 = st.columns(3)
+        with col_f1:
+            anos = sorted(df_vd["ano"].dropna().unique().astype(int), reverse=True)
+            ano_sel = st.selectbox("Ano:", anos, key="ano_vd")
+        with col_f2:
+            meses_ord = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"]
+            meses_disp = [m for m in meses_ord if m in df_vd[df_vd["ano"]==ano_sel]["mes"].str[:3].str.lower().unique()]
+            mes_sel = st.selectbox("Mes:", ["Todos"] + meses_disp, key="mes_vd")
+        with col_f3:
+            filiais_vd = ["Todas"] + sorted(df_vd["filial_curta"].unique())
+            filial_vd_sel = st.selectbox("Filial:", filiais_vd, key="filial_vd")
+
+        df_vd_f = df_vd[df_vd["ano"] == ano_sel].copy()
+        if mes_sel != "Todos":
+            df_vd_f = df_vd_f[df_vd_f["mes"].str[:3].str.lower() == mes_sel]
+        if filial_vd_sel != "Todas":
+            df_vd_f = df_vd_f[df_vd_f["filial_curta"] == filial_vd_sel]
+
+        # Cards executivos
+        with st.container(border=True):
+            st.markdown('<div class="section-title">Visao Executiva</div>', unsafe_allow_html=True)
+            vt = df_vd_f["venda_total"].sum()
+            mt = df_vd_f["meta_venda"].sum()
+            va1 = df_vd_f["venda_ano1"].sum()
+            gc = df_vd_f["gc_salao"].sum()
+            tk = vt / gc if gc > 0 else 0
+            pct_meta = (vt/mt - 1)*100 if mt > 0 else 0
+            pct_ano1 = (vt/va1 - 1)*100 if va1 > 0 else 0
+            vt_fmt = f"R$ {vt:,.0f}".replace(",",".")
+            mt_fmt = f"R$ {mt:,.0f}".replace(",",".")
+            va1_fmt = f"R$ {va1:,.0f}".replace(",",".")
+            tk_fmt = f"R$ {tk:.0f}"
+            cor_meta = "#2e6b3e" if pct_meta >= 0 else VERMELHO
+            cor_ano1 = "#2e6b3e" if pct_ano1 >= 0 else VERMELHO
+            cols_c = st.columns(5)
+            cards = [
+                ("VENDA TOTAL", vt_fmt, None, None),
+                ("BUDGET", mt_fmt, f"{pct_meta:+.1f}%", cor_meta),
+                ("ANO ANTERIOR", va1_fmt, f"{pct_ano1:+.1f}%", cor_ano1),
+                ("GUEST COUNT", f"{int(gc):,}".replace(",","."), None, None),
+                ("TICKET MEDIO", tk_fmt, None, None),
+            ]
+            for col_c, (label, valor, delta, cor_d) in zip(cols_c, cards):
+                with col_c:
+                    delta_html = f'<div style="font-size:11px; color:{cor_d}; font-weight:700;">{delta}</div>' if delta else ""
+                    st.markdown(f'''<div style="background:#3D2B1F; border-radius:10px; padding:16px; color:#F5F0E8;">
+                        <div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:8px;">{label}</div>
+                        <div style="font-size:16px; font-weight:700; margin-bottom:4px;">{valor}</div>
+                        {delta_html}</div>''', unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Evolucao diaria
+        with st.container(border=True):
+            st.markdown('<div class="section-title">Evolucao de Venda</div>', unsafe_allow_html=True)
+            df_evo = df_vd_f.groupby("data").agg(venda_total=("venda_total","sum"), meta_venda=("meta_venda","sum"), venda_ano1=("venda_ano1","sum")).reset_index().sort_values("data")
+            fig_evo = go.Figure()
+            fig_evo.add_trace(go.Scatter(x=df_evo["data"], y=df_evo["venda_total"].cumsum(), mode="lines", name="Realizado", line=dict(color=VERDE, width=3)))
+            fig_evo.add_trace(go.Scatter(x=df_evo["data"], y=df_evo["meta_venda"].cumsum(), mode="lines", name="Budget", line=dict(color="#B8923A", width=2, dash="dot")))
+            if df_evo["venda_ano1"].sum() > 0:
+                fig_evo.add_trace(go.Scatter(x=df_evo["data"], y=df_evo["venda_ano1"].cumsum(), mode="lines", name="Ano Anterior", line=dict(color="#8B7A5A", width=1.5, dash="dash")))
+            fig_evo.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), xaxis=dict(tickfont=dict(family="Nunito", size=10, color=MARROM)), yaxis=dict(showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=10, color=MARROM)), legend=dict(font=dict(family="Nunito", size=11, color=MARROM), orientation="h", yanchor="bottom", y=1.02), font=dict(family="Nunito"), height=320)
+            st.plotly_chart(fig_evo, use_container_width=True, key="fig_evo_vd")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        col_r1, col_r2 = st.columns(2)
+        # Ranking por filial
+        with col_r1:
+            with st.container(border=True):
+                st.markdown('<div class="section-title">Ranking por Filial</div>', unsafe_allow_html=True)
+                df_rank_vd = df_vd_f.groupby("filial_curta").agg(venda_total=("venda_total","sum"), meta_venda=("meta_venda","sum")).reset_index()
+                df_rank_vd["pct_meta"] = ((df_rank_vd["venda_total"]/df_rank_vd["meta_venda"]-1)*100).round(1)
+                df_rank_vd = df_rank_vd.sort_values("venda_total", ascending=True)
+                df_rank_vd["vt_fmt"] = df_rank_vd["venda_total"].apply(lambda v: f"R$ {v:,.0f}".replace(",","."))
+                fig_rank_vd = go.Figure(go.Bar(y=df_rank_vd["filial_curta"], x=df_rank_vd["venda_total"], orientation="h", marker_color=[VERDE if v>=0 else VERMELHO for v in df_rank_vd["pct_meta"]], text=df_rank_vd["vt_fmt"], textposition="inside", textfont=dict(family="Nunito", size=11, color="white")))
+                fig_rank_vd.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), xaxis=dict(showgrid=False), yaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM)), font=dict(family="Nunito"), height=280)
+                st.plotly_chart(fig_rank_vd, use_container_width=True, key="fig_rank_vd2")
+
+        # Mix de canal
+        with col_r2:
+            with st.container(border=True):
+                st.markdown('<div class="section-title">Mix de Canal</div>', unsafe_allow_html=True)
+                pct_salao = df_vd_f["pct_salao"].mean()*100 if df_vd_f["pct_salao"].notna().any() else 0
+                pct_dlv = df_vd_f["pct_dlv"].mean()*100 if df_vd_f["pct_dlv"].notna().any() else 0
+                pct_togo = df_vd_f["pct_togo"].mean()*100 if df_vd_f["pct_togo"].notna().any() else 0
+                fig_mix = go.Figure(go.Pie(labels=["Salao","Delivery","ToGo"], values=[pct_salao, pct_dlv, pct_togo], hole=0.5, textinfo="label+percent", textfont=dict(family="Nunito", size=12), marker=dict(colors=[VERDE,"#B8923A","#3D7A5C"])))
+                fig_mix.update_layout(paper_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), legend=dict(font=dict(family="Nunito", size=11, color=MARROM)), font=dict(family="Nunito"), height=280)
+                st.plotly_chart(fig_mix, use_container_width=True, key="fig_mix_vd")
+
+    elif visao_sel == "iFood":
+        import calendar
+        from datetime import datetime
+        df_v = df_ifood_vendas[df_ifood_vendas["logistica"] == "Entrega parceira"].copy()
+        df_v["filial_curta"] = df_v["filial"].str.replace("Olive Garden - ", "", regex=False)
+        periodos = sorted(df_v["periodo"].unique())
+
+        # Cards executivos
+        with st.container(border=True):
+            st.markdown('<div class="section-title">Visao Executiva</div>', unsafe_allow_html=True)
+            cols_v = st.columns(len(periodos))
+            prev_fat = None
+            for idx, periodo in enumerate(periodos):
+                df_per = df_v[df_v["periodo"] == periodo]
+                fat = df_per["faturamento"].sum()
+                ped = int(df_per["pedidos"].sum())
+                tkt = fat / ped if ped > 0 else 0
+                nov = int(df_per["novos_clientes"].sum())
+                mes = periodo.split("/")[1].strip()[:2] if "/" in periodo else periodo[:3]
+                mes_map = {"01":"Jan","02":"Fev","03":"Mar","04":"Abr","05":"Mai","06":"Jun","07":"Jul","08":"Ago","09":"Set","10":"Out","11":"Nov","12":"Dez"}
+                mes_label = mes_map.get(mes, periodo)
+                delta_txt = f" (+{((fat/prev_fat-1)*100):.1f}%)" if prev_fat and prev_fat > 0 else ""
+                prev_fat = fat
+                fat_fmt = f"R$ {fat:,.0f}".replace(",",".")
+                tkt_fmt = f"R$ {tkt:.0f}"
+                proj_html = ""
+                try:
+                    partes = periodo.split("-")
+                    d_ini = datetime.strptime(partes[0].strip(), "%d/%m/%Y")
+                    d_fim = datetime.strptime(partes[1].strip(), "%d/%m/%Y")
+                    dias_dec = (d_fim - d_ini).days + 1
+                    dias_mes = calendar.monthrange(d_ini.year, d_ini.month)[1]
+                    if dias_dec < dias_mes:
+                        fat_proj = fat / dias_dec * dias_mes
+                        fat_proj_fmt = f"R$ {fat_proj:,.0f}".replace(",",".")
+                        ped_proj = int(ped / dias_dec * dias_mes)
+                        proj_html = f'''<div style="margin-top:12px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1);">
+                            <div style="font-size:9px; color:#B8923A; letter-spacing:2px; margin-bottom:6px;">PROJECAO MES COMPLETO ({dias_mes} dias)</div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                            <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:2px;">FATURAMENTO</div>
+                            <div style="font-size:14px; font-weight:700; color:#B8923A;">{fat_proj_fmt}</div></div>
+                            <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:2px;">PEDIDOS</div>
+                            <div style="font-size:14px; font-weight:700; color:#B8923A;">{ped_proj:,}</div></div>
+                            </div>
+                            <div style="font-size:9px; color:#8B7A5A; margin-top:4px;">Parcial: {dias_dec} de {dias_mes} dias</div>
+                            </div>'''
+                except:
+                    pass
+                with cols_v[idx]:
+                    st.markdown(f'''<div style="background:#3D2B1F; border-radius:12px; padding:20px; color:#F5F0E8; margin-bottom:8px;">
+                        <div style="font-size:10px; letter-spacing:3px; color:#8B9A2E; text-transform:uppercase; margin-bottom:14px;">{mes_label}{delta_txt}</div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+                        <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">FATURAMENTO</div>
+                        <div style="font-size:16px; font-weight:700;">{fat_fmt}</div></div>
+                        <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">PEDIDOS</div>
+                        <div style="font-size:16px; font-weight:700;">{ped:,}</div></div>
+                        <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">TICKET MEDIO</div>
+                        <div style="font-size:16px; font-weight:700; color:#8B9A2E;">{tkt_fmt}</div></div>
+                        <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">NOVOS CLIENTES</div>
+                        <div style="font-size:16px; font-weight:700; color:#8B9A2E;">{nov:,}</div></div>
+                        </div>{proj_html}</div>''', unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        periodo_sel_v = st.selectbox("Periodo:", periodos, index=len(periodos)-1, key="periodo_v")
+        df_vp = df_v[df_v["periodo"] == periodo_sel_v]
+
+        # Ranking por filial com projecao
+        with st.container(border=True):
+            st.markdown('<div class="section-title">Faturamento por Filial</div>', unsafe_allow_html=True)
+            df_rank = df_vp.groupby("filial_curta").agg(faturamento=("faturamento","sum"), pedidos=("pedidos","sum"), novos_clientes=("novos_clientes","sum")).reset_index()
+            df_rank["ticket_medio"] = (df_rank["faturamento"] / df_rank["pedidos"]).round(0)
+            df_rank = df_rank.sort_values("faturamento", ascending=True)
+            df_rank["fat_fmt"] = df_rank["faturamento"].apply(lambda v: f"R$ {v:,.0f}".replace(",","."))
+            is_parcial = False
+            dias_decorridos = 30
+            dias_no_mes = 30
             try:
-                partes = periodo.split("-")
+                partes = periodo_sel_v.split("-")
                 d_ini = datetime.strptime(partes[0].strip(), "%d/%m/%Y")
                 d_fim = datetime.strptime(partes[1].strip(), "%d/%m/%Y")
-                dias_dec = (d_fim - d_ini).days + 1
-                dias_mes = calendar.monthrange(d_ini.year, d_ini.month)[1]
-                if dias_dec < dias_mes:
-                    fat_proj = fat / dias_dec * dias_mes
-                    fat_proj_fmt = f"R$ {fat_proj:,.0f}".replace(",",".")
-                    ped_proj = int(ped / dias_dec * dias_mes)
-                    proj_html = f'''<div style="margin-top:12px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1);">
-                        <div style="font-size:9px; color:#B8923A; letter-spacing:2px; margin-bottom:6px;">PROJECAO MES COMPLETO ({dias_mes} dias)</div>
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:2px;">FATURAMENTO</div>
-                        <div style="font-size:14px; font-weight:700; color:#B8923A;">{fat_proj_fmt}</div></div>
-                        <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:2px;">PEDIDOS</div>
-                        <div style="font-size:14px; font-weight:700; color:#B8923A;">{ped_proj:,}</div></div>
-                        </div>
-                        <div style="font-size:9px; color:#8B7A5A; margin-top:4px;">Parcial: {dias_dec} de {dias_mes} dias</div>
-                        </div>'''
+                dias_decorridos = (d_fim - d_ini).days + 1
+                dias_no_mes = calendar.monthrange(d_ini.year, d_ini.month)[1]
+                if dias_decorridos < dias_no_mes:
+                    is_parcial = True
+                    df_rank["faturamento_projetado"] = (df_rank["faturamento"] / dias_decorridos * dias_no_mes).round(0)
+                    df_rank["proj_fmt"] = df_rank["faturamento_projetado"].apply(lambda v: f"R$ {v:,.0f}".replace(",","."))
             except:
                 pass
-            with cols_v[idx]:
-                st.markdown(f'''<div style="background:#3D2B1F; border-radius:12px; padding:20px; color:#F5F0E8; margin-bottom:8px;">
-                    <div style="font-size:10px; letter-spacing:3px; color:#8B9A2E; text-transform:uppercase; margin-bottom:14px;">{mes_label}{delta_txt}</div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
-                    <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">FATURAMENTO</div>
-                    <div style="font-size:16px; font-weight:700;">{fat_fmt}</div></div>
-                    <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">PEDIDOS</div>
-                    <div style="font-size:16px; font-weight:700;">{ped:,}</div></div>
-                    <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">TICKET MEDIO</div>
-                    <div style="font-size:16px; font-weight:700; color:#8B9A2E;">{tkt_fmt}</div></div>
-                    <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">NOVOS CLIENTES</div>
-                    <div style="font-size:16px; font-weight:700; color:#8B9A2E;">{nov:,}</div></div>
-                    </div>{proj_html}</div>''', unsafe_allow_html=True)
+            fig_rank = go.Figure()
+            if is_parcial:
+                fig_rank.add_trace(go.Bar(y=df_rank["filial_curta"], x=df_rank["faturamento_projetado"], orientation="h", name=f"Projetado ({dias_no_mes} dias)", marker_color="#B8923A", opacity=0.4, text=df_rank["proj_fmt"], textposition="inside", textfont=dict(family="Nunito", size=12, color="white")))
+            fig_rank.add_trace(go.Bar(y=df_rank["filial_curta"], x=df_rank["faturamento"], orientation="h", name=f"Realizado ({dias_decorridos} dias)" if is_parcial else "Faturamento", marker_color=VERDE, text=df_rank["fat_fmt"], textposition="inside", textfont=dict(family="Nunito", size=12, color="white")))
+            if is_parcial:
+                fig_rank.add_annotation(text=f"Parcial: {dias_decorridos} de {dias_no_mes} dias | Projecao linear", xref="paper", yref="paper", x=0.5, y=-0.08, showarrow=False, font=dict(family="Nunito", size=11, color="#B8923A"))
+            fig_rank.update_layout(barmode="overlay", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=40,b=30,l=10,r=200), xaxis=dict(showgrid=False, tickfont=dict(family="Nunito", size=11, color=MARROM)), yaxis=dict(tickfont=dict(family="Nunito", size=12, color=MARROM)), legend=dict(font=dict(family="Nunito", size=11, color=MARROM), orientation="h", yanchor="bottom", y=1.04), font=dict(family="Nunito"), height=320)
+            st.plotly_chart(fig_rank, use_container_width=True, key="fig_rank_v")
 
-    st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
 
-    periodo_sel_v = st.selectbox("Periodo:", periodos, index=len(periodos)-1, key="periodo_v")
-    df_vp = df_v[df_v["periodo"] == periodo_sel_v]
-
-    # Ranking por filial com projecao
-    with st.container(border=True):
-        st.markdown('<div class="section-title">Faturamento por Filial</div>', unsafe_allow_html=True)
-        df_rank = df_vp.groupby("filial_curta").agg(faturamento=("faturamento","sum"), pedidos=("pedidos","sum"), novos_clientes=("novos_clientes","sum")).reset_index()
-        df_rank["ticket_medio"] = (df_rank["faturamento"] / df_rank["pedidos"]).round(0)
-        df_rank = df_rank.sort_values("faturamento", ascending=True)
-        df_rank["fat_fmt"] = df_rank["faturamento"].apply(lambda v: f"R$ {v:,.0f}".replace(",","."))
-
-        # Detectar se e parcial e calcular projecao
-        import calendar
-        from datetime import datetime
-        is_parcial = False
-        fat_projetado = None
-        try:
-            partes = periodo_sel_v.split("-")
-            data_ini = partes[0].strip()
-            data_fim = partes[1].strip()
-            d_ini = datetime.strptime(data_ini, "%d/%m/%Y")
-            d_fim = datetime.strptime(data_fim, "%d/%m/%Y")
-            dias_decorridos = (d_fim - d_ini).days + 1
-            dias_no_mes = calendar.monthrange(d_ini.year, d_ini.month)[1]
-            if dias_decorridos < dias_no_mes:
-                is_parcial = True
-                df_rank["faturamento_projetado"] = (df_rank["faturamento"] / dias_decorridos * dias_no_mes).round(0)
-                df_rank["proj_fmt"] = df_rank["faturamento_projetado"].apply(lambda v: f"R$ {v:,.0f}".replace(",","."))
-        except:
-            pass
-
-        fig_rank = go.Figure()
-
-        if is_parcial:
-            fig_rank.add_trace(go.Bar(
-                y=df_rank["filial_curta"],
-                x=df_rank["faturamento_projetado"],
-                orientation="h",
-                name=f"Projetado ({dias_no_mes} dias)",
-                marker_color="#B8923A",
-                opacity=0.4,
-                text=df_rank["proj_fmt"],
-                textposition="inside",
-                textfont=dict(family="Nunito", size=12, color="white"),
-            ))
-
-        fig_rank.add_trace(go.Bar(
-            y=df_rank["filial_curta"],
-            x=df_rank["faturamento"],
-            orientation="h",
-            name=f"Realizado ({dias_decorridos} dias)" if is_parcial else "Faturamento",
-            marker_color=VERDE,
-            text=df_rank["fat_fmt"],
-            textposition="inside",
-            textfont=dict(family="Nunito", size=12, color="white"),
-        ))
-
-        if is_parcial:
-            fig_rank.add_annotation(
-                text=f"Parcial: {dias_decorridos} de {dias_no_mes} dias | Projecao linear",
-                xref="paper", yref="paper", x=0.5, y=-0.08, showarrow=False,
-                font=dict(family="Nunito", size=11, color="#B8923A"),
-            )
-
-        fig_rank.update_layout(
-            barmode="overlay",
-            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-            margin=dict(t=40,b=10,l=10,r=250),
-            xaxis=dict(showgrid=False, tickfont=dict(family="Nunito", size=11, color=MARROM)),
-            yaxis=dict(tickfont=dict(family="Nunito", size=12, color=MARROM)),
-            legend=dict(font=dict(family="Nunito", size=11, color=MARROM), orientation="h", yanchor="bottom", y=1.04),
-            font=dict(family="Nunito"), height=320
-        )
-        st.plotly_chart(fig_rank, use_container_width=True, key="fig_rank_v")
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # Grafico de evolucao de receita no tempo
-    with st.container(border=True):
-        st.markdown('<div class="section-title">Evolucao de Receita</div>', unsafe_allow_html=True)
-        import calendar
-        from datetime import datetime
-        evolucao = []
-        for p in periodos:
-            df_p = df_v[df_v["periodo"] == p]
-            fat_p = df_p["faturamento"].sum()
-            try:
-                partes = p.split("-")
-                d_ini = datetime.strptime(partes[0].strip(), "%d/%m/%Y")
-                d_fim = datetime.strptime(partes[1].strip(), "%d/%m/%Y")
-                dias_dec = (d_fim - d_ini).days + 1
-                dias_mes = calendar.monthrange(d_ini.year, d_ini.month)[1]
-                mes_map = {"01":"Jan","02":"Fev","03":"Mar","04":"Abr","05":"Mai","06":"Jun","07":"Jul","08":"Ago","09":"Set","10":"Out","11":"Nov","12":"Dez"}
-                mes_label = mes_map.get(f"{d_ini.month:02d}", p)
-                is_p = dias_dec < dias_mes
-                fat_proj = fat_p / dias_dec * dias_mes if is_p else None
-                evolucao.append({"mes": mes_label, "fat": fat_p, "proj": fat_proj, "parcial": is_p})
-            except:
-                evolucao.append({"mes": p[:3], "fat": fat_p, "proj": None, "parcial": False})
-
-        fig_evo = go.Figure()
-        meses = [e["mes"] for e in evolucao]
-        fats = [e["fat"] for e in evolucao]
-        projs = [e["proj"] for e in evolucao]
-        parciais = [e["parcial"] for e in evolucao]
-
-        # Linha realizado
-        fig_evo.add_trace(go.Scatter(
-            x=meses, y=fats,
-            mode="lines+markers+text",
-            name="Realizado",
-            line=dict(color=VERDE, width=3),
-            marker=dict(size=10, color=VERDE),
-            text=[f"R$ {v:,.0f}".replace(",",".") for v in fats],
-            textposition="top center",
-            textfont=dict(family="Nunito", size=11, color=VERDE),
-        ))
-
-        # Linha projetada para meses parciais
-        for i_e, e in enumerate(evolucao):
-            if e["parcial"] and e["proj"]:
-                fig_evo.add_trace(go.Scatter(
-                    x=[meses[i_e], meses[i_e]],
-                    y=[fats[i_e], e["proj"]],
-                    mode="lines+markers+text",
-                    name="Projetado",
-                    line=dict(color="#B8923A", width=2, dash="dot"),
-                    marker=dict(size=10, color="#B8923A", symbol="diamond"),
-                    text=["", f"R$ {e['proj']:,.0f}".replace(",",".")],
-                    textposition="top center",
-                    textfont=dict(family="Nunito", size=11, color="#B8923A"),
-                    showlegend=True,
-                ))
-
-        fig_evo.update_layout(
-            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-            margin=dict(t=30,b=10,l=10,r=10),
-            xaxis=dict(tickfont=dict(family="Nunito", size=12, color=MARROM), showgrid=False),
-            yaxis=dict(showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=11, color=MARROM)),
-            legend=dict(font=dict(family="Nunito", size=11, color=MARROM), orientation="h", yanchor="bottom", y=1.02),
-            font=dict(family="Nunito"), height=350,
-        )
-        st.plotly_chart(fig_evo, use_container_width=True, key="fig_evo_v")
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    col_h1, col_h2 = st.columns(2)
-
-    with col_h1:
+        # Evolucao de receita iFood
         with st.container(border=True):
-            st.markdown('<div class="section-title">Horario de Pico</div>', unsafe_allow_html=True)
-            df_hor = df_ifood_horarios[df_ifood_horarios["periodo"] == periodo_sel_v].groupby(["periodo_semana","horario"])["pedidos"].sum().reset_index()
-            if len(df_hor) > 0:
-                df_hor_piv = df_hor.pivot(index="horario", columns="periodo_semana", values="pedidos").fillna(0)
-                fig_hor = go.Figure(data=go.Heatmap(z=df_hor_piv.values, x=df_hor_piv.columns.tolist(), y=df_hor_piv.index.tolist(), colorscale=[[0,"#F5F0E8"],[0.5,"#B8923A"],[1,VERDE]], texttemplate="%{z:.0f}", textfont=dict(family="Nunito", size=11)))
-                fig_hor.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), xaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM)), yaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM)), font=dict(family="Nunito"), height=380, coloraxis_showscale=False)
-                st.plotly_chart(fig_hor, use_container_width=True, key="fig_hor_v")
+            st.markdown('<div class="section-title">Evolucao de Receita iFood</div>', unsafe_allow_html=True)
+            evolucao = []
+            for p in periodos:
+                df_p = df_v[df_v["periodo"] == p]
+                fat_p = df_p["faturamento"].sum()
+                try:
+                    partes = p.split("-")
+                    d_ini = datetime.strptime(partes[0].strip(), "%d/%m/%Y")
+                    d_fim = datetime.strptime(partes[1].strip(), "%d/%m/%Y")
+                    dias_dec = (d_fim - d_ini).days + 1
+                    dias_mes = calendar.monthrange(d_ini.year, d_ini.month)[1]
+                    mes_map2 = {"01":"Jan","02":"Fev","03":"Mar","04":"Abr","05":"Mai","06":"Jun","07":"Jul","08":"Ago","09":"Set","10":"Out","11":"Nov","12":"Dez"}
+                    mes_label2 = mes_map2.get(f"{d_ini.month:02d}", p)
+                    is_p = dias_dec < dias_mes
+                    fat_proj2 = fat_p / dias_dec * dias_mes if is_p else None
+                    evolucao.append({"mes": mes_label2, "fat": fat_p, "proj": fat_proj2, "parcial": is_p})
+                except:
+                    evolucao.append({"mes": p[:3], "fat": fat_p, "proj": None, "parcial": False})
+            fig_evo2 = go.Figure()
+            meses2 = [e["mes"] for e in evolucao]
+            fats2 = [e["fat"] for e in evolucao]
+            fig_evo2.add_trace(go.Scatter(x=meses2, y=fats2, mode="lines+markers+text", name="Realizado", line=dict(color=VERDE, width=3), marker=dict(size=10, color=VERDE), text=[f"R$ {v:,.0f}".replace(",",".") for v in fats2], textposition="top center", textfont=dict(family="Nunito", size=11, color=VERDE)))
+            for i_e, e in enumerate(evolucao):
+                if e["parcial"] and e["proj"]:
+                    fig_evo2.add_trace(go.Scatter(x=[meses2[i_e], meses2[i_e]], y=[fats2[i_e], e["proj"]], mode="lines+markers+text", name="Projetado", line=dict(color="#B8923A", width=2, dash="dot"), marker=dict(size=10, color="#B8923A", symbol="diamond"), text=["", f"R$ {e['proj']:,.0f}".replace(",",".")], textposition="top center", textfont=dict(family="Nunito", size=11, color="#B8923A"), showlegend=True))
+            fig_evo2.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=30,b=10,l=10,r=10), xaxis=dict(tickfont=dict(family="Nunito", size=12, color=MARROM), showgrid=False), yaxis=dict(showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=11, color=MARROM)), legend=dict(font=dict(family="Nunito", size=11, color=MARROM), orientation="h", yanchor="bottom", y=1.02), font=dict(family="Nunito"), height=350)
+            st.plotly_chart(fig_evo2, use_container_width=True, key="fig_evo_v2")
 
-    with col_h2:
+        st.markdown("<br>", unsafe_allow_html=True)
+        col_h1, col_h2 = st.columns(2)
+        with col_h1:
+            with st.container(border=True):
+                st.markdown('<div class="section-title">Horario de Pico</div>', unsafe_allow_html=True)
+                df_hor = df_ifood_horarios[df_ifood_horarios["periodo"] == periodo_sel_v].groupby(["periodo_semana","horario"])["pedidos"].sum().reset_index()
+                if len(df_hor) > 0:
+                    df_hor_piv = df_hor.pivot(index="horario", columns="periodo_semana", values="pedidos").fillna(0)
+                    fig_hor = go.Figure(data=go.Heatmap(z=df_hor_piv.values, x=df_hor_piv.columns.tolist(), y=df_hor_piv.index.tolist(), colorscale=[[0,"#F5F0E8"],[0.5,"#B8923A"],[1,VERDE]], texttemplate="%{z:.0f}", textfont=dict(family="Nunito", size=11)))
+                    fig_hor.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), xaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM)), yaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM)), font=dict(family="Nunito"), height=380, coloraxis_showscale=False)
+                    st.plotly_chart(fig_hor, use_container_width=True, key="fig_hor_v")
+        with col_h2:
+            with st.container(border=True):
+                st.markdown('<div class="section-title">Dias de Pico</div>', unsafe_allow_html=True)
+                ordem_dias = ["Segunda","Terca","Quarta","Quinta","Sexta","Sabado","Domingo"]
+                df_dias = df_ifood_dias[df_ifood_dias["periodo"] == periodo_sel_v].copy()
+                df_dias["dia_norm"] = df_dias["dia_semana"].str.normalize("NFKD").str.encode("ascii","ignore").str.decode("ascii").str.strip()
+                df_dias_g = df_dias.groupby("dia_norm")["pedidos"].sum().reset_index()
+                df_dias_ord = [d for d in ordem_dias if d in df_dias_g["dia_norm"].values]
+                df_dias_g = df_dias_g.set_index("dia_norm").reindex(df_dias_ord).reset_index()
+                if len(df_dias_g) > 0:
+                    fig_dias = go.Figure(go.Bar(x=df_dias_g["dia_norm"], y=df_dias_g["pedidos"], marker_color=VERDE, text=df_dias_g["pedidos"], textposition="outside", textfont=dict(family="Nunito", size=12, color=MARROM)))
+                    fig_dias.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), xaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM)), yaxis=dict(showgrid=False, tickfont=dict(family="Nunito", size=11, color=MARROM)), font=dict(family="Nunito"), height=380)
+                    st.plotly_chart(fig_dias, use_container_width=True, key="fig_dias_v")
+        st.markdown("<br>", unsafe_allow_html=True)
         with st.container(border=True):
-            st.markdown('<div class="section-title">Dias de Pico</div>', unsafe_allow_html=True)
-            ordem_dias = ["Segunda","Terca","Quarta","Quinta","Sexta","Sabado","Domingo"]
-            df_dias = df_ifood_dias[df_ifood_dias["periodo"] == periodo_sel_v].copy()
-            df_dias["dia_norm"] = df_dias["dia_semana"].str.normalize("NFKD").str.encode("ascii","ignore").str.decode("ascii").str.strip()
-            df_dias_g = df_dias.groupby("dia_norm")["pedidos"].sum().reset_index()
-            df_dias_ord = [d for d in ordem_dias if d in df_dias_g["dia_norm"].values]
-            df_dias_g = df_dias_g.set_index("dia_norm").reindex(df_dias_ord).reset_index()
-            if len(df_dias_g) > 0:
-                fig_dias = go.Figure(go.Bar(x=df_dias_g["dia_norm"], y=df_dias_g["pedidos"], marker_color=VERDE, text=df_dias_g["pedidos"], textposition="outside", textfont=dict(family="Nunito", size=12, color=MARROM)))
-                fig_dias.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), xaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM)), yaxis=dict(showgrid=False, tickfont=dict(family="Nunito", size=11, color=MARROM)), font=dict(family="Nunito"), height=380)
-                st.plotly_chart(fig_dias, use_container_width=True, key="fig_dias_v")
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    with st.container(border=True):
-        st.markdown('<div class="section-title">Mix de Pagamento</div>', unsafe_allow_html=True)
-        df_pag = df_ifood_pagamentos[df_ifood_pagamentos["periodo"] == periodo_sel_v].groupby("forma_pagamento")["pedidos"].sum().reset_index().sort_values("pedidos", ascending=False)
-        if len(df_pag) > 0:
-            fig_pag = go.Figure(go.Pie(labels=df_pag["forma_pagamento"], values=df_pag["pedidos"], hole=0.5, textinfo="label+percent", textfont=dict(family="Nunito", size=12), marker=dict(colors=[VERDE,"#B8923A","#3D7A5C","#7A3D3D","#3D5A7A","#7A5C3D","#5C7A3D","#7A6B3D"])))
-            fig_pag.update_layout(paper_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), legend=dict(font=dict(family="Nunito", size=11, color=MARROM)), font=dict(family="Nunito"), height=320)
-            st.plotly_chart(fig_pag, use_container_width=True, key="fig_pag_v")
-
+            st.markdown('<div class="section-title">Mix de Pagamento</div>', unsafe_allow_html=True)
+            df_pag = df_ifood_pagamentos[df_ifood_pagamentos["periodo"] == periodo_sel_v].groupby("forma_pagamento")["pedidos"].sum().reset_index().sort_values("pedidos", ascending=False)
+            if len(df_pag) > 0:
+                fig_pag = go.Figure(go.Pie(labels=df_pag["forma_pagamento"], values=df_pag["pedidos"], hole=0.5, textinfo="label+percent", textfont=dict(family="Nunito", size=12), marker=dict(colors=[VERDE,"#B8923A","#3D7A5C","#7A3D3D","#3D5A7A","#7A5C3D","#5C7A3D","#7A6B3D"])))
+                fig_pag.update_layout(paper_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), legend=dict(font=dict(family="Nunito", size=11, color=MARROM)), font=dict(family="Nunito"), height=320)
+                st.plotly_chart(fig_pag, use_container_width=True, key="fig_pag_v")
 elif aba_sel == "OlivIA":
     import base64 as b64
     with open("assets/Olivia_Fundo_Branco_Header.png", "rb") as img_f:
