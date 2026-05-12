@@ -1092,6 +1092,7 @@ elif aba_sel == "Vendas":
             cor_meta = "#2e6b3e" if pct_meta >= 0 else VERMELHO
             cor_ano1 = "#2e6b3e" if pct_ano1 >= 0 else VERMELHO
             cols_c = st.columns(3)
+            gc_fmt = f"{int(gc):,}".replace(",", ".")
             # Card 1 - Venda Total vs Budget
             with cols_c[0]:
                 seta_meta = "▲" if pct_meta >= 0 else "▼"
@@ -1122,7 +1123,7 @@ elif aba_sel == "Vendas":
                     <div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:12px;">OPERACAO</div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:8px;">
                     <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">GUEST COUNT</div>
-                    <div style="font-size:22px; font-weight:800;">{int(gc):,}".replace(",",".")</div></div>
+                    <div style="font-size:22px; font-weight:800;">{gc_fmt}</div></div>
                     <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">TICKET MEDIO</div>
                     <div style="font-size:22px; font-weight:800; color:#8B9A2E;">{tk_fmt}</div></div>
                     </div></div>''', unsafe_allow_html=True)
