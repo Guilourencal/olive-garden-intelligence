@@ -1091,21 +1091,41 @@ elif aba_sel == "Vendas":
             tk_fmt = f"R$ {tk:.0f}"
             cor_meta = "#2e6b3e" if pct_meta >= 0 else VERMELHO
             cor_ano1 = "#2e6b3e" if pct_ano1 >= 0 else VERMELHO
-            cols_c = st.columns(5)
-            cards = [
-                ("VENDA TOTAL", vt_fmt, None, None),
-                ("BUDGET", mt_fmt, f"{pct_meta:+.1f}%", cor_meta),
-                ("ANO ANTERIOR", va1_fmt, f"{pct_ano1:+.1f}%", cor_ano1),
-                ("GUEST COUNT", f"{int(gc):,}".replace(",","."), None, None),
-                ("TICKET MEDIO", tk_fmt, None, None),
-            ]
-            for col_c, (label, valor, delta, cor_d) in zip(cols_c, cards):
-                with col_c:
-                    delta_html = f'<div style="font-size:11px; color:{cor_d}; font-weight:700;">{delta}</div>' if delta else ""
-                    st.markdown(f'''<div style="background:#3D2B1F; border-radius:10px; padding:16px; color:#F5F0E8;">
-                        <div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:8px;">{label}</div>
-                        <div style="font-size:16px; font-weight:700; margin-bottom:4px;">{valor}</div>
-                        {delta_html}</div>''', unsafe_allow_html=True)
+            cols_c = st.columns(3)
+            # Card 1 - Venda Total vs Budget
+            with cols_c[0]:
+                seta_meta = "▲" if pct_meta >= 0 else "▼"
+                cor_meta2 = "#2e6b3e" if pct_meta >= 0 else "#c0392b"
+                st.markdown(f'''<div style="background:#3D2B1F; border-radius:10px; padding:20px; color:#F5F0E8;">
+                    <div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:12px;">VENDA TOTAL</div>
+                    <div style="font-size:28px; font-weight:800; margin-bottom:8px;">{vt_fmt}</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1);">
+                    <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:2px;">BUDGET</div>
+                    <div style="font-size:12px; color:#D8CFC0;">{mt_fmt}</div></div>
+                    <div style="font-size:18px; font-weight:700; color:{cor_meta2};">{seta_meta} {pct_meta:+.1f}%</div>
+                    </div></div>''', unsafe_allow_html=True)
+            # Card 2 - Venda vs Ano Anterior
+            with cols_c[1]:
+                seta_ano1 = "▲" if pct_ano1 >= 0 else "▼"
+                cor_ano12 = "#2e6b3e" if pct_ano1 >= 0 else "#c0392b"
+                st.markdown(f'''<div style="background:#3D2B1F; border-radius:10px; padding:20px; color:#F5F0E8;">
+                    <div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:12px;">VENDA TOTAL</div>
+                    <div style="font-size:28px; font-weight:800; margin-bottom:8px;">{vt_fmt}</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1);">
+                    <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:2px;">ANO ANTERIOR</div>
+                    <div style="font-size:12px; color:#D8CFC0;">{va1_fmt}</div></div>
+                    <div style="font-size:18px; font-weight:700; color:{cor_ano12};">{seta_ano1} {pct_ano1:+.1f}%</div>
+                    </div></div>''', unsafe_allow_html=True)
+            # Card 3 - Guest Count e Ticket
+            with cols_c[2]:
+                st.markdown(f'''<div style="background:#3D2B1F; border-radius:10px; padding:20px; color:#F5F0E8;">
+                    <div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:12px;">OPERACAO</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:8px;">
+                    <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">GUEST COUNT</div>
+                    <div style="font-size:22px; font-weight:800;">{int(gc):,}".replace(",",".")</div></div>
+                    <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">TICKET MEDIO</div>
+                    <div style="font-size:22px; font-weight:800; color:#8B9A2E;">{tk_fmt}</div></div>
+                    </div></div>''', unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
 
