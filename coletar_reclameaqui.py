@@ -14,13 +14,11 @@ def coletar_reclameaqui():
     print("Coletando: Olive Garden - Reclame Aqui")
 
     run_input = {
-        "companies": ["olive-garden"],
-        "maxComplaints": 100,
-        "statusFilter": "all",
-        "includeCompanyStats": True,
+        "startUrls": [{"url": "https://www.reclameaqui.com.br/empresa/olive-garden/lista-reclamacoes/"}],
+        "maxItems": 100,
     }
 
-    run = client.actor("viralanalyzer/reclameaqui-scraper").call(run_input=run_input)
+    run = client.actor("epctex/reclame-aqui-scraper").call(run_input=run_input)
 
     reviews = []
     for item in client.dataset(run["defaultDatasetId"]).iterate_items():
