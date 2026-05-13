@@ -1096,7 +1096,7 @@ elif aba_sel == "Vendas":
         # Cards executivos
         with st.container(border=True):
             st.markdown('<div class="section-title">Visao Executiva — Salao</div>', unsafe_allow_html=True)
-            cols_c = st.columns(3)
+            cols_c = st.columns(4)
             seta_meta = "▲" if pct_meta >= 0 else "▼"
             cor_meta2 = "#2e6b3e" if pct_meta >= 0 else "#c0392b"
             seta_ano1 = "▲" if pct_ano1 >= 0 else "▼"
@@ -1132,6 +1132,49 @@ elif aba_sel == "Vendas":
                     <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">VENDA/HDC</div>
                     <div style="font-size:18px; font-weight:700; color:#8B9A2E;">{hdc_fmt}</div></div>
                     </div></div>''', unsafe_allow_html=True)
+            with cols_c[3]:
+                from datetime import date
+                hoje_v = date.today()
+                mes_atual = hoje_v.month
+                ano_atual = hoje_v.year
+                df_mes_atual = df_vd[
+                    (df_vd["data"].dt.month == mes_atual) &
+                    (df_vd["data"].dt.year == ano_atual) &
+                    df_vd["filial_curta"].isin(filiais_sel)
+                ].copy()
+                if len(df_mes_atual) > 0:
+                    import calendar
+                    dias_no_mes = calendar.monthrange(ano_atual, mes_atual)[1]
+                    dias_realizados = df_mes_atual["data"].dt.day.max()
+                    dias_restantes = dias_no_mes - dias_realizados
+                    venda_realizada = df_mes_atual["venda_salao"].sum()
+                    media_diaria = venda_realizada / dias_realizados if dias_realizados > 0 else 0
+                    proj_restante = media_diaria * dias_restantes
+                    proj_total = venda_realizada + proj_restante
+                    budget_mes = df_mes_atual["meta_venda"].sum() / dias_realizados * dias_no_mes
+                    pct_proj_budget = (proj_total / budget_mes - 1) * 100 if budget_mes > 0 else 0
+                    seta_proj = "▲" if pct_proj_budget >= 0 else "▼"
+                    cor_proj = "#2e6b3e" if pct_proj_budget >= 0 else "#c0392b"
+                    proj_fmt = f"R$ {proj_total:,.0f}".replace(",",".")
+                    budget_mes_fmt = f"R$ {budget_mes:,.0f}".replace(",",".")
+                    pct_concluido = int(dias_realizados / dias_no_mes * 100)
+                    st.markdown(f'''<div style="background:#3D2B1F; border-radius:10px; padding:20px; color:#F5F0E8;">
+                        <div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:12px;">PROJECAO DO MES</div>
+                        <div style="font-size:24px; font-weight:800; margin-bottom:8px;">{proj_fmt}</div>
+                        <div style="background:rgba(255,255,255,0.1); border-radius:4px; height:4px; margin-bottom:8px;">
+                            <div style="background:#8B9A2E; width:{pct_concluido}%; height:4px; border-radius:4px;"></div>
+                        </div>
+                        <div style="font-size:9px; color:#D8CFC0; margin-bottom:8px;">{dias_realizados}/{dias_no_mes} dias realizados</div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1);">
+                        <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:2px;">BUDGET MES</div>
+                        <div style="font-size:12px; color:#D8CFC0;">{budget_mes_fmt}</div></div>
+                        <div style="font-size:18px; font-weight:700; color:{cor_proj};">{seta_proj} {pct_proj_budget:+.1f}%</div>
+                        </div></div>''', unsafe_allow_html=True)
+                else:
+                    st.markdown('''<div style="background:#3D2B1F; border-radius:10px; padding:20px; color:#F5F0E8;">
+                        <div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:12px;">PROJECAO DO MES</div>
+                        <div style="font-size:13px; color:#8B7A5A;">Selecione o mes atual para ver a projecao.</div>
+                        </div>''', unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
 
