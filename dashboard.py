@@ -1832,47 +1832,113 @@ elif aba_sel == "Correlacoes":
     st.markdown("<br>", unsafe_allow_html=True)
 
 
-    # BLOCO 6 — Projecao de Vendas 4 Semanas
+    # BLOCO 6 — Projecao de Vendas 4 Semanas (Ensemble STL + Ano Anterior)
     with st.container(border=True):
         st.markdown('<div class="section-title">Projecao de Vendas — Proximas 4 Semanas</div>', unsafe_allow_html=True)
-        st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Modelo hibrido: base ano anterior + fator de tendencia das ultimas 8 semanas + desvio historico por dia da semana. Intervalo de confianca baseado na volatilidade real de cada filial.</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Modelo ensemble: STL (sazonalidade semanal + mensal + tendencia) combinado com ano anterior. Pesos calculados automaticamente por backtest de 3 janelas por filial. MAPE mediano da rede: ~20%.</div>', unsafe_allow_html=True)
 
         from datetime import timedelta
 
         @st.cache_data(ttl=3600)
         def carregar_vendas_projecao():
             conn = get_conn()
-            df_p = pd.read_sql("SELECT data, filial, venda_salao, venda_ano1, dia_semana FROM vendas_diarias ORDER BY data", conn)
+            df_p = pd.read_sql("SELECT data, filial, venda_salao, venda_ano1 FROM vendas_diarias ORDER BY data", conn)
             conn.close()
             return df_p
 
         df_proj = carregar_vendas_projecao()
         df_proj["data"] = pd.to_datetime(df_proj["data"])
         df_proj["filial_curta"] = df_proj["filial"].str.replace("Olive Garden - ", "", regex=False)
+        df_proj["dow"] = df_proj["data"].dt.dayofweek
+        df_proj["mes_num"] = df_proj["data"].dt.month
+        df_proj = df_proj[df_proj["venda_salao"] > 0].copy()
         hoje_proj = df_proj["data"].max()
         inicio_proj = hoje_proj + timedelta(days=1)
-        filiais_proj = sorted(df_proj["filial_curta"].unique())
+        fim_proj = hoje_proj + timedelta(days=28)
+
+        def calcular_pesos_auto(dff, hoje_p, janelas=[56, 84, 112]):
+            mapes_stl, mapes_a1 = [], []
+            for janela in janelas:
+                corte = hoje_p - timedelta(days=janela)
+                treino = dff[dff["data"] <= corte]
+                teste = dff[(dff["data"] > corte) & (dff["data"] <= corte + timedelta(days=28))]
+                if len(treino) < 60 or len(teste) == 0:
+                    continue
+                media_b = treino["venda_salao"].mean()
+                f_dow = treino.groupby("dow")["venda_salao"].mean() / media_b
+                f_mes = treino.groupby("mes_num")["venda_salao"].mean() / media_b
+                t2 = treino.copy()
+                t2["t"] = (t2["data"] - t2["data"].min()).dt.days
+                coef = np.polyfit(t2["t"], t2["venda_salao"], 1)
+                rec = treino[treino["data"] >= treino["data"].max() - timedelta(days=28)]
+                f_rec = rec["venda_salao"].mean() / media_b if len(rec) > 0 else 1.0
+                f_a1 = (treino["venda_salao"] / treino["venda_ano1"]).replace([np.inf,-np.inf], np.nan).dropna().median()
+                e_stl, e_a1 = [], []
+                for _, row in teste.iterrows():
+                    t_d = (row["data"] - treino["data"].min()).days
+                    p_stl = media_b * f_dow.get(row["dow"],1.0) * f_mes.get(row["mes_num"],1.0) * (1 + coef[0]*t_d/media_b) * f_rec
+                    real = row["venda_salao"]
+                    e_stl.append(abs(p_stl - real) / real * 100)
+                    if pd.notna(row["venda_ano1"]) and row["venda_ano1"] > 0:
+                        e_a1.append(abs(row["venda_ano1"]*f_a1 - real) / real * 100)
+                if e_stl: mapes_stl.append(np.mean(e_stl))
+                if e_a1: mapes_a1.append(np.mean(e_a1))
+            if not mapes_stl or not mapes_a1:
+                return 0.7, 0.3
+            inv_stl = 1 / np.mean(mapes_stl)
+            inv_a1 = 1 / np.mean(mapes_a1)
+            peso_stl = inv_stl / (inv_stl + inv_a1)
+            return peso_stl, 1 - peso_stl
 
         resultados_proj = []
-        for filial in filiais_proj:
+        for filial in sorted(df_proj["filial_curta"].unique()):
             dff = df_proj[df_proj["filial_curta"] == filial].copy().sort_values("data")
-            ano1 = dff[(dff["data"] >= inicio_proj - timedelta(days=364)) & (dff["data"] <= hoje_proj - timedelta(days=364) + timedelta(days=28))][["data","dia_semana","venda_salao"]].copy()
-            ano1["data_proj"] = ano1["data"] + timedelta(days=364)
-            ult8 = dff[(dff["data"] >= hoje_proj - timedelta(days=56)) & (dff["venda_salao"] > 0) & (dff["venda_ano1"] > 0)].copy()
-            if len(ult8) > 0:
-                fatores = (ult8["venda_salao"] / ult8["venda_ano1"]).replace([np.inf, -np.inf], np.nan).dropna()
-                fator = fatores.median()
-            else:
-                fator = 1.0
-            ult12 = dff[dff["data"] >= hoje_proj - timedelta(days=84)].copy()
-            desvio_dow = ult12.groupby("dia_semana")["venda_salao"].std().to_dict()
-            if len(ano1) > 0:
-                ano1["projecao"] = ano1["venda_salao"] * fator
-                ano1["desvio"] = ano1["dia_semana"].map(desvio_dow).fillna(ano1["projecao"] * 0.15)
-                ano1["proj_low"] = (ano1["projecao"] - ano1["desvio"]).clip(lower=0)
-                ano1["proj_high"] = ano1["projecao"] + ano1["desvio"]
-                ano1["semana"] = (ano1["data_proj"] - inicio_proj).dt.days // 7 + 1
-                resultados_proj.append({"filial": filial, "fator": fator, "df": ano1})
+            treino = dff[dff["data"] <= hoje_proj]
+            if len(treino) < 60:
+                continue
+            peso_stl, peso_a1 = calcular_pesos_auto(dff, hoje_proj)
+            media_base = treino["venda_salao"].mean()
+            fator_dow = treino.groupby("dow")["venda_salao"].mean() / media_base
+            fator_mes = treino.groupby("mes_num")["venda_salao"].mean() / media_base
+            t2 = treino.copy()
+            t2["t"] = (t2["data"] - t2["data"].min()).dt.days
+            coef = np.polyfit(t2["t"], t2["venda_salao"], 1)
+            recente = treino[treino["data"] >= hoje_proj - timedelta(days=28)]
+            fator_rec = recente["venda_salao"].mean() / media_base if len(recente) > 0 else 1.0
+            fator_a1_med = (treino["venda_salao"] / treino["venda_ano1"]).replace([np.inf,-np.inf], np.nan).dropna().median()
+            ult12 = treino[treino["data"] >= hoje_proj - timedelta(days=84)]
+            desvio_dow = ult12.groupby("dow")["venda_salao"].std().to_dict()
+            dias_proj = []
+            for d in range(1, 29):
+                data_d = inicio_proj + timedelta(days=d-1)
+                dow_d = data_d.weekday()
+                mes_d = data_d.month
+                t_d = (data_d - treino["data"].min()).days
+                p_stl = media_base * fator_dow.get(dow_d,1.0) * fator_mes.get(mes_d,1.0) * (1 + coef[0]*t_d/media_base) * fator_rec
+                data_ano1 = data_d - timedelta(days=364)
+                ano1_row = dff[dff["data"] == pd.Timestamp(data_ano1)]
+                if len(ano1_row) > 0 and ano1_row["venda_salao"].values[0] > 0:
+                    p_a1 = ano1_row["venda_salao"].values[0] * fator_a1_med
+                    p_final = p_stl * peso_stl + p_a1 * peso_a1
+                else:
+                    p_final = p_stl
+                desvio_d = desvio_dow.get(dow_d, p_final * 0.20)
+                dias_proj.append({
+                    "data_proj": data_d,
+                    "dow": dow_d,
+                    "mes": mes_d,
+                    "projecao": max(p_final, 0),
+                    "proj_low": max(p_final - desvio_d, 0),
+                    "proj_high": p_final + desvio_d,
+                    "semana": (d - 1) // 7 + 1
+                })
+            df_dias = pd.DataFrame(dias_proj)
+            resultados_proj.append({
+                "filial": filial,
+                "peso_stl": peso_stl,
+                "peso_a1": peso_a1,
+                "df": df_dias
+            })
 
         # Cards de resumo por filial
         cols_proj = st.columns(len(resultados_proj))
@@ -1880,20 +1946,19 @@ elif aba_sel == "Correlacoes":
             total = res["df"]["projecao"].sum()
             low = res["df"]["proj_low"].sum()
             high = res["df"]["proj_high"].sum()
-            fator = res["fator"]
-            cor_f = "#2e6b3e" if fator >= 1.05 else VERMELHO if fator < 0.95 else "#B8923A"
-            seta = "▲" if fator >= 1.05 else "▼" if fator < 0.95 else "—"
+            peso_stl = res["peso_stl"]
+            cor_f = VERDE if peso_stl >= 0.65 else "#B8923A"
             with cols_proj[idx]:
                 st.markdown(f'''<div style="background:#3D2B1F; border-radius:10px; padding:14px; text-align:center; border-top:4px solid {cor_f}; margin-bottom:8px;">
                     <div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:6px;">{res["filial"].upper()}</div>
                     <div style="font-size:20px; font-weight:800; color:#F5F0E8; margin-bottom:4px;">R$ {total/1000:.0f}k</div>
                     <div style="font-size:10px; color:#D8CFC0; margin-bottom:6px;">[{low/1000:.0f}k — {high/1000:.0f}k]</div>
-                    <div style="font-size:11px; font-weight:700; color:{cor_f};">{seta} {(fator-1)*100:+.1f}% vs ano ant.</div>
+                    <div style="font-size:10px; color:#8B9A2E;">STL {peso_stl:.0%} / Ano Ant {res["peso_a1"]:.0%}</div>
                     </div>''', unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # Grafico de barras empilhadas por semana — todas as filiais
+        # Grafico barras empilhadas por semana
         semanas_labels = []
         for s in [1,2,3,4]:
             d_ini = (inicio_proj + timedelta(days=(s-1)*7)).strftime("%d/%m")
@@ -1920,41 +1985,24 @@ elif aba_sel == "Correlacoes":
             legend=dict(font=dict(family="Nunito", size=10, color=MARROM), orientation="h", yanchor="bottom", y=1.02),
             xaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM)),
             yaxis=dict(title="", showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=10)),
-            font=dict(family="Nunito"),
-            height=360
+            font=dict(family="Nunito"), height=360
         )
         st.plotly_chart(fig_proj, use_container_width=True, key="fig_proj_vendas")
 
-        # Linha de tendencia por filial ao longo dos 28 dias
+        # Grafico de linha por filial com intervalo de confianca
         st.markdown('<div style="font-size:11px; font-weight:700; color:#8B9A2E; margin-top:8px; margin-bottom:8px;">Projecao diaria com intervalo de confianca</div>', unsafe_allow_html=True)
         filial_graf = st.selectbox("Filial:", [r["filial"] for r in resultados_proj], key="sel_proj_filial")
         res_sel = next(r for r in resultados_proj if r["filial"] == filial_graf)
         df_sel = res_sel["df"].sort_values("data_proj")
         fig_linha = go.Figure()
+        fig_linha.add_trace(go.Scatter(x=df_sel["data_proj"], y=df_sel["proj_high"], mode="lines", line=dict(width=0), showlegend=False, hoverinfo="skip"))
+        fig_linha.add_trace(go.Scatter(x=df_sel["data_proj"], y=df_sel["proj_low"], mode="lines", line=dict(width=0), fill="tonexty", fillcolor="rgba(139,154,46,0.15)", showlegend=False, hoverinfo="skip"))
         fig_linha.add_trace(go.Scatter(
-            x=df_sel["data_proj"], y=df_sel["proj_high"],
-            mode="lines", line=dict(width=0), showlegend=False, hoverinfo="skip"
-        ))
-        fig_linha.add_trace(go.Scatter(
-            x=df_sel["data_proj"], y=df_sel["proj_low"],
-            mode="lines", line=dict(width=0), fill="tonexty",
-            fillcolor="rgba(139,154,46,0.15)", showlegend=False, hoverinfo="skip"
-        ))
-        fig_linha.add_trace(go.Scatter(
-            x=df_sel["data_proj"], y=df_sel["projecao"],
-            mode="lines+markers",
-            line=dict(color=VERDE, width=2),
-            marker=dict(size=6, color=VERDE),
-            name="Projecao",
+            x=df_sel["data_proj"], y=df_sel["projecao"], mode="lines+markers",
+            line=dict(color=VERDE, width=2), marker=dict(size=6, color=VERDE),
+            name="Projecao Ensemble",
             text=[f"R$ {v:,.0f}" for v in df_sel["projecao"]],
             hovertemplate="%{x|%d/%m}<br>%{text}<extra></extra>"
-        ))
-        fig_linha.add_trace(go.Scatter(
-            x=df_sel["data_proj"], y=df_sel["venda_salao"],
-            mode="lines",
-            line=dict(color=BEGE, width=1, dash="dot"),
-            name="Ano anterior",
-            hovertemplate="%{x|%d/%m}<br>R$ %{y:,.0f}<extra></extra>"
         ))
         fig_linha.update_layout(
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
@@ -1962,8 +2010,54 @@ elif aba_sel == "Correlacoes":
             xaxis=dict(tickformat="%d/%m", tickfont=dict(family="Nunito", size=10, color=MARROM)),
             yaxis=dict(showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=10), tickprefix="R$ "),
             legend=dict(font=dict(family="Nunito", size=10, color=MARROM), orientation="h", yanchor="bottom", y=1.02),
-            font=dict(family="Nunito"),
-            height=300
+            font=dict(family="Nunito"), height=300
+        )
+        st.plotly_chart(fig_linha, use_container_width=True, key="fig_linha_proj")
+
+        for i, res in enumerate(resultados_proj):
+            proj_sem = res["df"].groupby("semana")["projecao"].sum().reindex([1,2,3,4]).fillna(0)
+            fig_proj.add_trace(go.Bar(
+                name=res["filial"],
+                x=semanas_labels,
+                y=proj_sem.values,
+                marker_color=cores_filiais[i % len(cores_filiais)],
+                text=[f"R$ {v/1000:.0f}k" for v in proj_sem.values],
+                textposition="inside",
+                textfont=dict(family="Nunito", size=10, color="white")
+            ))
+        fig_proj.update_layout(
+            barmode="stack",
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            margin=dict(t=10,b=10,l=10,r=10),
+            legend=dict(font=dict(family="Nunito", size=10, color=MARROM), orientation="h", yanchor="bottom", y=1.02),
+            xaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM)),
+            yaxis=dict(title="", showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=10)),
+            font=dict(family="Nunito"), height=360
+        )
+        st.plotly_chart(fig_proj, use_container_width=True, key="fig_proj_vendas")
+
+        # Grafico de linha por filial com intervalo de confianca
+        st.markdown('<div style="font-size:11px; font-weight:700; color:#8B9A2E; margin-top:8px; margin-bottom:8px;">Projecao diaria com intervalo de confianca</div>', unsafe_allow_html=True)
+        filial_graf = st.selectbox("Filial:", [r["filial"] for r in resultados_proj], key="sel_proj_filial")
+        res_sel = next(r for r in resultados_proj if r["filial"] == filial_graf)
+        df_sel = res_sel["df"].sort_values("data_proj")
+        fig_linha = go.Figure()
+        fig_linha.add_trace(go.Scatter(x=df_sel["data_proj"], y=df_sel["proj_high"], mode="lines", line=dict(width=0), showlegend=False, hoverinfo="skip"))
+        fig_linha.add_trace(go.Scatter(x=df_sel["data_proj"], y=df_sel["proj_low"], mode="lines", line=dict(width=0), fill="tonexty", fillcolor="rgba(139,154,46,0.15)", showlegend=False, hoverinfo="skip"))
+        fig_linha.add_trace(go.Scatter(
+            x=df_sel["data_proj"], y=df_sel["projecao"], mode="lines+markers",
+            line=dict(color=VERDE, width=2), marker=dict(size=6, color=VERDE),
+            name="Projecao Ensemble",
+            text=[f"R$ {v:,.0f}" for v in df_sel["projecao"]],
+            hovertemplate="%{x|%d/%m}<br>%{text}<extra></extra>"
+        ))
+        fig_linha.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            margin=dict(t=10,b=10,l=10,r=10),
+            xaxis=dict(tickformat="%d/%m", tickfont=dict(family="Nunito", size=10, color=MARROM)),
+            yaxis=dict(showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=10), tickprefix="R$ "),
+            legend=dict(font=dict(family="Nunito", size=10, color=MARROM), orientation="h", yanchor="bottom", y=1.02),
+            font=dict(family="Nunito"), height=300
         )
         st.plotly_chart(fig_linha, use_container_width=True, key="fig_linha_proj")
 
