@@ -1060,24 +1060,26 @@ elif aba_sel == "Vendas":
         col_f1, col_f2, col_f3 = st.columns(3)
         with col_f1:
             anos = sorted(df_vd["ano"].dropna().unique().astype(int), reverse=True)
-            ano_sel = st.selectbox("Ano:", anos, key="ano_vd")
+            anos_sel = st.multiselect("Ano:", anos, default=[anos[0]], key="ano_vd")
+            if not anos_sel:
+                anos_sel = anos
         with col_f2:
             meses_ord = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"]
-            meses_disp = [m for m in meses_ord if m in df_vd[df_vd["ano"]==ano_sel]["mes"].str[:3].str.lower().unique()]
-            mes_sel = st.selectbox("Mes:", ["Todos"] + meses_disp, key="mes_vd")
+            meses_disp = [m for m in meses_ord if m in df_vd[df_vd["ano"].isin(anos_sel)]["mes"].str[:3].str.lower().unique()]
+            meses_sel = st.multiselect("Mes:", meses_disp, default=[], key="mes_vd")
+            if not meses_sel:
+                meses_sel = meses_disp
         with col_f3:
             filiais_vd = ["Todas"] + sorted(df_vd["filial_curta"].unique())
-            filial_vd_sel = st.selectbox("Filial:", filiais_vd, key="filial_vd")
-
-        df_vd_f = df_vd[df_vd["ano"] == ano_sel].copy()
-        if mes_sel != "Todos":
-            df_vd_f = df_vd_f[df_vd_f["mes"].str[:3].str.lower() == mes_sel]
-        if filial_vd_sel != "Todas":
-            df_vd_f = df_vd_f[df_vd_f["filial_curta"] == filial_vd_sel]
-
-        # KPIs
-        vt = df_vd_f["venda_salao"].sum()
-        mt = df_vd_f["meta_venda"].sum()
+            filiais_disponiveis = sorted(df_vd["filial_curta"].unique())
+            filiais_sel = st.multiselect("Filial:", filiais_disponiveis, default=[], key="filial_vd")
+            if not filiais_sel:
+                filiais_sel = filiais_disponiveis
+        df_vd_f = df_vd[
+            df_vd["ano"].isin(anos_sel) &
+            df_vd["mes"].str[:3].str.lower().isin(meses_sel) &
+            df_vd["filial_curta"].isin(filiais_sel)
+        ].copy()
         va1 = df_vd_f["venda_ano1"].sum()
         gc = df_vd_f["gc_salao"].sum()
         tk = vt / gc if gc > 0 else 0
@@ -1166,8 +1168,8 @@ elif aba_sel == "Vendas":
                 ordem_dias = ["seg","ter","qua","qui","sex","sab","dom"]
                 labels_dias = ["Seg","Ter","Qua","Qui","Sex","Sab","Dom"]
                 df_dow_base = df_vd.copy()
-                if filial_vd_sel != "Todas":
-                    df_dow_base = df_dow_base[df_dow_base["filial_curta"] == filial_vd_sel]
+                if filiais_sel != sorted(df_vd["filial_curta"].unique()):
+                    df_dow_base = df_dow_base[df_dow_base["filial_curta"].isin(filiais_sel)]
                 df_dow_base["dia_norm"] = df_dow_base["dia_semana"].str[:3].str.lower()
                 # Ultima semana fechada
                 hoje = df_dow_base["data"].max()
@@ -1208,8 +1210,8 @@ elif aba_sel == "Vendas":
         with st.container(border=True):
             st.markdown('<div class="section-title">Comparativo Mensal 2025 vs 2026</div>', unsafe_allow_html=True)
             df_mensal = df_vd.copy()
-            if filial_vd_sel != "Todas":
-                df_mensal = df_mensal[df_mensal["filial_curta"] == filial_vd_sel]
+            if filiais_sel != sorted(df_vd["filial_curta"].unique()):
+                df_mensal = df_mensal[df_mensal["filial_curta"].isin(filiais_sel)]
             df_mensal["mes_num"] = pd.to_datetime(df_mensal["data"]).dt.month
             df_mensal["mes_label"] = pd.to_datetime(df_mensal["data"]).dt.strftime("%b")
             df_2025 = df_mensal[df_mensal["ano"]==2025].groupby(["mes_num","mes_label"])["venda_salao"].sum().reset_index().sort_values("mes_num")
