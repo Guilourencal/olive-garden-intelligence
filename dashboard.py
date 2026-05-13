@@ -2014,53 +2014,6 @@ elif aba_sel == "Correlacoes":
         )
         st.plotly_chart(fig_linha, use_container_width=True, key="fig_linha_proj")
 
-        for i, res in enumerate(resultados_proj):
-            proj_sem = res["df"].groupby("semana")["projecao"].sum().reindex([1,2,3,4]).fillna(0)
-            fig_proj.add_trace(go.Bar(
-                name=res["filial"],
-                x=semanas_labels,
-                y=proj_sem.values,
-                marker_color=cores_filiais[i % len(cores_filiais)],
-                text=[f"R$ {v/1000:.0f}k" for v in proj_sem.values],
-                textposition="inside",
-                textfont=dict(family="Nunito", size=10, color="white")
-            ))
-        fig_proj.update_layout(
-            barmode="stack",
-            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-            margin=dict(t=10,b=10,l=10,r=10),
-            legend=dict(font=dict(family="Nunito", size=10, color=MARROM), orientation="h", yanchor="bottom", y=1.02),
-            xaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM)),
-            yaxis=dict(title="", showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=10)),
-            font=dict(family="Nunito"), height=360
-        )
-        st.plotly_chart(fig_proj, use_container_width=True, key="fig_proj_vendas")
-
-        # Grafico de linha por filial com intervalo de confianca
-        st.markdown('<div style="font-size:11px; font-weight:700; color:#8B9A2E; margin-top:8px; margin-bottom:8px;">Projecao diaria com intervalo de confianca</div>', unsafe_allow_html=True)
-        filial_graf = st.selectbox("Filial:", [r["filial"] for r in resultados_proj], key="sel_proj_filial")
-        res_sel = next(r for r in resultados_proj if r["filial"] == filial_graf)
-        df_sel = res_sel["df"].sort_values("data_proj")
-        fig_linha = go.Figure()
-        fig_linha.add_trace(go.Scatter(x=df_sel["data_proj"], y=df_sel["proj_high"], mode="lines", line=dict(width=0), showlegend=False, hoverinfo="skip"))
-        fig_linha.add_trace(go.Scatter(x=df_sel["data_proj"], y=df_sel["proj_low"], mode="lines", line=dict(width=0), fill="tonexty", fillcolor="rgba(139,154,46,0.15)", showlegend=False, hoverinfo="skip"))
-        fig_linha.add_trace(go.Scatter(
-            x=df_sel["data_proj"], y=df_sel["projecao"], mode="lines+markers",
-            line=dict(color=VERDE, width=2), marker=dict(size=6, color=VERDE),
-            name="Projecao Ensemble",
-            text=[f"R$ {v:,.0f}" for v in df_sel["projecao"]],
-            hovertemplate="%{x|%d/%m}<br>%{text}<extra></extra>"
-        ))
-        fig_linha.update_layout(
-            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-            margin=dict(t=10,b=10,l=10,r=10),
-            xaxis=dict(tickformat="%d/%m", tickfont=dict(family="Nunito", size=10, color=MARROM)),
-            yaxis=dict(showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=10), tickprefix="R$ "),
-            legend=dict(font=dict(family="Nunito", size=10, color=MARROM), orientation="h", yanchor="bottom", y=1.02),
-            font=dict(family="Nunito"), height=300
-        )
-        st.plotly_chart(fig_linha, use_container_width=True, key="fig_linha_proj")
-
 st.markdown(
     '<div style="text-align:center; font-size:10px; color:#B8A898; letter-spacing:0.1em; padding-top:20px;">'
     'OLIVE GARDEN BRAND INTELLIGENCE © 2026</div>',
