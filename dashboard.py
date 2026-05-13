@@ -1080,6 +1080,8 @@ elif aba_sel == "Vendas":
             df_vd["mes"].str[:3].str.lower().isin(meses_sel) &
             df_vd["filial_curta"].isin(filiais_sel)
         ].copy()
+        vt = df_vd_f["venda_salao"].sum()
+        mt = df_vd_f["meta_venda"].sum()
         va1 = df_vd_f["venda_ano1"].sum()
         gc = df_vd_f["gc_salao"].sum()
         tk = vt / gc if gc > 0 else 0
