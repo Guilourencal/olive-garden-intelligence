@@ -1730,6 +1730,143 @@ elif aba_sel == "Correlacoes":
                     cor = "#B8923A"; icone = "— Alinhado"; msg = "Percepcao interna e externa consistentes"
                 st.markdown(f'<div style="padding:10px 0; border-bottom:1px solid #e8ddc8;"><div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:13px; font-weight:700; color:#3D2B1F;">{row["filial_curta"]}</span><span style="font-size:12px; color:{cor}; font-weight:700;">{div:+.1f} pts — {icone}</span></div><div style="font-size:11px; color:#8B7A5A; margin-top:3px;">GSS: {row["overall_experience"]:.1f}% | Reputacao: {row["score_externo"]:.1f} | {msg}</div></div>', unsafe_allow_html=True)
 
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # BLOCO 6 — Projecao de Vendas 4 Semanas
+    with st.container(border=True):
+        st.markdown('<div class="section-title">Projecao de Vendas — Proximas 4 Semanas</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Modelo hibrido: base ano anterior + fator de tendencia das ultimas 8 semanas + desvio historico por dia da semana. Intervalo de confianca baseado na volatilidade real de cada filial.</div>', unsafe_allow_html=True)
+
+        from datetime import timedelta
+
+        @st.cache_data(ttl=3600)
+        def carregar_vendas_projecao():
+            conn = get_conn()
+            df_p = pd.read_sql("SELECT data, filial, venda_salao, venda_ano1, dia_semana FROM vendas_diarias ORDER BY data", conn)
+            conn.close()
+            return df_p
+
+        df_proj = carregar_vendas_projecao()
+        df_proj["data"] = pd.to_datetime(df_proj["data"])
+        df_proj["filial_curta"] = df_proj["filial"].str.replace("Olive Garden - ", "", regex=False)
+        hoje_proj = df_proj["data"].max()
+        inicio_proj = hoje_proj + timedelta(days=1)
+        filiais_proj = sorted(df_proj["filial_curta"].unique())
+
+        resultados_proj = []
+        for filial in filiais_proj:
+            dff = df_proj[df_proj["filial_curta"] == filial].copy().sort_values("data")
+            ano1 = dff[(dff["data"] >= inicio_proj - timedelta(days=364)) & (dff["data"] <= hoje_proj - timedelta(days=364) + timedelta(days=28))][["data","dia_semana","venda_salao"]].copy()
+            ano1["data_proj"] = ano1["data"] + timedelta(days=364)
+            ult8 = dff[(dff["data"] >= hoje_proj - timedelta(days=56)) & (dff["venda_salao"] > 0) & (dff["venda_ano1"] > 0)].copy()
+            if len(ult8) > 0:
+                fatores = (ult8["venda_salao"] / ult8["venda_ano1"]).replace([np.inf, -np.inf], np.nan).dropna()
+                fator = fatores.median()
+            else:
+                fator = 1.0
+            ult12 = dff[dff["data"] >= hoje_proj - timedelta(days=84)].copy()
+            desvio_dow = ult12.groupby("dia_semana")["venda_salao"].std().to_dict()
+            if len(ano1) > 0:
+                ano1["projecao"] = ano1["venda_salao"] * fator
+                ano1["desvio"] = ano1["dia_semana"].map(desvio_dow).fillna(ano1["projecao"] * 0.15)
+                ano1["proj_low"] = (ano1["projecao"] - ano1["desvio"]).clip(lower=0)
+                ano1["proj_high"] = ano1["projecao"] + ano1["desvio"]
+                ano1["semana"] = (ano1["data_proj"] - inicio_proj).dt.days // 7 + 1
+                resultados_proj.append({"filial": filial, "fator": fator, "df": ano1})
+
+        # Cards de resumo por filial
+        cols_proj = st.columns(len(resultados_proj))
+        for idx, res in enumerate(resultados_proj):
+            total = res["df"]["projecao"].sum()
+            low = res["df"]["proj_low"].sum()
+            high = res["df"]["proj_high"].sum()
+            fator = res["fator"]
+            cor_f = "#2e6b3e" if fator >= 1.05 else VERMELHO if fator < 0.95 else "#B8923A"
+            seta = "▲" if fator >= 1.05 else "▼" if fator < 0.95 else "—"
+            with cols_proj[idx]:
+                st.markdown(f'''<div style="background:#3D2B1F; border-radius:10px; padding:14px; text-align:center; border-top:4px solid {cor_f}; margin-bottom:8px;">
+                    <div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:6px;">{res["filial"].upper()}</div>
+                    <div style="font-size:20px; font-weight:800; color:#F5F0E8; margin-bottom:4px;">R$ {total/1000:.0f}k</div>
+                    <div style="font-size:10px; color:#D8CFC0; margin-bottom:6px;">[{low/1000:.0f}k — {high/1000:.0f}k]</div>
+                    <div style="font-size:11px; font-weight:700; color:{cor_f};">{seta} {(fator-1)*100:+.1f}% vs ano ant.</div>
+                    </div>''', unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Grafico de barras empilhadas por semana — todas as filiais
+        semanas_labels = []
+        for s in [1,2,3,4]:
+            d_ini = (inicio_proj + timedelta(days=(s-1)*7)).strftime("%d/%m")
+            d_fim = (inicio_proj + timedelta(days=s*7-1)).strftime("%d/%m")
+            semanas_labels.append(f"Sem {s}\n{d_ini}-{d_fim}")
+
+        cores_filiais = ["#8B9A2E","#4D3321","#B8923A","#8B2E2E","#5C7A8B","#7A5C8B"]
+        fig_proj = go.Figure()
+        for i, res in enumerate(resultados_proj):
+            proj_sem = res["df"].groupby("semana")["projecao"].sum().reindex([1,2,3,4]).fillna(0)
+            fig_proj.add_trace(go.Bar(
+                name=res["filial"],
+                x=semanas_labels,
+                y=proj_sem.values,
+                marker_color=cores_filiais[i % len(cores_filiais)],
+                text=[f"R$ {v/1000:.0f}k" for v in proj_sem.values],
+                textposition="inside",
+                textfont=dict(family="Nunito", size=10, color="white")
+            ))
+        fig_proj.update_layout(
+            barmode="stack",
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            margin=dict(t=10,b=10,l=10,r=10),
+            legend=dict(font=dict(family="Nunito", size=10, color=MARROM), orientation="h", yanchor="bottom", y=1.02),
+            xaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM)),
+            yaxis=dict(title="", showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=10)),
+            font=dict(family="Nunito"),
+            height=360
+        )
+        st.plotly_chart(fig_proj, use_container_width=True, key="fig_proj_vendas")
+
+        # Linha de tendencia por filial ao longo dos 28 dias
+        st.markdown('<div style="font-size:11px; font-weight:700; color:#8B9A2E; margin-top:8px; margin-bottom:8px;">Projecao diaria com intervalo de confianca</div>', unsafe_allow_html=True)
+        filial_graf = st.selectbox("Filial:", [r["filial"] for r in resultados_proj], key="sel_proj_filial")
+        res_sel = next(r for r in resultados_proj if r["filial"] == filial_graf)
+        df_sel = res_sel["df"].sort_values("data_proj")
+        fig_linha = go.Figure()
+        fig_linha.add_trace(go.Scatter(
+            x=df_sel["data_proj"], y=df_sel["proj_high"],
+            mode="lines", line=dict(width=0), showlegend=False, hoverinfo="skip"
+        ))
+        fig_linha.add_trace(go.Scatter(
+            x=df_sel["data_proj"], y=df_sel["proj_low"],
+            mode="lines", line=dict(width=0), fill="tonexty",
+            fillcolor="rgba(139,154,46,0.15)", showlegend=False, hoverinfo="skip"
+        ))
+        fig_linha.add_trace(go.Scatter(
+            x=df_sel["data_proj"], y=df_sel["projecao"],
+            mode="lines+markers",
+            line=dict(color=VERDE, width=2),
+            marker=dict(size=6, color=VERDE),
+            name="Projecao",
+            text=[f"R$ {v:,.0f}" for v in df_sel["projecao"]],
+            hovertemplate="%{x|%d/%m}<br>%{text}<extra></extra>"
+        ))
+        fig_linha.add_trace(go.Scatter(
+            x=df_sel["data_proj"], y=df_sel["venda_salao"],
+            mode="lines",
+            line=dict(color=BEGE, width=1, dash="dot"),
+            name="Ano anterior",
+            hovertemplate="%{x|%d/%m}<br>R$ %{y:,.0f}<extra></extra>"
+        ))
+        fig_linha.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            margin=dict(t=10,b=10,l=10,r=10),
+            xaxis=dict(tickformat="%d/%m", tickfont=dict(family="Nunito", size=10, color=MARROM)),
+            yaxis=dict(showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=10), tickprefix="R$ "),
+            legend=dict(font=dict(family="Nunito", size=10, color=MARROM), orientation="h", yanchor="bottom", y=1.02),
+            font=dict(family="Nunito"),
+            height=300
+        )
+        st.plotly_chart(fig_linha, use_container_width=True, key="fig_linha_proj")
+
 st.markdown(
     '<div style="text-align:center; font-size:10px; color:#B8A898; letter-spacing:0.1em; padding-top:20px;">'
     'OLIVE GARDEN BRAND INTELLIGENCE © 2026</div>',
