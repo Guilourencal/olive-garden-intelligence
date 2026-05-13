@@ -1591,12 +1591,13 @@ Seja direto como um consultor sênior apresentando para o CEO. Use dados reais, 
             st.rerun()
 
 elif aba_sel == "Correlacoes":
-    import calendar
-    from datetime import datetime
-    st.markdown('''<div style="font-weight:800; font-size:26px; color:#3D2B1F; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:4px;">Correlacoes & Inteligencia</div>
-    <div style="font-size:13px; color:#8B9A2E; letter-spacing:0.1em; margin-bottom:20px;">PADROES, TENDENCIAS, AMEACAS E CAUSALIDADES</div>''', unsafe_allow_html=True)
+    from datetime import timedelta
+    import numpy as np
 
-    # Prepara dados base
+    st.markdown('''<div style="font-weight:800; font-size:26px; color:#3D2B1F; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:4px;">Inteligencia & Predicao</div>
+    <div style="font-size:13px; color:#8B9A2E; letter-spacing:0.1em; margin-bottom:20px;">DRIVERS DE REPUTACAO, PROJECOES E RISCO PREDITIVO</div>''', unsafe_allow_html=True)
+
+    # Dados base
     df_perf_c = df_perf[df_perf["restaurant"] != "nan"].copy()
     df_perf_c["filial_curta"] = df_perf_c["restaurant"].str.replace("Olive Garden - ", "", regex=False)
     df_perf_c["periodo_curto"] = df_perf_c["periodo"].str.extract(r"(FW\d+ to FW\d+)")
@@ -1604,15 +1605,13 @@ elif aba_sel == "Correlacoes":
     rep_pub = df.groupby("filial").agg(nota_media=("nota", "mean"), pct_pos=("sentimento", lambda x: (x == "Positivo").sum() / len(x) * 100)).reset_index()
     rep_pub["score_externo"] = (((rep_pub["nota_media"] - 1) / 4) * 40 + rep_pub["pct_pos"] * 0.6).clip(0, 100).round(1)
     rep_pub["filial_curta"] = rep_pub["filial"].str.replace("Olive Garden - ", "", regex=False)
-    df_v_c = df_ifood_vendas[df_ifood_vendas["logistica"] == "Entrega parceira"].copy()
-    df_v_c["filial_curta"] = df_v_c["filial"].str.replace("Olive Garden - ", "", regex=False)
 
     # BLOCO 1 — Radar de Saude da Rede
     with st.container(border=True):
         st.markdown('<div class="section-title">Radar de Saude da Rede</div>', unsafe_allow_html=True)
         st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Semaforo por filial cruzando GSS interno + Reputacao publica + Sentimento iFood. Identifica quem esta bem, em risco ou em queda.</div>', unsafe_allow_html=True)
         if len(gss_atual) > 0:
-            saude = rep_pub.merge(gss_atual[["filial_curta", "overall_experience", "service", "taste", "speed_of_service"]], on="filial_curta", how="left")
+            saude = rep_pub.merge(gss_atual[["filial_curta","overall_experience","service","taste","speed_of_service"]], on="filial_curta", how="left")
             sent_ifood = df[df["plataforma"] == "iFood"].groupby("filial").agg(pct_pos_if=("sentimento", lambda x: (x=="Positivo").sum()/len(x)*100)).reset_index()
             sent_ifood["filial_curta"] = sent_ifood["filial"].str.replace("Olive Garden - ", "", regex=False)
             saude = saude.merge(sent_ifood[["filial_curta","pct_pos_if"]], on="filial_curta", how="left")
@@ -1637,100 +1636,158 @@ elif aba_sel == "Correlacoes":
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # BLOCO 2 — Tendencias e Alertas GSS
+    # BLOCO 2 — Drivers de Reputacao com R2
     with st.container(border=True):
-        st.markdown('<div class="section-title">Tendencias GSS — Alertas por Dimensao</div>', unsafe_allow_html=True)
-        st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Evolucao de cada dimensao ao longo dos periodos. Dimensoes em queda consistente requerem acao imediata.</div>', unsafe_allow_html=True)
-        if len(df_perf_c["periodo_curto"].dropna().unique()) > 1:
-            metricas_t = {"overall_experience": "Exp. Geral", "value": "Valor", "service": "Atendimento", "taste": "Sabor", "speed_of_service": "Velocidade", "clean": "Limpeza", "soup_salad_refill": "Refil Sopa", "breadstick_refill": "Refil Bread"}
-            trend_df = df_perf_c.groupby("periodo_curto")[list(metricas_t.keys())].mean().reset_index().sort_values("periodo_curto")
-            alertas = []
-            for col, lbl in metricas_t.items():
-                if len(trend_df) >= 2:
-                    delta = trend_df[col].iloc[-1] - trend_df[col].iloc[0]
-                    delta_recente = trend_df[col].iloc[-1] - trend_df[col].iloc[-2]
-                    if delta < -2 or delta_recente < -1.5:
-                        alertas.append({"dim": lbl, "delta": delta, "delta_rec": delta_recente, "tipo": "ALERTA"})
-                    elif delta > 2:
-                        alertas.append({"dim": lbl, "delta": delta, "delta_rec": delta_recente, "tipo": "POSITIVO"})
-                    else:
-                        alertas.append({"dim": lbl, "delta": delta, "delta_rec": delta_recente, "tipo": "ESTAVEL"})
-            col_a1, col_a2 = st.columns([1, 2])
-            with col_a1:
-                for a in sorted(alertas, key=lambda x: x["delta"]):
-                    cor_a = VERMELHO if a["tipo"] == "ALERTA" else "#2e6b3e" if a["tipo"] == "POSITIVO" else "#B8923A"
-                    icone_a = "▼" if a["tipo"] == "ALERTA" else "▲" if a["tipo"] == "POSITIVO" else "—"
-                    st.markdown(f'<div style="padding:8px 0; border-bottom:1px solid #e8ddc8; display:flex; justify-content:space-between; align-items:center;"><span style="font-size:12px; color:#3D2B1F; font-weight:600;">{a["dim"]}</span><span style="font-size:12px; color:{cor_a}; font-weight:700;">{icone_a} {a["delta"]:+.1f}%</span></div>', unsafe_allow_html=True)
-            with col_a2:
-                fig_trend = go.Figure()
-                for col, lbl in metricas_t.items():
-                    delta = trend_df[col].iloc[-1] - trend_df[col].iloc[0] if len(trend_df) > 1 else 0
-                    cor_line = VERMELHO if delta < -2 else "#2e6b3e" if delta > 2 else "#B8923A"
-                    fig_trend.add_trace(go.Scatter(x=trend_df["periodo_curto"], y=trend_df[col].round(1), mode="lines+markers", name=f"{lbl} ({delta:+.1f}%)", line=dict(color=cor_line, width=2), marker=dict(size=6)))
-                fig_trend.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), xaxis=dict(tickfont=dict(family="Nunito", size=10, color=MARROM)), yaxis=dict(range=[60,105], showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=10, color=MARROM)), legend=dict(font=dict(family="Nunito", size=9, color=MARROM), orientation="h", yanchor="bottom", y=1.02), font=dict(family="Nunito"), height=320)
-                st.plotly_chart(fig_trend, use_container_width=True, key="fig_trend_c")
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # BLOCO 3 — Padroes de Causalidade
-    with st.container(border=True):
-        st.markdown('<div class="section-title">Padroes de Causalidade</div>', unsafe_allow_html=True)
-        st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Correlacoes entre dimensoes internas e percepcao publica. Identifica o que mais impacta a reputacao.</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Drivers de Reputacao — O que Move a Agulha</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Correlacao estatistica (Pearson) e poder explicativo (R²) entre cada dimensao GSS e o score de reputacao publica. Quanto maior o R², mais essa dimensao explica a reputacao.</div>', unsafe_allow_html=True)
         if len(gss_atual) > 0 and len(rep_pub) > 0:
-            caus_df = rep_pub.merge(gss_atual[["filial_curta","overall_experience","service","taste","speed_of_service","value"]], on="filial_curta", how="left").dropna()
-            col_c1, col_c2, col_c3 = st.columns(3)
-            dims = [("service","Atendimento vs Reputacao","Atendimento GSS"),("taste","Sabor vs Reputacao","Sabor GSS"),("speed_of_service","Velocidade vs Reputacao","Velocidade GSS")]
-            for col_c, (dim, titulo, xlabel) in zip([col_c1,col_c2,col_c3], dims):
-                with col_c:
-                    fig_c = go.Figure(go.Scatter(x=caus_df[dim], y=caus_df["score_externo"], mode="markers+text", text=caus_df["filial_curta"], textposition="top center", textfont=dict(family="Nunito", size=9, color=MARROM), marker=dict(size=12, color=VERDE, opacity=0.8)))
-                    fig_c.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=30,b=10,l=10,r=10), title=dict(text=titulo, font=dict(family="Nunito", size=11, color=MARROM), x=0.5), xaxis=dict(title=xlabel, tickfont=dict(family="Nunito", size=9, color=MARROM), gridcolor="#E8DCC8"), yaxis=dict(title="Reputacao Publica", tickfont=dict(family="Nunito", size=9, color=MARROM), gridcolor="#E8DCC8"), font=dict(family="Nunito"), height=280)
-                    st.plotly_chart(fig_c, use_container_width=True, key=f"fig_caus_{dim}")
+            dims_driver = {"service": "Atendimento", "taste": "Sabor", "speed_of_service": "Velocidade", "value": "Valor", "clean": "Limpeza", "overall_experience": "Exp. Geral"}
+            caus_df = rep_pub.merge(gss_atual[["filial_curta"] + list(dims_driver.keys())], on="filial_curta", how="left").dropna()
+            if len(caus_df) >= 3:
+                drivers = []
+                for col, lbl in dims_driver.items():
+                    x = caus_df[col].values
+                    y = caus_df["score_externo"].values
+                    if np.std(x) > 0 and np.std(y) > 0:
+                        pearson = np.corrcoef(x, y)[0, 1]
+                        r2 = pearson ** 2
+                        m, b = np.polyfit(x, y, 1)
+                        drivers.append({"dim": lbl, "col": col, "pearson": pearson, "r2": r2, "m": m, "b": b})
+                drivers = sorted(drivers, key=lambda x: x["r2"], reverse=True)
+
+                # Ranking de drivers
+                col_rank, col_scatters = st.columns([1, 2])
+                with col_rank:
+                    st.markdown('<div style="font-size:11px; font-weight:700; color:#8B9A2E; margin-bottom:12px;">Ranking por poder explicativo (R²)</div>', unsafe_allow_html=True)
+                    for i, d in enumerate(drivers):
+                        pct = int(d["r2"] * 100)
+                        cor_r = "#2e6b3e" if pct >= 60 else "#B8923A" if pct >= 30 else "#8B7A5A"
+                        dir_corr = "▲ positiva" if d["pearson"] > 0 else "▼ negativa"
+                        st.markdown(f'''<div style="padding:10px 0; border-bottom:1px solid #e8ddc8;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                <span style="font-size:12px; font-weight:700; color:#3D2B1F;">#{i+1} {d["dim"]}</span>
+                                <span style="font-size:12px; font-weight:800; color:{cor_r};">R² {pct}%</span>
+                            </div>
+                            <div style="background:#e8ddc8; border-radius:4px; height:6px; margin-bottom:4px;">
+                                <div style="background:{cor_r}; width:{pct}%; height:6px; border-radius:4px;"></div>
+                            </div>
+                            <div style="font-size:10px; color:#8B7A5A;">Pearson: {d["pearson"]:+.2f} — correlacao {dir_corr}</div>
+                        </div>''', unsafe_allow_html=True)
+
+                with col_scatters:
+                    top3 = drivers[:3]
+                    fig_drv = go.Figure()
+                    cores_drv = [VERDE, "#B8923A", "#4D3321"]
+                    for i, d in enumerate(top3):
+                        x_vals = caus_df[d["col"]].values
+                        y_vals = caus_df["score_externo"].values
+                        x_line = np.linspace(x_vals.min(), x_vals.max(), 50)
+                        y_line = d["m"] * x_line + d["b"]
+                        fig_drv.add_trace(go.Scatter(
+                            x=x_vals, y=y_vals, mode="markers+text",
+                            name=d["dim"],
+                            text=caus_df["filial_curta"],
+                            textposition="top center",
+                            textfont=dict(family="Nunito", size=8, color=MARROM),
+                            marker=dict(size=10, color=cores_drv[i], opacity=0.85),
+                            visible=(i == 0)
+                        ))
+                        fig_drv.add_trace(go.Scatter(
+                            x=x_line, y=y_line, mode="lines",
+                            name=f"Tendencia {d['dim']}",
+                            line=dict(color=cores_drv[i], width=2, dash="dash"),
+                            showlegend=False,
+                            visible=(i == 0)
+                        ))
+                    buttons_drv = []
+                    for i, d in enumerate(top3):
+                        vis = [False] * len(top3) * 2
+                        vis[i*2] = True
+                        vis[i*2+1] = True
+                        buttons_drv.append(dict(label=d["dim"], method="update", args=[{"visible": vis}, {"title": f'{d["dim"]} vs Reputacao Publica (R²={int(d["r2"]*100)}%)'}]))
+                    fig_drv.update_layout(
+                        updatemenus=[dict(type="buttons", direction="right", x=0, y=1.15, buttons=buttons_drv, bgcolor="#e8ddc8", bordercolor=VERDE, font=dict(family="Nunito", size=10, color=MARROM))],
+                        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                        margin=dict(t=60,b=10,l=10,r=10),
+                        xaxis=dict(title="Score GSS (%)", tickfont=dict(family="Nunito", size=10, color=MARROM), gridcolor="#E8DCC8"),
+                        yaxis=dict(title="Reputacao Publica", tickfont=dict(family="Nunito", size=10, color=MARROM), gridcolor="#E8DCC8"),
+                        font=dict(family="Nunito"), height=320,
+                        title=dict(text=f'{top3[0]["dim"]} vs Reputacao Publica (R²={int(top3[0]["r2"]*100)}%)', font=dict(family="Nunito", size=11, color=MARROM), x=0.5)
+                    )
+                    st.plotly_chart(fig_drv, use_container_width=True, key="fig_drivers_r2")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # BLOCO 4 — Sazonalidade iFood
+    # BLOCO 3 — Score Preditivo de Risco
     with st.container(border=True):
-        st.markdown('<div class="section-title">Sazonalidade iFood</div>', unsafe_allow_html=True)
-        st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Padroes de demanda por dia da semana e horario. Identifica concentracao operacional e oportunidades.</div>', unsafe_allow_html=True)
-        col_s1, col_s2 = st.columns(2)
-        with col_s1:
-            ordem_dias = ["Segunda","Terca","Quarta","Quinta","Sexta","Sabado","Domingo"]
-            df_dias_c = df_ifood_dias.copy()
-            df_dias_c["dia_norm"] = df_dias_c["dia_semana"].str.normalize("NFKD").str.encode("ascii","ignore").str.decode("ascii").str.strip()
-            df_dias_agg = df_dias_c.groupby("dia_norm")["pedidos"].sum().reset_index()
-            df_dias_agg = df_dias_agg.set_index("dia_norm").reindex([d for d in ordem_dias if d in df_dias_agg["dia_norm"].values]).reset_index()
-            fig_dias_c = go.Figure(go.Bar(x=df_dias_agg["dia_norm"], y=df_dias_agg["pedidos"], marker_color=[VERDE if v == df_dias_agg["pedidos"].max() else "#B8923A" if v >= df_dias_agg["pedidos"].quantile(0.7) else "#D8CFC0" for v in df_dias_agg["pedidos"]], text=df_dias_agg["pedidos"], textposition="outside", textfont=dict(family="Nunito", size=11, color=MARROM)))
-            fig_dias_c.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=30,b=10,l=10,r=10), title=dict(text="Pedidos por Dia da Semana (acumulado)", font=dict(family="Nunito", size=11, color=MARROM), x=0.5), xaxis=dict(tickfont=dict(family="Nunito", size=10, color=MARROM)), yaxis=dict(showgrid=False), font=dict(family="Nunito"), height=280)
-            st.plotly_chart(fig_dias_c, use_container_width=True, key="fig_dias_c")
-        with col_s2:
-            df_hor_c = df_ifood_horarios.groupby(["periodo_semana","horario"])["pedidos"].sum().reset_index()
-            if len(df_hor_c) > 0:
-                df_hor_piv_c = df_hor_c.pivot(index="horario", columns="periodo_semana", values="pedidos").fillna(0)
-                fig_hor_c = go.Figure(data=go.Heatmap(z=df_hor_piv_c.values, x=df_hor_piv_c.columns.tolist(), y=df_hor_piv_c.index.tolist(), colorscale=[[0,"#F5F0E8"],[0.5,"#B8923A"],[1,VERDE]], texttemplate="%{z:.0f}", textfont=dict(family="Nunito", size=10)))
-                fig_hor_c.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=30,b=10,l=10,r=10), title=dict(text="Horario de Pico Acumulado", font=dict(family="Nunito", size=11, color=MARROM), x=0.5), xaxis=dict(tickfont=dict(family="Nunito", size=10, color=MARROM)), yaxis=dict(tickfont=dict(family="Nunito", size=10, color=MARROM)), font=dict(family="Nunito"), height=280, coloraxis_showscale=False)
-                st.plotly_chart(fig_hor_c, use_container_width=True, key="fig_hor_c")
+        st.markdown('<div class="section-title">Score Preditivo de Risco — Proximos 30 Dias</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Combina tendencia de vendas, trajetoria GSS e sentimento publico para identificar filiais com risco de deterioracao antes que os indicadores lagging sinalizem. Quanto maior o score, maior o risco.</div>', unsafe_allow_html=True)
+
+        @st.cache_data(ttl=3600)
+        def carregar_vendas_risco():
+            conn = get_conn()
+            df_r = pd.read_sql("SELECT data, filial, venda_salao, venda_ano1 FROM vendas_diarias ORDER BY data", conn)
+            conn.close()
+            return df_r
+
+        df_risco = carregar_vendas_risco()
+        df_risco["data"] = pd.to_datetime(df_risco["data"])
+        df_risco["filial_curta"] = df_risco["filial"].str.replace("Olive Garden - ", "", regex=False)
+        hoje_r = df_risco["data"].max()
+
+        scores_risco = []
+        for filial in sorted(df_risco["filial_curta"].unique()):
+            dff = df_risco[df_risco["filial_curta"] == filial].copy()
+            ult8 = dff[(dff["data"] >= hoje_r - timedelta(days=56)) & (dff["venda_salao"] > 0) & (dff["venda_ano1"] > 0)]
+            fator_venda = ult8["venda_salao"].sum() / ult8["venda_ano1"].sum() if len(ult8) > 0 and ult8["venda_ano1"].sum() > 0 else 1.0
+            risco_venda = max(0, (1 - fator_venda) * 100)
+            gss_row = gss_atual[gss_atual["filial_curta"] == filial] if len(gss_atual) > 0 else pd.DataFrame()
+            risco_gss = max(0, 100 - gss_row["overall_experience"].values[0]) if len(gss_row) > 0 else 20
+            rep_row = rep_pub[rep_pub["filial_curta"] == filial]
+            risco_rep = max(0, 100 - rep_row["score_externo"].values[0]) if len(rep_row) > 0 else 20
+            score_risco = (risco_venda * 0.5 + risco_gss * 0.3 + risco_rep * 0.2)
+            nivel = "ALTO" if score_risco >= 25 else "MEDIO" if score_risco >= 12 else "BAIXO"
+            cor_risco = VERMELHO if nivel == "ALTO" else "#B8923A" if nivel == "MEDIO" else "#2e6b3e"
+            scores_risco.append({"filial": filial, "score": round(score_risco, 1), "nivel": nivel, "cor": cor_risco, "fator_venda": fator_venda, "risco_gss": risco_gss, "risco_rep": risco_rep})
+
+        scores_risco = sorted(scores_risco, key=lambda x: x["score"], reverse=True)
+        col_r1, col_r2 = st.columns([1, 2])
+        with col_r1:
+            for r in scores_risco:
+                pct = min(int(r["score"] * 2), 100)
+                st.markdown(f'''<div style="padding:10px 0; border-bottom:1px solid #e8ddc8;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <span style="font-size:12px; font-weight:700; color:#3D2B1F;">{r["filial"]}</span>
+                        <span style="font-size:12px; font-weight:800; color:{r["cor"]};">{r["nivel"]} {r["score"]:.1f}</span>
+                    </div>
+                    <div style="background:#e8ddc8; border-radius:4px; height:6px; margin-bottom:4px;">
+                        <div style="background:{r["cor"]}; width:{pct}%; height:6px; border-radius:4px;"></div>
+                    </div>
+                    <div style="font-size:10px; color:#8B7A5A;">Vendas vs ano ant: {(r["fator_venda"]-1)*100:+.1f}% | GSS risco: {r["risco_gss"]:.0f} | Rep risco: {r["risco_rep"]:.0f}</div>
+                </div>''', unsafe_allow_html=True)
+        with col_r2:
+            fig_risco = go.Figure()
+            fig_risco.add_trace(go.Bar(
+                x=[r["filial"] for r in scores_risco],
+                y=[r["score"] for r in scores_risco],
+                marker_color=[r["cor"] for r in scores_risco],
+                text=[f'{r["nivel"]}\n{r["score"]:.1f}' for r in scores_risco],
+                textposition="outside",
+                textfont=dict(family="Nunito", size=10, color=MARROM)
+            ))
+            fig_risco.add_hline(y=25, line_dash="dash", line_color=VERMELHO, annotation_text="Risco Alto", annotation_font=dict(family="Nunito", size=9, color=VERMELHO))
+            fig_risco.add_hline(y=12, line_dash="dash", line_color="#B8923A", annotation_text="Risco Medio", annotation_font=dict(family="Nunito", size=9, color="#B8923A"))
+            fig_risco.update_layout(
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                margin=dict(t=20,b=10,l=10,r=10),
+                xaxis=dict(tickfont=dict(family="Nunito", size=10, color=MARROM)),
+                yaxis=dict(title="Score de Risco", showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=10), range=[0, 55]),
+                font=dict(family="Nunito"), height=320, showlegend=False
+            )
+            st.plotly_chart(fig_risco, use_container_width=True, key="fig_score_risco")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # BLOCO 5 — Divergencias Internas vs Externas
-    with st.container(border=True):
-        st.markdown('<div class="section-title">Divergencias — Percepcao Interna vs Externa</div>', unsafe_allow_html=True)
-        st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Onde a experiencia interna e a reputacao publica divergem. Sinal de alerta estrategico — o cliente esta saindo diferente do que a pesquisa indica.</div>', unsafe_allow_html=True)
-        if len(gss_atual) > 0 and len(rep_pub) > 0:
-            div_df = rep_pub.merge(gss_atual[["filial_curta","overall_experience"]], on="filial_curta", how="left").dropna()
-            div_df["divergencia"] = (div_df["overall_experience"] - div_df["score_externo"]).round(1)
-            div_df = div_df.sort_values("divergencia", ascending=False)
-            for _, row in div_df.iterrows():
-                div = row["divergencia"]
-                if div > 10:
-                    cor = "#2e6b3e"; icone = "▲ Interno ACIMA do publico"; msg = "Oportunidade: amplificar reputacao publica"
-                elif div < -10:
-                    cor = VERMELHO; icone = "▼ Publico ACIMA do interno"; msg = "Alerta: cliente insatisfeito nao aparece na pesquisa?"
-                else:
-                    cor = "#B8923A"; icone = "— Alinhado"; msg = "Percepcao interna e externa consistentes"
-                st.markdown(f'<div style="padding:10px 0; border-bottom:1px solid #e8ddc8;"><div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:13px; font-weight:700; color:#3D2B1F;">{row["filial_curta"]}</span><span style="font-size:12px; color:{cor}; font-weight:700;">{div:+.1f} pts — {icone}</span></div><div style="font-size:11px; color:#8B7A5A; margin-top:3px;">GSS: {row["overall_experience"]:.1f}% | Reputacao: {row["score_externo"]:.1f} | {msg}</div></div>', unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
 
     # BLOCO 6 — Projecao de Vendas 4 Semanas
     with st.container(border=True):
