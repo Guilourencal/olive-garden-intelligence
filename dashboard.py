@@ -1691,7 +1691,7 @@ Total comentarios: {total_social} | Sentimento positivo: {pct_pos_social:.1f}%
                         st.session_state.chat_history.append({"role": "assistant", "content": response.content[0].text})
                     st.rerun()
         with col_env2:
-            if st.button("🗑️ Limpar conversa", key="btn_limpar", use_container_width=False):
+            if st.button("🗑️ Limpar conversa", key="btn_limpar2", use_container_width=False):
                 st.session_state.chat_history = []
                 st.rerun()
         if st.button("🗑️ Limpar conversa", key="btn_limpar"):
