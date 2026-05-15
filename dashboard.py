@@ -1148,20 +1148,24 @@ elif aba_sel == "Vendas":
                     dias_realizados = df_mes_atual["data"].dt.day.max()
                     dias_restantes = dias_no_mes - dias_realizados
                     venda_realizada = df_mes_atual["venda_salao"].sum()
-                    # Modelo STL para os dias restantes
+                    # Modelo STL por filial
                     df_hist = df_vd[df_vd["filial_curta"].isin(filiais_sel) & (df_vd["venda_salao"] > 0)].copy()
-                    media_base = df_hist["venda_salao"].mean()
-                    fator_dow = df_hist.groupby(df_hist["data"].dt.dayofweek)["venda_salao"].mean() / media_base
-                    fator_mes_hist = df_hist.groupby(df_hist["data"].dt.month)["venda_salao"].mean() / media_base
-                    recente = df_hist[df_hist["data"] >= df_hist["data"].max() - pd.Timedelta(days=28)]
-                    fator_rec = recente["venda_salao"].mean() / media_base if len(recente) > 0 else 1.0
                     proj_restante = 0
-                    for d in range(dias_realizados + 1, dias_no_mes + 1):
-                        data_d = pd.Timestamp(ano_atual, mes_atual, d)
-                        dow_d = data_d.dayofweek
-                        f_dow = fator_dow.get(dow_d, 1.0)
-                        f_mes = fator_mes_hist.get(mes_atual, 1.0)
-                        proj_restante += media_base * f_dow * f_mes * fator_rec
+                    for fil in filiais_sel:
+                        dff_h = df_hist[df_hist["filial_curta"] == fil]
+                        if len(dff_h) < 30:
+                            continue
+                        media_fil = dff_h["venda_salao"].mean()
+                        fator_dow_fil = dff_h.groupby(dff_h["data"].dt.dayofweek)["venda_salao"].mean() / media_fil
+                        fator_mes_fil = dff_h.groupby(dff_h["data"].dt.month)["venda_salao"].mean() / media_fil
+                        recente_fil = dff_h[dff_h["data"] >= dff_h["data"].max() - pd.Timedelta(days=28)]
+                        fator_rec_fil = recente_fil["venda_salao"].mean() / media_fil if len(recente_fil) > 0 else 1.0
+                        for d in range(dias_realizados + 1, dias_no_mes + 1):
+                            data_d = pd.Timestamp(ano_atual, mes_atual, d)
+                            dow_d = data_d.dayofweek
+                            f_dow = fator_dow_fil.get(dow_d, 1.0)
+                            f_mes = fator_mes_fil.get(mes_atual, 1.0)
+                            proj_restante += media_fil * f_dow * f_mes * fator_rec_fil
                     proj_total = venda_realizada + proj_restante
                     budget_mes = df_mes_atual["meta_venda"].sum() / dias_realizados * dias_no_mes
                     pct_proj_budget = (proj_total / budget_mes - 1) * 100 if budget_mes > 0 else 0
