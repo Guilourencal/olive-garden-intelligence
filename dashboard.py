@@ -1313,61 +1313,92 @@ elif aba_sel == "Vendas":
         df_v["filial_curta"] = df_v["filial"].str.replace("Olive Garden - ", "", regex=False)
         periodos = sorted(df_v["periodo"].unique())
 
-        # Cards executivos
+        # Cards executivos iFood
         with st.container(border=True):
             st.markdown('<div class="section-title">Visao Executiva</div>', unsafe_allow_html=True)
-            cols_v = st.columns(len(periodos))
-            prev_fat = None
-            for idx, periodo in enumerate(periodos):
+            # Calcular dados por periodo
+            dados_periodos = []
+            for periodo in periodos:
                 df_per = df_v[df_v["periodo"] == periodo]
                 fat = df_per["faturamento"].sum()
                 ped = int(df_per["pedidos"].sum())
                 tkt = fat / ped if ped > 0 else 0
                 nov = int(df_per["novos_clientes"].sum())
-                mes = periodo.split("/")[1].strip()[:2] if "/" in periodo else periodo[:3]
-                mes_map = {"01":"Jan","02":"Fev","03":"Mar","04":"Abr","05":"Mai","06":"Jun","07":"Jul","08":"Ago","09":"Set","10":"Out","11":"Nov","12":"Dez"}
-                mes_label = mes_map.get(mes, periodo)
-                delta_txt = f" (+{((fat/prev_fat-1)*100):.1f}%)" if prev_fat and prev_fat > 0 else ""
-                prev_fat = fat
-                fat_fmt = f"R$ {fat:,.0f}".replace(",",".")
-                tkt_fmt = f"R$ {tkt:.0f}"
-                proj_html = ""
                 try:
                     partes = periodo.split("-")
                     d_ini = datetime.strptime(partes[0].strip(), "%d/%m/%Y")
                     d_fim = datetime.strptime(partes[1].strip(), "%d/%m/%Y")
                     dias_dec = (d_fim - d_ini).days + 1
                     dias_mes = calendar.monthrange(d_ini.year, d_ini.month)[1]
-                    if dias_dec < dias_mes:
-                        fat_proj = fat / dias_dec * dias_mes
-                        fat_proj_fmt = f"R$ {fat_proj:,.0f}".replace(",",".")
-                        ped_proj = int(ped / dias_dec * dias_mes)
-                        proj_html = f'''<div style="margin-top:12px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1);">
-                            <div style="font-size:9px; color:#B8923A; letter-spacing:2px; margin-bottom:6px;">PROJECAO MES COMPLETO ({dias_mes} dias)</div>
-                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                            <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:2px;">FATURAMENTO</div>
-                            <div style="font-size:14px; font-weight:700; color:#B8923A;">{fat_proj_fmt}</div></div>
-                            <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:2px;">PEDIDOS</div>
-                            <div style="font-size:14px; font-weight:700; color:#B8923A;">{ped_proj:,}</div></div>
-                            </div>
-                            <div style="font-size:9px; color:#8B7A5A; margin-top:4px;">Parcial: {dias_dec} de {dias_mes} dias</div>
-                            </div>'''
                 except:
-                    pass
-                with cols_v[idx]:
+                    dias_dec = 30
+                    dias_mes = 30
+                dados_periodos.append({"periodo": periodo, "fat": fat, "ped": ped, "tkt": tkt, "nov": nov, "dias_dec": dias_dec, "dias_mes": dias_mes})
+            # Card acumulado
+            fat_acum = df_v["faturamento"].sum()
+            ped_acum = int(df_v["pedidos"].sum())
+            tkt_acum = fat_acum / ped_acum if ped_acum > 0 else 0
+            nov_acum = int(df_v["novos_clientes"].sum())
+            mes_map = {"01":"Jan","02":"Fev","03":"Mar","04":"Abr","05":"Mai","06":"Jun","07":"Jul","08":"Ago","09":"Set","10":"Out","11":"Nov","12":"Dez"}
+            # Layout: acumulado + periodos
+            cols_v = st.columns([1.2] + [1]*len(periodos))
+            with cols_v[0]:
+                st.markdown(f'''<div style="background:#1a1209; border-radius:12px; padding:20px; color:#F5F0E8; margin-bottom:8px; border:1px solid #8B9A2E;">
+                    <div style="font-size:10px; letter-spacing:3px; color:#8B9A2E; text-transform:uppercase; margin-bottom:14px;">ACUMULADO</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+                    <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">FATURAMENTO</div>
+                    <div style="font-size:16px; font-weight:700;">R$ {fat_acum:,.0f}".replace(",",".")</div></div>
+                    <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">PEDIDOS</div>
+                    <div style="font-size:16px; font-weight:700;">{ped_acum:,}</div></div>
+                    <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">TICKET MEDIO</div>
+                    <div style="font-size:16px; font-weight:700; color:#8B9A2E;">R$ {tkt_acum:.0f}</div></div>
+                    <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">NOVOS CLIENTES</div>
+                    <div style="font-size:16px; font-weight:700; color:#8B9A2E;">{nov_acum:,}</div></div>
+                    </div></div>''', unsafe_allow_html=True)
+            for idx, dp in enumerate(dados_periodos):
+                mes_num = dp["periodo"].split("/")[1].strip()[:2] if "/" in dp["periodo"] else ""
+                mes_label = mes_map.get(mes_num, dp["periodo"][:3])
+                # Delta vs periodo anterior por dia (evita distorcao de mes parcial)
+                if idx > 0:
+                    prev = dados_periodos[idx-1]
+                    media_dia_atual = dp["fat"] / dp["dias_dec"] if dp["dias_dec"] > 0 else 0
+                    media_dia_prev = prev["fat"] / prev["dias_dec"] if prev["dias_dec"] > 0 else 0
+                    delta_pct = (media_dia_atual / media_dia_prev - 1) * 100 if media_dia_prev > 0 else 0
+                    sinal = "+" if delta_pct >= 0 else ""
+                    delta_txt = f" ({sinal}{delta_pct:.1f}% /dia)"
+                else:
+                    delta_txt = ""
+                # Projecao para mes parcial
+                proj_html = ""
+                if dp["dias_dec"] < dp["dias_mes"]:
+                    fat_proj = dp["fat"] / dp["dias_dec"] * dp["dias_mes"]
+                    ped_proj = int(dp["ped"] / dp["dias_dec"] * dp["dias_mes"])
+                    fat_proj_fmt = f"R$ {fat_proj:,.0f}".replace(",",".")
+                    proj_html = f'''<div style="margin-top:12px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1);">
+                        <div style="font-size:9px; color:#B8923A; letter-spacing:2px; margin-bottom:6px;">PROJECAO MES COMPLETO ({dp["dias_mes"]} dias)</div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:2px;">FATURAMENTO</div>
+                        <div style="font-size:14px; font-weight:700; color:#B8923A;">{fat_proj_fmt}</div></div>
+                        <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:2px;">PEDIDOS</div>
+                        <div style="font-size:14px; font-weight:700; color:#B8923A;">{ped_proj:,}</div></div>
+                        </div>
+                        <div style="font-size:9px; color:#8B7A5A; margin-top:4px;">Parcial: {dp["dias_dec"]} de {dp["dias_mes"]} dias</div>
+                        </div>'''
+                fat_fmt = f"R$ {dp['fat']:,.0f}".replace(",",".")
+                tkt_fmt = f"R$ {dp['tkt']:.0f}"
+                with cols_v[idx+1]:
                     st.markdown(f'''<div style="background:#3D2B1F; border-radius:12px; padding:20px; color:#F5F0E8; margin-bottom:8px;">
                         <div style="font-size:10px; letter-spacing:3px; color:#8B9A2E; text-transform:uppercase; margin-bottom:14px;">{mes_label}{delta_txt}</div>
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
                         <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">FATURAMENTO</div>
                         <div style="font-size:16px; font-weight:700;">{fat_fmt}</div></div>
                         <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">PEDIDOS</div>
-                        <div style="font-size:16px; font-weight:700;">{ped:,}</div></div>
+                        <div style="font-size:16px; font-weight:700;">{dp["ped"]:,}</div></div>
                         <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">TICKET MEDIO</div>
                         <div style="font-size:16px; font-weight:700; color:#8B9A2E;">{tkt_fmt}</div></div>
                         <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">NOVOS CLIENTES</div>
-                        <div style="font-size:16px; font-weight:700; color:#8B9A2E;">{nov:,}</div></div>
+                        <div style="font-size:16px; font-weight:700; color:#8B9A2E;">{dp["nov"]:,}</div></div>
                         </div>{proj_html}</div>''', unsafe_allow_html=True)
-
         st.markdown("<br>", unsafe_allow_html=True)
         periodo_sel_v = st.selectbox("Periodo:", periodos, index=len(periodos)-1, key="periodo_v")
         df_vp = df_v[df_v["periodo"] == periodo_sel_v]
