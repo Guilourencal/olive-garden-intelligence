@@ -1148,8 +1148,20 @@ elif aba_sel == "Vendas":
                     dias_realizados = df_mes_atual["data"].dt.day.max()
                     dias_restantes = dias_no_mes - dias_realizados
                     venda_realizada = df_mes_atual["venda_salao"].sum()
-                    media_diaria = venda_realizada / dias_realizados if dias_realizados > 0 else 0
-                    proj_restante = media_diaria * dias_restantes
+                    # Modelo STL para os dias restantes
+                    df_hist = df_vd[df_vd["filial_curta"].isin(filiais_sel) & (df_vd["venda_salao"] > 0)].copy()
+                    media_base = df_hist["venda_salao"].mean()
+                    fator_dow = df_hist.groupby(df_hist["data"].dt.dayofweek)["venda_salao"].mean() / media_base
+                    fator_mes_hist = df_hist.groupby(df_hist["data"].dt.month)["venda_salao"].mean() / media_base
+                    recente = df_hist[df_hist["data"] >= df_hist["data"].max() - pd.Timedelta(days=28)]
+                    fator_rec = recente["venda_salao"].mean() / media_base if len(recente) > 0 else 1.0
+                    proj_restante = 0
+                    for d in range(dias_realizados + 1, dias_no_mes + 1):
+                        data_d = pd.Timestamp(ano_atual, mes_atual, d)
+                        dow_d = data_d.dayofweek
+                        f_dow = fator_dow.get(dow_d, 1.0)
+                        f_mes = fator_mes_hist.get(mes_atual, 1.0)
+                        proj_restante += media_base * f_dow * f_mes * fator_rec
                     proj_total = venda_realizada + proj_restante
                     budget_mes = df_mes_atual["meta_venda"].sum() / dias_realizados * dias_no_mes
                     pct_proj_budget = (proj_total / budget_mes - 1) * 100 if budget_mes > 0 else 0
