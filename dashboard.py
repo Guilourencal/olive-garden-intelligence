@@ -1303,14 +1303,28 @@ elif aba_sel == "Vendas":
 
         # HDC por filial
         with st.container(border=True):
-            st.markdown('<div class="section-title">Produtividade por Assento — Venda por HDC</div>', unsafe_allow_html=True)
-            st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Media de venda por assento disponivel. Indica eficiencia de ocupacao e produtividade do salao.</div>', unsafe_allow_html=True)
-            df_hdc = df_vd_f.groupby("filial_curta")["venda_por_hdc"].mean().reset_index().sort_values("venda_por_hdc", ascending=False)
-            df_hdc_total = df_hdc["venda_por_hdc"].mean()
-            fig_hdc = go.Figure(go.Bar(x=df_hdc["filial_curta"], y=df_hdc["venda_por_hdc"], marker_color=[VERDE if v >= df_hdc_total else "#B8923A" for v in df_hdc["venda_por_hdc"]], text=df_hdc["venda_por_hdc"].apply(lambda v: f"R$ {v:.0f}"), textposition="outside", textfont=dict(family="Nunito", size=12, color=MARROM)))
-            fig_hdc.add_hline(y=df_hdc_total, line_dash="dot", line_color="#B8923A", annotation_text=f"Media: R$ {df_hdc_total:.0f}", annotation_font=dict(family="Nunito", size=11, color="#B8923A"))
-            fig_hdc.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=40), xaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM)), yaxis=dict(showgrid=False), font=dict(family="Nunito"), height=280)
-            st.plotly_chart(fig_hdc, use_container_width=True, key="fig_hdc_vd")
+            st.markdown('<div class="section-title">Produtividade — Venda por HDC e por Assento</div>', unsafe_allow_html=True)
+            ASSENTOS = {"Aricanduva": 174, "Center Norte": 149, "Dom Pedro": 241, "Guarulhos GRU2": 242, "Guarulhos GRU3": 124, "Morumbi": 288}
+            df_hdc = df_vd_f.groupby("filial_curta").agg(venda_por_hdc=("venda_por_hdc","mean"), venda_salao=("venda_salao","sum")).reset_index()
+            df_hdc["nr_assentos"] = df_hdc["filial_curta"].map(ASSENTOS)
+            df_hdc["venda_por_assento"] = (df_hdc["venda_salao"] / df_hdc["nr_assentos"]).round(0)
+            df_hdc = df_hdc.sort_values("venda_por_hdc", ascending=False)
+            col_hdc1, col_hdc2 = st.columns(2)
+            with col_hdc1:
+                st.markdown('<div style="font-size:11px; font-weight:700; color:#8B9A2E; margin-bottom:8px;">Receita por Funcionario (HDC)</div>', unsafe_allow_html=True)
+                media_hdc = df_hdc["venda_por_hdc"].mean()
+                fig_hdc = go.Figure(go.Bar(x=df_hdc["filial_curta"], y=df_hdc["venda_por_hdc"], marker_color=[VERDE if v >= media_hdc else "#B8923A" for v in df_hdc["venda_por_hdc"]], text=df_hdc["venda_por_hdc"].apply(lambda v: f"R$ {v:.0f}"), textposition="outside", textfont=dict(family="Nunito", size=11, color=MARROM)))
+                fig_hdc.add_hline(y=media_hdc, line_dash="dot", line_color="#B8923A", annotation_text=f"Media: R$ {media_hdc:.0f}", annotation_font=dict(family="Nunito", size=10, color="#B8923A"))
+                fig_hdc.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=40), xaxis=dict(tickfont=dict(family="Nunito", size=10, color=MARROM)), yaxis=dict(showgrid=False), font=dict(family="Nunito"), height=260)
+                st.plotly_chart(fig_hdc, use_container_width=True, key="fig_hdc_vd")
+            with col_hdc2:
+                st.markdown('<div style="font-size:11px; font-weight:700; color:#8B9A2E; margin-bottom:8px;">Receita por Assento</div>', unsafe_allow_html=True)
+                df_hdc2 = df_hdc.sort_values("venda_por_assento", ascending=False)
+                media_ass = df_hdc2["venda_por_assento"].mean()
+                fig_ass = go.Figure(go.Bar(x=df_hdc2["filial_curta"], y=df_hdc2["venda_por_assento"], marker_color=[VERDE if v >= media_ass else "#B8923A" for v in df_hdc2["venda_por_assento"]], text=df_hdc2["venda_por_assento"].apply(lambda v: f"R$ {v:.0f}"), textposition="outside", textfont=dict(family="Nunito", size=11, color=MARROM)))
+                fig_ass.add_hline(y=media_ass, line_dash="dot", line_color="#B8923A", annotation_text=f"Media: R$ {media_ass:.0f}", annotation_font=dict(family="Nunito", size=10, color="#B8923A"))
+                fig_ass.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=40), xaxis=dict(tickfont=dict(family="Nunito", size=10, color=MARROM)), yaxis=dict(showgrid=False), font=dict(family="Nunito"), height=260)
+                st.plotly_chart(fig_ass, use_container_width=True, key="fig_ass_vd")
     elif visao_sel == "iFood":
         import calendar
         from datetime import datetime
