@@ -1304,7 +1304,7 @@ elif aba_sel == "Vendas":
         # HDC por filial
         with st.container(border=True):
             st.markdown('<div class="section-title">Produtividade — Venda por HDC e por Assento</div>', unsafe_allow_html=True)
-            ASSENTOS = {"Aricanduva": 174, "Center Norte": 149, "Dom Pedro": 241, "Guarulhos GRU2": 242, "Guarulhos GRU3": 124, "Morumbi": 288}
+            ASSENTOS = {"Aricanduva": 174, "Center Norte": 173, "Dom Pedro": 241, "Guarulhos GRU2": 212, "Guarulhos GRU3": 124, "Morumbi": 300}
             df_hdc = df_vd_f.groupby("filial_curta").agg(venda_por_hdc=("venda_por_hdc","mean"), venda_salao=("venda_salao","sum")).reset_index()
             df_hdc["nr_assentos"] = df_hdc["filial_curta"].map(ASSENTOS)
             df_hdc["venda_por_assento"] = (df_hdc["venda_salao"] / df_hdc["nr_assentos"]).round(0)
