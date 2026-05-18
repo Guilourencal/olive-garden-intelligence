@@ -1305,7 +1305,14 @@ elif aba_sel == "Vendas":
         with st.container(border=True):
             st.markdown('<div class="section-title">Produtividade — Venda por HDC e por Assento</div>', unsafe_allow_html=True)
             ASSENTOS = {"Aricanduva": 174, "Center Norte": 173, "Dom Pedro": 241, "Guarulhos GRU2": 212, "Guarulhos GRU3": 124, "Morumbi": 300}
-            df_hdc = df_vd_f.groupby("filial_curta").agg(venda_por_hdc=("venda_por_hdc","mean"), venda_salao=("venda_salao","sum")).reset_index()
+            from datetime import date as _date
+            _hoje = _date.today()
+            df_mes_hdc = df_vd[
+                (df_vd["data"].dt.month == _hoje.month) &
+                (df_vd["data"].dt.year == _hoje.year) &
+                df_vd["filial_curta"].isin(filiais_sel)
+            ].copy()
+            df_hdc = df_mes_hdc.groupby("filial_curta").agg(venda_por_hdc=("venda_por_hdc","mean"), venda_salao=("venda_salao","sum")).reset_index()
             df_hdc["nr_assentos"] = df_hdc["filial_curta"].map(ASSENTOS)
             df_hdc["venda_por_assento"] = (df_hdc["venda_salao"] / df_hdc["nr_assentos"]).round(0)
             df_hdc = df_hdc.sort_values("venda_por_hdc", ascending=False)
