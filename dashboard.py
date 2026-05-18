@@ -1070,7 +1070,9 @@ elif aba_sel == "Vendas":
             meses_ord = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"]
             meses_disp = [m for m in meses_ord if m in df_vd[df_vd["ano"].isin(anos_sel)]["mes"].str[:3].str.lower().unique()]
             meses_sel = st.multiselect("Mes:", meses_disp, default=[], key="mes_vd")
-            filiais_vd = ["Todas"] + sorted(df_vd["filial_curta"].unique())
+            if not meses_sel:
+                meses_sel = meses_disp
+        with col_f3:
             filiais_disponiveis = sorted(df_vd["filial_curta"].unique())
             filiais_sel = st.multiselect("Filial:", filiais_disponiveis, default=[], key="filial_vd")
             if not filiais_sel:
