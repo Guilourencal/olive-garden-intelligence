@@ -1060,16 +1060,16 @@ elif aba_sel == "Vendas":
         col_f1, col_f2, col_f3 = st.columns(3)
         with col_f1:
             anos = sorted(df_vd["ano"].dropna().unique().astype(int), reverse=True)
-            anos = sorted(df_vd["ano"].dropna().unique().astype(int), reverse=True)
             if not list(anos):
-                st.warning("Sem dados de vendas disponíveis.")
+                st.warning("Sem dados de vendas disponiveis.")
                 st.stop()
             anos_sel = st.multiselect("Ano:", anos, default=[anos[0]], key="ano_vd")
+            if not anos_sel:
+                anos_sel = anos
+        with col_f2:
+            meses_ord = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"]
             meses_disp = [m for m in meses_ord if m in df_vd[df_vd["ano"].isin(anos_sel)]["mes"].str[:3].str.lower().unique()]
             meses_sel = st.multiselect("Mes:", meses_disp, default=[], key="mes_vd")
-            if not meses_sel:
-                meses_sel = meses_disp
-        with col_f3:
             filiais_vd = ["Todas"] + sorted(df_vd["filial_curta"].unique())
             filiais_disponiveis = sorted(df_vd["filial_curta"].unique())
             filiais_sel = st.multiselect("Filial:", filiais_disponiveis, default=[], key="filial_vd")
