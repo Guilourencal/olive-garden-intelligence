@@ -1176,6 +1176,7 @@ elif aba_sel == "Vendas":
                         fator_mes_fil = dff_clean.groupby("mes_n")["venda_salao"].mean() / media_fil
                         recente_fil = dff_clean[dff_clean["data"] >= dff_clean["data"].max() - pd.Timedelta(days=28)]
                         fator_rec_fil = recente_fil["venda_salao"].mean() / media_fil if len(recente_fil) > 0 else 1.0
+                        fator_rec_fil = float(np.clip(fator_rec_fil, 0.85, 1.15))
                         for d in range(dias_realizados + 1, dias_no_mes + 1):
                             data_d = pd.Timestamp(ano_atual, mes_atual, d)
                             dow_d = data_d.dayofweek
@@ -1988,7 +1989,8 @@ elif aba_sel == "Correlacoes":
             coef = np.polyfit(t2["t"], t2["venda_salao"], 1)
             recente = treino[treino["data"] >= hoje_proj - timedelta(days=28)]
             fator_rec = recente["venda_salao"].mean() / media_base if len(recente) > 0 else 1.0
-            fator_a1_med = (treino["venda_salao"] / treino["venda_ano1"]).replace([np.inf,-np.inf], np.nan).dropna().median()
+            fator_rec = recente["venda_salao"].mean() / media_base if len(recente) > 0 else 1.0
+            fator_rec = float(np.clip(fator_rec, 0.85, 1.15))
             ult12 = treino[treino["data"] >= hoje_proj - timedelta(days=84)]
             desvio_dow = ult12.groupby("dow")["venda_salao"].std().to_dict()
             dias_proj = []
