@@ -1831,6 +1831,24 @@ elif aba_sel == "Correlacoes":
         st.markdown('<div class="section-title">Score Preditivo de Risco — Proximos 30 Dias</div>', unsafe_allow_html=True)
         st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Combina tendencia de vendas, trajetoria GSS e sentimento publico para identificar filiais com risco de deterioracao antes que os indicadores lagging sinalizem. Quanto maior o score, maior o risco.</div>', unsafe_allow_html=True)
 
+        with st.expander("Metodologia do Score Preditivo de Risco"):
+            st.markdown("""
+**O que e?** Um indice composto (0-100) que combina tres dimensoes de saude operacional para antecipar deterioracao antes que ela apareca nos indicadores tradicionais.
+
+**Composicao:**
+- **Tendencia de Vendas (50%)** — compara a media diaria das ultimas 8 semanas vs o mesmo periodo do ano anterior. Queda > 5% gera risco proporcional.
+- **GSS Experiencia Interna (30%)** — usa o % de insatisfacao do periodo mais recente. Quanto menor o GSS, maior o risco.
+- **Reputacao Publica (20%)** — complemento do indice de reputacao publico. Reputacao degradada amplifica o risco.
+
+**Niveis de risco:**
+- Score < 12 — BAIXO: operacao saudavel, monitoramento padrao
+- Score 12-25 — MEDIO: atencao requerida, investigar causa raiz
+- Score > 25 — ALTO: acao imediata, risco real de deterioracao acelerada
+
+**Por que esses pesos?** Vendas e o indicador mais sensivel e de resposta mais rapida (dados diarios). GSS captura a experiencia antes que vire review publico. Reputacao e o mais lagging dos tres, por isso tem menor peso.
+
+**Limitacoes:** base historica de ~17 meses — pesos e limiares serao refinados conforme mais dados acumulam. Nao prevê eventos externos (feriados, obras, eventos no shopping).
+            """)
         @st.cache_data(ttl=3600)
         def carregar_vendas_risco():
             conn = get_conn()
