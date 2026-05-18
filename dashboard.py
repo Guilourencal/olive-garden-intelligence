@@ -894,8 +894,11 @@ elif aba_sel == "Pesquisa":
         if len(df_perf) > 0:
             df_perf_f = df_perf[df_perf["restaurant"] != "nan"].copy()
             df_perf_f["filial_curta"] = df_perf_f["restaurant"].str.replace("Olive Garden - ", "")
+            df_perf_f["periodo_curto"] = df_perf_f["periodo"].str.extract(r"(FW\d+ to FW\d+)")
+            ultimo_periodo = df_perf_f["periodo_curto"].dropna().max()
+            df_perf_f = df_perf_f[df_perf_f["periodo_curto"] == ultimo_periodo]
             metricas = ["overall_experience", "value", "service", "taste", "speed_of_service", "clean", "soup_salad_refill", "breadstick_refill"]
-            labels = ["Experiência Geral", "Valor", "Atendimento", "Sabor", "Velocidade", "Limpeza", "Refil Sopa/Salada", "Refil Breadstick"]
+            labels = ["Experiencia Geral", "Valor", "Atendimento", "Sabor", "Velocidade", "Limpeza", "Refil Sopa/Salada", "Refil Breadstick"]
             pivot = df_perf_f.set_index("filial_curta")[metricas]
             fig_heat2 = go.Figure(data=go.Heatmap(
                 z=pivot.values,
