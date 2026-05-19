@@ -100,9 +100,9 @@ for pid, filial, data_alvo, proj in pendentes:
     filial_full = 'Olive Garden - ' + filial if not filial.startswith('Olive') else filial
     real_row = df[(df['filial'] == filial_full) & (df['data'].dt.date == data_alvo)]
     if len(real_row) > 0:
-        real = real_row['venda_salao'].values[0]
-        erro_abs = abs(proj - real)
-        erro_pct = (proj - real) / real * 100 if real > 0 else None
+        real = float(real_row["venda_salao"].values[0])
+        erro_abs = float(abs(proj - real))
+        erro_pct = float((proj - real) / real * 100) if real > 0 else None
         cur.execute('UPDATE projecoes_historico SET valor_realizado=%s, erro_absoluto=%s, erro_pct=%s WHERE id=%s',
                    (real, erro_abs, erro_pct, pid))
         atualizados += 1
