@@ -235,7 +235,7 @@ with st.sidebar:
     )
     st.markdown('<div style="height:1px; background:rgba(255,255,255,0.1); margin-bottom:10px;"></div>', unsafe_allow_html=True)
 
-    for aba in ["Reviews", "Social", "Pesquisa", "Correlacoes", "Vendas", "OlivIA"]:
+    for aba in ["Reviews", "Social", "Pesquisa", "Analises", "Vendas", "OlivIA"]:
         if st.button(aba, key=f"btn_{aba}", use_container_width=True):
             st.session_state.aba_sel = aba
             st.rerun()
@@ -952,7 +952,7 @@ elif aba_sel == "Pesquisa":
                 margin=dict(t=20, b=10, l=10, r=10),
                 legend=dict(font=dict(family="Nunito", size=11, color=MARROM), orientation="h", yanchor="bottom", y=1.02),
                 xaxis=dict(title="", tickfont=dict(family="Nunito", size=11, color=MARROM)),
-                yaxis=dict(title="% Topbox", range=[60, 105], showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=11, color=MARROM)),
+                yaxis=dict(title="% Topbox", range=[80, 100], showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=11, color=MARROM)),
                 font=dict(family="Nunito"),
                 height=400,
             )
@@ -989,7 +989,7 @@ elif aba_sel == "Pesquisa":
                     margin=dict(t=40, b=10, l=10, r=10),
                     legend=dict(font=dict(family="Nunito", size=9, color=MARROM), orientation="h", yanchor="bottom", y=-0.5),
                     xaxis=dict(tickfont=dict(family="Nunito", size=9, color=MARROM)),
-                    yaxis=dict(range=[60, 105], showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=9, color=MARROM)),
+                    yaxis=dict(range=[80, 100], showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=9, color=MARROM)),
                     height=280,
                     font=dict(family="Nunito"),
                 )
@@ -1780,7 +1780,7 @@ Total comentarios: {total_social} | Sentimento positivo: {pct_pos_social:.1f}%
             st.session_state.chat_history = []
             st.rerun()
 
-elif aba_sel == "Correlacoes":
+elif aba_sel == "Analises":
     from datetime import timedelta
     import numpy as np
 
@@ -1795,36 +1795,6 @@ elif aba_sel == "Correlacoes":
     rep_pub = df.groupby("filial").agg(nota_media=("nota", "mean"), pct_pos=("sentimento", lambda x: (x == "Positivo").sum() / len(x) * 100)).reset_index()
     rep_pub["score_externo"] = (((rep_pub["nota_media"] - 1) / 4) * 40 + rep_pub["pct_pos"] * 0.6).clip(0, 100).round(1)
     rep_pub["filial_curta"] = rep_pub["filial"].str.replace("Olive Garden - ", "", regex=False)
-
-    # BLOCO 1 — Radar de Saude da Rede
-    with st.container(border=True):
-        st.markdown('<div class="section-title">Radar de Saude da Rede</div>', unsafe_allow_html=True)
-        st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Semaforo por filial cruzando GSS interno + Reputacao publica + Sentimento iFood. Identifica quem esta bem, em risco ou em queda.</div>', unsafe_allow_html=True)
-        if len(gss_atual) > 0:
-            saude = rep_pub.merge(gss_atual[["filial_curta","overall_experience","service","taste","speed_of_service"]], on="filial_curta", how="left")
-            sent_ifood = df[df["plataforma"] == "iFood"].groupby("filial").agg(pct_pos_if=("sentimento", lambda x: (x=="Positivo").sum()/len(x)*100)).reset_index()
-            sent_ifood["filial_curta"] = sent_ifood["filial"].str.replace("Olive Garden - ", "", regex=False)
-            saude = saude.merge(sent_ifood[["filial_curta","pct_pos_if"]], on="filial_curta", how="left")
-            saude["indice_saude"] = (saude["score_externo"].fillna(70) * 0.4 + saude["overall_experience"].fillna(80) * 0.4 + saude["pct_pos_if"].fillna(70) * 0.2).round(1)
-            saude = saude.sort_values("indice_saude", ascending=False)
-            cols_radar = st.columns(len(saude))
-            for idx, (_, row) in enumerate(saude.iterrows()):
-                v = row["indice_saude"]
-                cor = "#2e6b3e" if v >= 80 else "#B8923A" if v >= 70 else VERMELHO
-                status = "SAUDAVEL" if v >= 80 else "ATENCAO" if v >= 70 else "CRITICO"
-                icone = "●" if v >= 80 else "▲" if v >= 70 else "■"
-                with cols_radar[idx]:
-                    st.markdown(f'''<div style="background:#3D2B1F; border-radius:10px; padding:16px; text-align:center; border-top:4px solid {cor};">
-                        <div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:8px;">{row["filial_curta"].upper()}</div>
-                        <div style="font-size:28px; color:{cor}; margin-bottom:4px;">{icone}</div>
-                        <div style="font-size:11px; font-weight:700; color:{cor}; margin-bottom:12px;">{status}</div>
-                        <div style="font-size:10px; color:#D8CFC0; text-align:left;">
-                        <div style="margin-bottom:4px;">GSS: <span style="color:#F5F0E8; font-weight:700;">{row["overall_experience"]:.0f}%</span></div>
-                        <div style="margin-bottom:4px;">Reputacao: <span style="color:#F5F0E8; font-weight:700;">{row["score_externo"]:.0f}</span></div>
-                        <div>iFood: <span style="color:#F5F0E8; font-weight:700;">{row["pct_pos_if"]:.0f}%</span></div>
-                        </div></div>''', unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
 
 
     # BLOCO 3 — Score Preditivo de Risco
