@@ -12,8 +12,8 @@ def get_conn():
         database='postgres'
     )
 
-def calcular_modelo_filial(dff, hoje):
-    dff = dff[dff['venda_salao'] > 0].copy()
+def calcular_modelo_filial(dff, hoje, datas_eventos=set()):
+    dff = dff[(dff["venda_salao"] > 0) & (~dff["data"].dt.date.isin(datas_eventos))].copy()
     dff['dow'] = dff['data'].dt.dayofweek
     dff['mes'] = dff['data'].dt.month
 
@@ -112,11 +112,28 @@ print(f'  {atualizados} projecoes atualizadas com valores realizados')
 # ETAPA 2 — Gerar e salvar projecoes para os proximos 28 dias
 print('ETAPA 2 — Gerando projecoes para proximos 28 dias...')
 inseridos = 0
+# Carregar datas de eventos por filial
+conn_ev = get_conn()
+cur_ev = conn_ev.cursor()
+cur_ev.execute("SELECT filial, data_inicio, data_fim FROM calendario_eventos")
+eventos_db = cur_ev.fetchall()
+cur_ev.close()
+conn_ev.close()
+from datetime import date as _date
+eventos_por_filial = {}
+for fil_ev, d_ini, d_fim in eventos_db:
+    fil_curta = fil_ev.replace("Olive Garden - ", "") if fil_ev else None
+    d = d_ini
+    while d <= d_fim:
+        if fil_curta:
+            eventos_por_filial.setdefault(fil_curta, set()).add(d)
+        d = _date(d.year, d.month, d.day + 1) if d.day < 28 else (_date(d.year, d.month+1, 1) if d.month < 12 else _date(d.year+1, 1, 1))
+
 for filial in sorted(df['filial_curta'].unique()):
     dff = df[df['filial_curta'] == filial].copy().sort_values('data')
     if len(dff) < 60:
         continue
-    m = calcular_modelo_filial(dff, hoje)
+    m = calcular_modelo_filial(dff, hoje, eventos_por_filial.get(filial, set()))
     filial_full = 'Olive Garden - ' + filial
 
     for d in range(1, 29):
