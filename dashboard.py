@@ -1996,7 +1996,7 @@ elif aba_sel == "Analises":
             })
 
         # Cards de resumo por filial
-        cols_proj = st.columns(len(resultados_proj))
+        cols_proj = st.columns(max(len(resultados_proj), 1))
         for idx, res in enumerate(resultados_proj):
             total = res["df"]["projecao"].sum()
             low = res["df"]["proj_low"].sum()
