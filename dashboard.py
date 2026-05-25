@@ -826,9 +826,9 @@ elif aba_sel == "Pesquisa":
         externo["score_externo"] = (((externo["nota_media"] - 1) / 4) * 40 + externo["pct_pos"] * 0.6).clip(0, 100).round(1)
 
         # Cruza os dois
-        cruzado = pd.merge(interno, externo[["filial", "score_externo"]], on="filial", how="outer")
+        cruzado = pd.merge(interno, externo[["filial", "score_externo"]], on="filial", how="inner")
+        cruzado = cruzado.dropna(subset=["score_interno", "score_externo"])
         cruzado["filial_curta"] = cruzado["filial"].str.replace("Olive Garden - ", "")
-        cruzado["score_interno"] = cruzado["score_interno"].round(1)
         cruzado["divergencia"] = (cruzado["score_interno"] - cruzado["score_externo"]).round(1)
 
         fig_cross = go.Figure()
@@ -895,9 +895,9 @@ elif aba_sel == "Pesquisa":
             df_perf_f = df_perf[df_perf["restaurant"] != "nan"].copy()
             df_perf_f["filial_curta"] = df_perf_f["restaurant"].str.replace("Olive Garden - ", "")
             df_perf_f["periodo_curto"] = df_perf_f["periodo"].str.extract(r"(FW\d+ to FW\d+)")
-            ultimo_periodo = df_perf_f["periodo_curto"].dropna().max()
+            df_perf_f["fw_num"] = df_perf_f["periodo_curto"].str.extract(r"FW(\d+)").astype(float)
+            ultimo_periodo = df_perf_f.loc[df_perf_f["fw_num"].idxmax(), "periodo_curto"] if len(df_perf_f) > 0 else ""
             df_perf_f = df_perf_f[df_perf_f["periodo_curto"] == ultimo_periodo]
-            metricas = ["overall_experience", "value", "service", "taste", "speed_of_service", "clean", "soup_salad_refill", "breadstick_refill"]
             labels = ["Experiencia Geral", "Valor", "Atendimento", "Sabor", "Velocidade", "Limpeza", "Refil Sopa/Salada", "Refil Breadstick"]
             pivot = df_perf_f.set_index("filial_curta")[metricas]
             fig_heat2 = go.Figure(data=go.Heatmap(
