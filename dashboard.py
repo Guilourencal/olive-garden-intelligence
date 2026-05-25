@@ -462,7 +462,7 @@ if aba_sel == "Reviews":
                 total=("nota", "count"),
                 pct_pos=("sentimento", lambda x: (x == "Positivo").sum() / len(x) * 100)
             ).reset_index()
-            ranking["indice"] = (((ranking["nota_media"] - 1) / 4) * 40 + ranking["pct_pos"] * 0.6).clip(0, 100).round(0).astype(int)
+            ranking["indice"] = (((ranking["nota_media"] - 1) / 4) * 40 + ranking["pct_pos"] * 0.6).clip(0, 100).round(0).fillna(0).astype(int)
             ranking = ranking.sort_values("indice", ascending=False).reset_index(drop=True)
             html_ranking = ""
             for i, row in ranking.iterrows():
