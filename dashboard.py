@@ -235,7 +235,7 @@ with st.sidebar:
     )
     st.markdown('<div style="height:1px; background:rgba(255,255,255,0.1); margin-bottom:10px;"></div>', unsafe_allow_html=True)
 
-    for aba in ["Reviews", "Social", "Pesquisa", "Analises", "Vendas", "OlivIA"]:
+    for aba in ["Reviews", "Social", "Pesquisa", "Correlacoes", "Vendas", "OlivIA"]:
         if st.button(aba, key=f"btn_{aba}", use_container_width=True):
             st.session_state.aba_sel = aba
             st.rerun()
@@ -293,192 +293,312 @@ if aba_sel == "Reviews":
     if sentimento_sel != "Todos":
         df_f = df_f[df_f["sentimento"] == sentimento_sel]
 
+    data_coleta_max = pd.to_datetime(df_f["data_coleta"], errors="coerce").max()
+    data_coleta_str = data_coleta_max.strftime("%d/%m/%Y %H:%M") if pd.notna(data_coleta_max) else "—"
+    data_review_min = pd.to_datetime(df_f["data_original"], errors="coerce", utc=True).min()
+    data_review_max = pd.to_datetime(df_f["data_original"], errors="coerce", utc=True).max()
+    if pd.notna(data_review_min) and pd.notna(data_review_max):
+        periodo_str = f"{data_review_min.strftime('%d/%m/%Y')} a {data_review_max.strftime('%d/%m/%Y')}"
+    else:
+        periodo_str = "Período variável por plataforma"
+
     st.markdown(
-        '<div style="font-weight:800; font-size:26px; color:#3D2B1F; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:20px;">Reputacao & Reviews</div>',
+        '<div style="font-weight:800; font-size:26px; color:#3D2B1F; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:4px;">Visão Geral</div>'
+        '<div style="display:flex; gap:24px; align-items:center; margin-bottom:20px;">'
+        f'<div style="font-size:13px; color:#8B9A2E; letter-spacing:0.1em;">BRAND INTELLIGENCE — BRASIL</div>'
+        f'<div style="font-size:11px; color:#7a5c3a; background:#e8ddc8; padding:4px 12px; border-radius:20px;">Última atualização: {data_coleta_str}</div>'
+        f'<div style="font-size:11px; color:#7a5c3a; background:#e8ddc8; padding:4px 12px; border-radius:20px;">Período: {periodo_str}</div>'
+        '</div>',
         unsafe_allow_html=True
     )
 
-    # BLOCO 1 — Saude da Reputacao
-    with st.container(border=True):
-        st.markdown('<div class="section-title">Saude da Reputacao por Filial</div>', unsafe_allow_html=True)
-        total = len(df_f)
-        nota_media = df_f["nota"].mean()
-        pct_pos = len(df_f[df_f["sentimento"] == "Positivo"]) / total * 100 if total > 0 else 0
-        pct_neg = len(df_f[df_f["sentimento"] == "Negativo"]) / total * 100 if total > 0 else 0
-        nota_norm = ((nota_media - 1) / 4) * 40 if pd.notna(nota_media) else 0
-        sent_norm = pct_pos * 0.6
-        indice = min(round(nota_norm + sent_norm), 100)
-        cor_indice = VERDE if indice >= 70 else "#B8923A" if indice >= 50 else VERMELHO
-        classificacao = "Boa reputacao" if indice >= 70 else "Reputacao regular" if indice >= 50 else "Reputacao critica"
-        col_ind, col_fil = st.columns([1, 3])
-        with col_ind:
-            st.markdown(
-                '<div style="background:#3D2B1F; border-radius:12px; padding:24px; text-align:center;">'
-                + '<div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:8px;">INDICE DE REPUTACAO</div>'
-                + '<div style="font-size:56px; font-weight:800; color:' + cor_indice + ';">' + str(indice) + '</div>'
-                + '<div style="font-size:11px; color:' + cor_indice + '; margin-top:4px;">' + classificacao + '</div>'
-                + '<div style="font-size:9px; color:#8B7A5A; margin-top:12px;">' + str(total) + ' reviews | Nota ' + f"{nota_media:.1f}" + '/5</div>'
-                + '</div>',
-                unsafe_allow_html=True
-            )
-        with col_fil:
+    total = len(df_f)
+    nota_media = df_f["nota"].mean()
+    pct_pos = len(df_f[df_f["sentimento"] == "Positivo"]) / total * 100 if total > 0 else 0
+    pct_neg = len(df_f[df_f["sentimento"] == "Negativo"]) / total * 100 if total > 0 else 0
+    nota_norm = ((nota_media - 1) / 4) * 40 if pd.notna(nota_media) else 0
+    sent_norm = pct_pos * 0.6
+    indice = min(round(nota_norm + sent_norm), 100)
+    if indice >= 70:
+        cor_indice = VERDE
+        classificacao = "Boa reputação"
+    elif indice >= 50:
+        cor_indice = "#B8923A"
+        classificacao = "Reputação regular"
+    else:
+        cor_indice = VERMELHO
+        classificacao = "Reputação crítica"
+
+    col_ind, col_metrics = st.columns([1, 3])
+    with col_ind:
+        st.markdown(
+            f'<div class="indice-card">'
+            f'<div class="indice-valor" style="color:{cor_indice}">{indice}</div>'
+            f'<div class="indice-label">Índice de Reputação</div>'
+            f'<div class="indice-sub">{classificacao}</div>'
+            f'<div style="font-size:10px; color:#b0a090; margin-top:12px; line-height:1.6;">'
+            f'* Índice de 0 a 100 calculado com base em:<br>'
+            f'40% nota média das avaliações (escala 1–5)<br>'
+            f'60% percentual de sentimento positivo<br>'
+            f'Fontes: Google Reviews, TripAdvisor, iFood'
+            f'</div></div>',
+            unsafe_allow_html=True
+        )
+    with col_metrics:
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
+            st.metric("Total de Reviews", f"{total:,}")
+        with c2:
+            st.metric("Nota Média", f"{nota_media:.1f} / 5" if pd.notna(nota_media) else "—")
+        with c3:
+            st.metric("% Positivo", f"{pct_pos:.0f}%")
+        with c4:
+            st.metric("% Negativo", f"{pct_neg:.0f}%")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    col_a, col_b = st.columns(2)
+    with col_a:
+        with st.container(border=True):
+            st.markdown('<div class="section-title">Polaridade Geral</div>', unsafe_allow_html=True)
+            contagem = df_f["sentimento"].value_counts().reset_index()
+            contagem.columns = ["Sentimento", "Total"]
+            fig1 = px.pie(contagem, values="Total", names="Sentimento", color="Sentimento", color_discrete_map=CORES_SENT, hole=0.6)
+            fig1.update_traces(textfont_family="Nunito", textfont_size=13)
+            fig1.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10, b=10, l=10, r=10), legend=dict(font=dict(family="Nunito", size=12, color=MARROM)), font=dict(family="Nunito"))
+            st.plotly_chart(fig1, use_container_width=True, key="fig1")
+
+    with col_b:
+        with st.container(border=True):
+            st.markdown('<div class="section-title">Nota Média por Filial e Plataforma</div>', unsafe_allow_html=True)
+            nota_heat = df_f.groupby(["filial", "plataforma"])["nota"].mean().reset_index()
+            nota_pivot = nota_heat.pivot(index="filial", columns="plataforma", values="nota").round(1)
+            z_values = nota_pivot.values
+            text_values = np.where(np.isnan(z_values), "", z_values.round(1).astype(str))
+            fig2 = go.Figure(data=go.Heatmap(z=z_values, x=nota_pivot.columns.tolist(), y=nota_pivot.index.tolist(), colorscale=[[0, VERMELHO], [0.4, "#B8923A"], [1, VERDE]], zmin=1, zmax=5, text=text_values, texttemplate="%{text}", textfont=dict(family="Nunito", size=13, color="white"), hoverongaps=False))
+            fig2.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10, b=10, l=10, r=10), xaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM), title=""), yaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM), title=""), font=dict(family="Nunito"), coloraxis_showscale=False)
+            st.plotly_chart(fig2, use_container_width=True, key="fig2")
+
+    col_c, col_d = st.columns(2)
+    with col_c:
+        with st.container(border=True):
+            st.markdown('<div class="section-title">Temas Mais Citados</div>', unsafe_allow_html=True)
+            temas = df_f["tema"].dropna().str.split(", ").explode()
+            temas = temas[~temas.isin(["Sem tema", "Geral"])]
+            tema_count = temas.value_counts().reset_index()
+            tema_count.columns = ["Tema", "Total"]
+            tema_count = tema_count.sort_values("Total", ascending=True)
+            fig3 = px.bar(tema_count, x="Total", y="Tema", orientation="h", color="Total", color_continuous_scale=[[0, BEGE], [1, VERDE]], text="Total")
+            fig3.update_traces(textposition="outside", textfont=dict(family="Nunito", size=11, color=MARROM))
+            fig3.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10, b=10, l=10, r=40), coloraxis_showscale=False, xaxis=dict(showgrid=False, zeroline=False, title=""), yaxis=dict(title="", tickfont=dict(family="Nunito", size=11, color=MARROM)), font=dict(family="Nunito"))
+            st.plotly_chart(fig3, use_container_width=True, key="fig3")
+
+    with col_d:
+        with st.container(border=True):
+            st.markdown('<div class="section-title">Sentimento por Plataforma</div>', unsafe_allow_html=True)
+            sent_plat = df_f.groupby(["plataforma", "sentimento"]).size().reset_index(name="Total")
+            fig4 = px.bar(sent_plat, x="plataforma", y="Total", color="sentimento", color_discrete_map=CORES_SENT, barmode="group", text="Total")
+            fig4.update_traces(textposition="outside", textfont=dict(family="Nunito", size=11))
+            fig4.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10, b=10, l=10, r=10), legend=dict(title="", font=dict(family="Nunito", size=11, color=MARROM), orientation="h", yanchor="bottom", y=1.02), xaxis=dict(title="", tickfont=dict(family="Nunito", size=11, color=MARROM)), yaxis=dict(title="", showgrid=False, tickfont=dict(family="Nunito", size=11)), font=dict(family="Nunito"))
+            st.plotly_chart(fig4, use_container_width=True, key="fig4")
+
+    col_e, col_f = st.columns(2)
+    with col_e:
+        with st.container(border=True):
+            st.markdown('<div class="section-title">Evolução da Nota Média</div>', unsafe_allow_html=True)
+            df_tempo = df_f.copy()
+            df_tempo["data_coleta"] = pd.to_datetime(df_tempo["data_coleta"], errors="coerce")
+            df_tempo = df_tempo.dropna(subset=["data_coleta"])
+            if len(df_tempo) > 0:
+                df_tempo["mes"] = df_tempo["data_coleta"].dt.strftime("%b/%Y")
+                evolucao = df_tempo.groupby("mes")["nota"].mean().reset_index()
+                evolucao.columns = ["Mês", "Nota Média"]
+                evolucao["Nota Média"] = evolucao["Nota Média"].round(2)
+                fig5 = go.Figure()
+                fig5.add_trace(go.Scatter(
+                    x=evolucao["Mês"],
+                    y=evolucao["Nota Média"],
+                    mode="lines+markers+text",
+                    fill="tozeroy",
+                    fillcolor="rgba(139,154,46,0.15)",
+                    line=dict(color=VERDE, width=3),
+                    marker=dict(size=8, color=VERDE),
+                    text=evolucao["Nota Média"],
+                    textposition="top center",
+                    textfont=dict(family="Nunito", size=11, color=MARROM),
+                ))
+                fig5.update_layout(
+                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                    margin=dict(t=10, b=10, l=10, r=10),
+                    xaxis=dict(title="", tickfont=dict(family="Nunito", size=11, color=MARROM), showgrid=False),
+                    yaxis=dict(title="", range=[0, 5.5], showgrid=True, gridcolor="#e8ddc8", tickfont=dict(family="Nunito", size=11)),
+                    font=dict(family="Nunito")
+                )
+                st.plotly_chart(fig5, use_container_width=True, key="fig5")
+
+    with col_f:
+        with st.container(border=True):
+            st.markdown('<div class="section-title">Palavras Mais Citadas nos Negativos</div>', unsafe_allow_html=True)
+            textos_neg = df_f[df_f["sentimento"] == "Negativo"]["texto"].dropna()
+            if len(textos_neg) > 0:
+                texto_completo = " ".join(textos_neg.tolist())
+                texto_completo = re.sub(r'[^\w\s]', ' ', texto_completo.lower())
+                palavras = [p for p in texto_completo.split() if p not in STOPWORDS_PT and len(p) > 3]
+                freq = pd.Series(palavras).value_counts().head(20).reset_index()
+                freq.columns = ["Palavra", "Frequência"]
+                fig_tree = px.treemap(freq, path=["Palavra"], values="Frequência", color="Frequência", color_continuous_scale=[[0, "#e8ddc8"], [0.5, "#B8923A"], [1, VERMELHO]])
+                fig_tree.update_traces(textfont=dict(family="Nunito", size=14, color="white"), textinfo="label+value")
+                fig_tree.update_layout(paper_bgcolor="rgba(0,0,0,0)", margin=dict(t=10, b=10, l=10, r=10), coloraxis_showscale=False, font=dict(family="Nunito"))
+                st.plotly_chart(fig_tree, use_container_width=True, key="fig_tree")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    col_g, col_h = st.columns(2)
+
+    with col_g:
+        with st.container(border=True):
+            st.markdown('<div class="section-title">Ranking de Filiais</div>', unsafe_allow_html=True)
             ranking = df_f.groupby("filial").agg(
                 nota_media=("nota", "mean"),
                 total=("nota", "count"),
                 pct_pos=("sentimento", lambda x: (x == "Positivo").sum() / len(x) * 100)
             ).reset_index()
-            ranking["indice"] = (((ranking["nota_media"] - 1) / 4) * 40 + ranking["pct_pos"] * 0.6).clip(0, 100).round(0).fillna(0).astype(int)
-            # Tendencia: comparar ultima quinzena vs quinzena anterior
-            df_f["data_dt"] = pd.to_datetime(df_f["data_coleta"], errors="coerce")
-            data_max = df_f["data_dt"].max()
-            df_rec = df_f[df_f["data_dt"] >= data_max - pd.Timedelta(days=15)]
-            df_ant = df_f[(df_f["data_dt"] < data_max - pd.Timedelta(days=15)) & (df_f["data_dt"] >= data_max - pd.Timedelta(days=30))]
+            ranking["indice"] = (((ranking["nota_media"] - 1) / 4) * 40 + ranking["pct_pos"] * 0.6).clip(0, 100).round(0).astype(int)
             ranking = ranking.sort_values("indice", ascending=False).reset_index(drop=True)
-            html_rank = ""
-            for i_r, row in ranking.iterrows():
-                cor_r = "#2e6b3e" if row["indice"] >= 70 else "#B8923A" if row["indice"] >= 50 else VERMELHO
-                filial_c = row["filial"].replace("Olive Garden - ", "")
-                nota_rec = df_rec[df_rec["filial"]==row["filial"]]["nota"].mean()
-                nota_ant = df_ant[df_ant["filial"]==row["filial"]]["nota"].mean()
-                if pd.notna(nota_rec) and pd.notna(nota_ant):
-                    tend = "▲" if nota_rec > nota_ant + 0.1 else "▼" if nota_rec < nota_ant - 0.1 else "→"
-                    cor_tend = "#2e6b3e" if tend == "▲" else VERMELHO if tend == "▼" else "#B8923A"
+            html_ranking = ""
+            for i, row in ranking.iterrows():
+                if row["indice"] >= 70:
+                    badge_class, badge_text = "badge-green", "Boa reputação"
+                elif row["indice"] >= 50:
+                    badge_class, badge_text = "badge-yellow", "Regular"
                 else:
-                    tend = "—"
-                    cor_tend = "#8B7A5A"
-                html_rank += (
-                    '<div style="display:flex; align-items:center; padding:10px 0; border-bottom:1px solid #e8ddc8;">'
-                    + '<div style="font-size:16px; font-weight:800; color:' + cor_r + '; width:32px;">#' + str(i_r+1) + '</div>'
-                    + '<div style="flex:1; font-size:13px; font-weight:600; color:#3D2B1F;">' + filial_c + '</div>'
-                    + '<div style="font-size:12px; color:#8B7A5A; margin-right:16px;">' + f"{row['nota_media']:.1f}" + ' ★ | ' + f"{row['pct_pos']:.0f}" + '% pos</div>'
-                    + '<div style="font-size:14px; font-weight:700; color:' + cor_tend + '; margin-right:16px;">' + tend + '</div>'
-                    + '<div style="font-size:18px; font-weight:800; color:' + cor_r + '; width:40px; text-align:right;">' + str(row["indice"]) + '</div>'
-                    + '</div>'
+                    badge_class, badge_text = "badge-red", "Crítica"
+                filial_curta = row["filial"].replace("Olive Garden - ", "")
+                html_ranking += (
+                    f'<div class="ranking-row">'
+                    f'<div class="ranking-pos">#{i+1}</div>'
+                    f'<div class="ranking-nome">{filial_curta}</div>'
+                    f'<span class="ranking-badge {badge_class}">{badge_text}</span>'
+                    f'<div class="ranking-nota">{row["indice"]}</div>'
+                    f'</div>'
                 )
-            st.markdown(html_rank, unsafe_allow_html=True)
+            st.markdown(html_ranking, unsafe_allow_html=True)
+
+    with col_h:
+        with st.container(border=True):
+            st.markdown('<div class="section-title">Nota Média por Tema</div>', unsafe_allow_html=True)
+            df_temas = df_f.copy()
+            df_temas["tema_individual"] = df_temas["tema"].str.split(", ")
+            df_temas = df_temas.explode("tema_individual")
+            df_temas = df_temas[~df_temas["tema_individual"].isin(["Sem tema", "Geral", None])]
+            nota_tema = df_temas.groupby("tema_individual")["nota"].mean().reset_index()
+            nota_tema.columns = ["Tema", "Nota"]
+            nota_tema = nota_tema.sort_values("Nota", ascending=True)
+            fig_tema = px.bar(nota_tema, x="Nota", y="Tema", orientation="h", color="Nota", color_continuous_scale=[[0, VERMELHO], [0.5, "#B8923A"], [1, VERDE]], range_color=[1, 5], text=nota_tema["Nota"].round(1))
+            fig_tema.update_traces(textposition="outside", textfont=dict(family="Nunito", size=11, color=MARROM))
+            fig_tema.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10, b=10, l=10, r=50), coloraxis_showscale=False, xaxis=dict(range=[0, 6], showgrid=False, zeroline=False, title=""), yaxis=dict(title="", tickfont=dict(family="Nunito", size=11, color=MARROM)), font=dict(family="Nunito"))
+            st.plotly_chart(fig_tema, use_container_width=True, key="fig_tema")
 
     st.markdown("<br>", unsafe_allow_html=True)
-
-    # BLOCO 2 — O que os clientes dizem
     with st.container(border=True):
-        st.markdown('<div class="section-title">O que os Clientes Dizem</div>', unsafe_allow_html=True)
-        col_pos, col_neg = st.columns(2)
-        with col_pos:
-            st.markdown('<div style="font-size:11px; font-weight:700; color:#2e6b3e; margin-bottom:12px;">TOP TEMAS ELOGIADOS</div>', unsafe_allow_html=True)
-            temas_pos = df_f[df_f["sentimento"]=="Positivo"]["tema"].dropna().str.split(", ").explode()
-            temas_pos = temas_pos[~temas_pos.isin(["Sem tema","Geral"])].value_counts().head(3)
-            for tema, cnt in temas_pos.items():
-                melhor = df_f[(df_f["sentimento"]=="Positivo") & (df_f["tema"].str.contains(tema, na=False))]["texto"].dropna()
-                frase = melhor.iloc[0][:150] if len(melhor) > 0 else ""
-                st.markdown(
-                    '<div style="background:#e8f2eb; border-radius:8px; padding:12px; margin-bottom:8px;">'
-                    + '<div style="font-size:12px; font-weight:700; color:#2e6b3e; margin-bottom:4px;">' + tema + ' (' + str(cnt) + ' mencoes)</div>'
-                    + '<div style="font-size:11px; color:#3D2B1F; font-style:italic;">&ldquo;' + frase + '&rdquo;</div>'
-                    + '</div>',
-                    unsafe_allow_html=True
-                )
-        with col_neg:
-            st.markdown('<div style="font-size:11px; font-weight:700; color:#8B2E2E; margin-bottom:12px;">TOP TEMAS CRITICADOS</div>', unsafe_allow_html=True)
-            temas_neg = df_f[df_f["sentimento"]=="Negativo"]["tema"].dropna().str.split(", ").explode()
-            temas_neg = temas_neg[~temas_neg.isin(["Sem tema","Geral"])].value_counts().head(3)
-            for tema, cnt in temas_neg.items():
-                pior = df_f[(df_f["sentimento"]=="Negativo") & (df_f["tema"].str.contains(tema, na=False))]["texto"].dropna()
-                frase = pior.iloc[0][:150] if len(pior) > 0 else ""
-                st.markdown(
-                    '<div style="background:#f5e8e8; border-radius:8px; padding:12px; margin-bottom:8px;">'
-                    + '<div style="font-size:12px; font-weight:700; color:#8B2E2E; margin-bottom:4px;">' + tema + ' (' + str(cnt) + ' mencoes)</div>'
-                    + '<div style="font-size:11px; color:#3D2B1F; font-style:italic;">&ldquo;' + frase + '&rdquo;</div>'
-                    + '</div>',
-                    unsafe_allow_html=True
-                )
+        st.markdown('<div class="section-title">Distribuição de Notas</div>', unsafe_allow_html=True)
+        dist_notas = df_f["nota"].dropna().astype(int).value_counts().reset_index()
+        dist_notas.columns = ["Nota", "Total"]
+        dist_notas = dist_notas.sort_values("Nota")
+        dist_notas["Estrelas"] = dist_notas["Nota"].apply(lambda x: "★" * x)
+        fig_dist = px.bar(dist_notas, x="Estrelas", y="Total", color="Nota", color_continuous_scale=[[0, VERMELHO], [0.5, "#B8923A"], [1, VERDE]], range_color=[1, 5], text="Total")
+        fig_dist.update_traces(textposition="outside", textfont=dict(family="Nunito", size=12, color=MARROM))
+        fig_dist.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10, b=10, l=10, r=10), coloraxis_showscale=False, xaxis=dict(title="", tickfont=dict(family="Nunito", size=14, color=MARROM)), yaxis=dict(title="", showgrid=False, tickfont=dict(family="Nunito", size=11)), font=dict(family="Nunito"))
+        st.plotly_chart(fig_dist, use_container_width=True, key="fig_dist")
 
     st.markdown("<br>", unsafe_allow_html=True)
-
-    # BLOCO 3 — Evolucao temporal
     with st.container(border=True):
-        st.markdown('<div class="section-title">Evolucao Temporal da Reputacao</div>', unsafe_allow_html=True)
-        df_tempo = df_f.copy()
-        df_tempo["data_dt"] = pd.to_datetime(df_tempo["data_coleta"], errors="coerce")
-        df_tempo = df_tempo.dropna(subset=["data_dt"])
-        if len(df_tempo) > 0:
-            df_tempo["mes"] = df_tempo["data_dt"].dt.to_period("M").astype(str)
-            evo = df_tempo.groupby("mes").agg(
-                nota_media=("nota","mean"),
-                pct_pos=("sentimento", lambda x: (x=="Positivo").sum()/len(x)*100),
-                total=("nota","count")
-            ).reset_index().sort_values("mes")
-            col_e1, col_e2 = st.columns(2)
-            with col_e1:
-                st.markdown('<div style="font-size:11px; font-weight:700; color:#8B9A2E; margin-bottom:8px;">Nota Media por Mes</div>', unsafe_allow_html=True)
-                fig_evo1 = go.Figure()
-                fig_evo1.add_trace(go.Scatter(x=evo["mes"], y=evo["nota_media"].round(2), mode="lines+markers+text",
-                    fill="tozeroy", fillcolor="rgba(139,154,46,0.1)",
-                    line=dict(color=VERDE, width=3), marker=dict(size=8, color=VERDE),
-                    text=evo["nota_media"].round(1), textposition="top center",
-                    textfont=dict(family="Nunito", size=11, color=MARROM)))
-                fig_evo1.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                    margin=dict(t=10,b=10,l=10,r=10),
-                    xaxis=dict(tickfont=dict(family="Nunito", size=10, color=MARROM), showgrid=False),
-                    yaxis=dict(range=[0,5.5], showgrid=True, gridcolor="#e8ddc8", tickfont=dict(family="Nunito", size=10)),
-                    font=dict(family="Nunito"), height=220)
-                st.plotly_chart(fig_evo1, use_container_width=True, key="fig_evo_nota")
-            with col_e2:
-                st.markdown('<div style="font-size:11px; font-weight:700; color:#8B9A2E; margin-bottom:8px;">% Sentimento Positivo por Mes</div>', unsafe_allow_html=True)
-                fig_evo2 = go.Figure()
-                fig_evo2.add_trace(go.Bar(x=evo["mes"], y=evo["pct_pos"].round(1),
-                    marker_color=[VERDE if v >= 70 else "#B8923A" if v >= 50 else VERMELHO for v in evo["pct_pos"]],
-                    text=evo["pct_pos"].round(0).astype(int).astype(str)+" %",
-                    textposition="outside", textfont=dict(family="Nunito", size=11, color=MARROM)))
-                fig_evo2.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                    margin=dict(t=10,b=10,l=10,r=10),
-                    xaxis=dict(tickfont=dict(family="Nunito", size=10, color=MARROM)),
-                    yaxis=dict(range=[0,110], showgrid=False),
-                    font=dict(family="Nunito"), height=220)
-                st.plotly_chart(fig_evo2, use_container_width=True, key="fig_evo_sent")
+        st.markdown('<div class="section-title">Reviews Recentes</div>', unsafe_allow_html=True)
+        colunas = ["filial", "plataforma", "autor", "nota", "sentimento", "tema", "texto"]
+        df_tabela = df_f[colunas].copy()
+        df_tabela.columns = ["Filial", "Plataforma", "Autor", "Nota", "Sentimento", "Tema", "Comentário"]
+        st.dataframe(df_tabela.head(30), use_container_width=True, hide_index=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
+        import io
+        buffer = io.BytesIO()
+        with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+            df_tabela.sort_values("Nota").to_excel(writer, index=False, sheet_name="Reviews")
+        st.download_button(
+            label="⬇️ Baixar em Excel",
+            data=buffer.getvalue(),
+            file_name="reviews_olive_garden.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
 
-    # BLOCO 4 — Alertas e oportunidades
-    with st.container(border=True):
-        st.markdown('<div class="section-title">Alertas e Reviews Criticos</div>', unsafe_allow_html=True)
-        col_al1, col_al2 = st.columns([1,2])
-        with col_al1:
-            st.markdown('<div style="font-size:11px; font-weight:700; color:#8B2E2E; margin-bottom:8px;">FILIAIS EM QUEDA (ultimos 30 dias)</div>', unsafe_allow_html=True)
-            df_f2 = df_f.copy()
-            df_f2["data_dt"] = pd.to_datetime(df_f2["data_coleta"], errors="coerce")
-            data_max2 = df_f2["data_dt"].max()
-            df_30 = df_f2[df_f2["data_dt"] >= data_max2 - pd.Timedelta(days=30)]
-            df_ant2 = df_f2[df_f2["data_dt"] < data_max2 - pd.Timedelta(days=30)]
-            alertas_html = ""
-            for fil in df_f2["filial"].unique():
-                n30 = df_30[df_30["filial"]==fil]["nota"].mean()
-                nant = df_ant2[df_ant2["filial"]==fil]["nota"].mean()
-                if pd.notna(n30) and pd.notna(nant) and n30 < nant - 0.2:
-                    filc = fil.replace("Olive Garden - ","")
-                    alertas_html += (
-                        '<div style="padding:8px 0; border-bottom:1px solid #e8ddc8;">'
-                        + '<div style="font-size:12px; font-weight:700; color:#8B2E2E;">▼ ' + filc + '</div>'
-                        + '<div style="font-size:11px; color:#8B7A5A;">' + f"{nant:.1f}" + ' → ' + f"{n30:.1f}" + ' (ultimos 30d)</div>'
-                        + '</div>'
-                    )
-            if not alertas_html:
-                alertas_html = '<div style="font-size:12px; color:#2e6b3e; padding:8px 0;">Nenhuma filial em queda significativa.</div>'
-            st.markdown(alertas_html, unsafe_allow_html=True)
-        with col_al2:
-            st.markdown('<div style="font-size:11px; font-weight:700; color:#8B2E2E; margin-bottom:8px;">REVIEWS CRITICOS RECENTES (nota 1-2)</div>', unsafe_allow_html=True)
-            criticos = df_f[df_f["nota"] <= 2][["filial","plataforma","nota","texto"]].dropna(subset=["texto"]).head(5)
-            for _, row in criticos.iterrows():
-                filc = row["filial"].replace("Olive Garden - ","")
-                st.markdown(
-                    '<div style="background:#f5e8e8; border-radius:8px; padding:10px; margin-bottom:6px; border-left:3px solid #8B2E2E;">'
-                    + '<div style="font-size:10px; color:#8B2E2E; font-weight:700; margin-bottom:4px;">' + filc + ' | ' + row["plataforma"] + ' | ' + "★"*int(row["nota"]) + '</div>'
-                    + '<div style="font-size:11px; color:#3D2B1F;">' + str(row["texto"])[:200] + '</div>'
-                    + '</div>',
-                    unsafe_allow_html=True
-                )
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    # Qualidade iFood por Tags
+    if len(df_ifood_tags) > 0:
+        st.markdown("<br>", unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown('<div class="section-title">Qualidade iFood — Analise por Tags</div>', unsafe_allow_html=True)
+            st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Percentual de clientes que avaliaram positivamente cada atributo. Baseado nas tags do relatorio oficial iFood.</div>', unsafe_allow_html=True)
+            periodos_tags = sorted(df_ifood_tags["periodo"].unique())
+            col_sel1, col_sel2 = st.columns(2)
+            with col_sel1:
+                periodo_tag_sel = st.selectbox("Periodo:", periodos_tags, index=len(periodos_tags)-1, key="periodo_tags")
+            with col_sel2:
+                filiais_tags = ["Todas"] + sorted(df_ifood_tags["filial"].str.replace("Olive Garden - ", "", regex=False).unique().tolist())
+                filial_tag_sel = st.selectbox("Filial:", filiais_tags, key="filial_tags")
+            df_tags_f = df_ifood_tags[df_ifood_tags["periodo"] == periodo_tag_sel]
+            if filial_tag_sel != "Todas":
+                df_tags_f = df_tags_f[df_tags_f["filial"].str.contains(filial_tag_sel, regex=False)]
+            col_tp, col_tn = st.columns(2)
 
+            with col_tp:
+                st.markdown('<div style="font-size:11px; font-weight:700; color:#2e6b3e; margin-bottom:8px;">ATRIBUTOS POSITIVOS</div>', unsafe_allow_html=True)
+                df_pos = df_tags_f[df_tags_f["tipo"] == "positiva"].groupby("tag")["pct_sim"].mean().reset_index().sort_values("pct_sim", ascending=True)
+                if len(df_pos) > 0:
+                    fig_tp = go.Figure(go.Bar(
+                        y=df_pos["tag"], x=df_pos["pct_sim"],
+                        orientation="h",
+                        marker_color=[VERDE if v >= 50 else "#B8923A" for v in df_pos["pct_sim"]],
+                        text=df_pos["pct_sim"].apply(lambda v: f"{v:.0f}%"),
+                        textposition="outside",
+                        textfont=dict(family="Nunito", size=11, color=MARROM),
+                    ))
+                    fig_tp.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=60), xaxis=dict(range=[0,110], showgrid=False, tickfont=dict(family="Nunito", size=10, color=MARROM)), yaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM)), font=dict(family="Nunito"), height=300)
+                    st.plotly_chart(fig_tp, use_container_width=True, key="fig_tags_pos")
+
+            with col_tn:
+                st.markdown('<div style="font-size:11px; font-weight:700; color:#8B2E2E; margin-bottom:8px;">PROBLEMAS REPORTADOS</div>', unsafe_allow_html=True)
+                df_neg = df_tags_f[df_tags_f["tipo"] == "negativa"].groupby("tag")["pct_sim"].mean().reset_index().sort_values("pct_sim", ascending=False)
+                if len(df_neg) > 0 and df_neg["pct_sim"].sum() > 0:
+                    fig_tn = go.Figure(go.Bar(
+                        x=df_neg["tag"], y=df_neg["pct_sim"],
+                        marker_color=[VERMELHO if v > 5 else "#B8923A" if v > 0 else "#E8DCC8" for v in df_neg["pct_sim"]],
+                        text=df_neg["pct_sim"].apply(lambda v: f"{v:.0f}%"),
+                        textposition="outside",
+                        textfont=dict(family="Nunito", size=11, color=MARROM),
+                    ))
+                    fig_tn.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=20,b=10,l=10,r=10), xaxis=dict(tickfont=dict(family="Nunito", size=10, color=MARROM)), yaxis=dict(range=[0,30], showgrid=False), font=dict(family="Nunito"), height=300)
+                    st.plotly_chart(fig_tn, use_container_width=True, key="fig_tags_neg")
+                else:
+                    st.markdown('<div style="padding:40px; text-align:center; color:#2e6b3e; font-size:13px; font-weight:700;">Nenhum problema reportado neste periodo!</div>', unsafe_allow_html=True)
+
+            # Score de qualidade por filial
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown('<div style="font-size:12px; font-weight:700; color:#3D2B1F; margin-bottom:12px;">Score de Qualidade por Filial</div>', unsafe_allow_html=True)
+            score_filial = df_tags_f[df_tags_f["tipo"] == "positiva"].groupby("filial")["pct_sim"].mean().reset_index()
+            score_filial.columns = ["filial", "score"]
+            score_filial["filial_curta"] = score_filial["filial"].str.replace("Olive Garden - ", "", regex=False)
+            score_filial = score_filial.sort_values("score", ascending=False)
+            for _, row in score_filial.iterrows():
+                v = row["score"]
+                cor = "#2e6b3e" if v >= 50 else "#B8923A" if v >= 30 else VERMELHO
+                pct = int(v)
+                st.markdown(f'''<div style="margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <span style="font-size:12px; font-weight:700; color:#3D2B1F;">{row["filial_curta"]}</span>
+                    <span style="font-size:12px; font-weight:700; color:{cor};">{v:.0f}%</span>
+                    </div>
+                    <div style="background:#e8ddc8; border-radius:4px; height:6px;">
+                    <div style="background:{cor}; width:{pct}%; height:6px; border-radius:4px;"></div>
+                    </div></div>''', unsafe_allow_html=True)
+elif aba_sel == "Social":
     df_social_f = df_social.copy()
     if sent_social_sel != "Todos":
         df_social_f = df_social_f[df_social_f["sentimento"] == sent_social_sel]
@@ -832,7 +952,7 @@ elif aba_sel == "Pesquisa":
                 margin=dict(t=20, b=10, l=10, r=10),
                 legend=dict(font=dict(family="Nunito", size=11, color=MARROM), orientation="h", yanchor="bottom", y=1.02),
                 xaxis=dict(title="", tickfont=dict(family="Nunito", size=11, color=MARROM)),
-                yaxis=dict(title="% Topbox", range=[80, 100], showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=11, color=MARROM)),
+                yaxis=dict(title="% Topbox", range=[60, 105], showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=11, color=MARROM)),
                 font=dict(family="Nunito"),
                 height=400,
             )
@@ -869,7 +989,7 @@ elif aba_sel == "Pesquisa":
                     margin=dict(t=40, b=10, l=10, r=10),
                     legend=dict(font=dict(family="Nunito", size=9, color=MARROM), orientation="h", yanchor="bottom", y=-0.5),
                     xaxis=dict(tickfont=dict(family="Nunito", size=9, color=MARROM)),
-                    yaxis=dict(range=[80, 100], showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=9, color=MARROM)),
+                    yaxis=dict(range=[60, 105], showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=9, color=MARROM)),
                     height=280,
                     font=dict(family="Nunito"),
                 )
@@ -1660,7 +1780,7 @@ Total comentarios: {total_social} | Sentimento positivo: {pct_pos_social:.1f}%
             st.session_state.chat_history = []
             st.rerun()
 
-elif aba_sel == "Analises":
+elif aba_sel == "Correlacoes":
     from datetime import timedelta
     import numpy as np
 
@@ -1675,6 +1795,36 @@ elif aba_sel == "Analises":
     rep_pub = df.groupby("filial").agg(nota_media=("nota", "mean"), pct_pos=("sentimento", lambda x: (x == "Positivo").sum() / len(x) * 100)).reset_index()
     rep_pub["score_externo"] = (((rep_pub["nota_media"] - 1) / 4) * 40 + rep_pub["pct_pos"] * 0.6).clip(0, 100).round(1)
     rep_pub["filial_curta"] = rep_pub["filial"].str.replace("Olive Garden - ", "", regex=False)
+
+    # BLOCO 1 — Radar de Saude da Rede
+    with st.container(border=True):
+        st.markdown('<div class="section-title">Radar de Saude da Rede</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Semaforo por filial cruzando GSS interno + Reputacao publica + Sentimento iFood. Identifica quem esta bem, em risco ou em queda.</div>', unsafe_allow_html=True)
+        if len(gss_atual) > 0:
+            saude = rep_pub.merge(gss_atual[["filial_curta","overall_experience","service","taste","speed_of_service"]], on="filial_curta", how="left")
+            sent_ifood = df[df["plataforma"] == "iFood"].groupby("filial").agg(pct_pos_if=("sentimento", lambda x: (x=="Positivo").sum()/len(x)*100)).reset_index()
+            sent_ifood["filial_curta"] = sent_ifood["filial"].str.replace("Olive Garden - ", "", regex=False)
+            saude = saude.merge(sent_ifood[["filial_curta","pct_pos_if"]], on="filial_curta", how="left")
+            saude["indice_saude"] = (saude["score_externo"].fillna(70) * 0.4 + saude["overall_experience"].fillna(80) * 0.4 + saude["pct_pos_if"].fillna(70) * 0.2).round(1)
+            saude = saude.sort_values("indice_saude", ascending=False)
+            cols_radar = st.columns(len(saude))
+            for idx, (_, row) in enumerate(saude.iterrows()):
+                v = row["indice_saude"]
+                cor = "#2e6b3e" if v >= 80 else "#B8923A" if v >= 70 else VERMELHO
+                status = "SAUDAVEL" if v >= 80 else "ATENCAO" if v >= 70 else "CRITICO"
+                icone = "●" if v >= 80 else "▲" if v >= 70 else "■"
+                with cols_radar[idx]:
+                    st.markdown(f'''<div style="background:#3D2B1F; border-radius:10px; padding:16px; text-align:center; border-top:4px solid {cor};">
+                        <div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:8px;">{row["filial_curta"].upper()}</div>
+                        <div style="font-size:28px; color:{cor}; margin-bottom:4px;">{icone}</div>
+                        <div style="font-size:11px; font-weight:700; color:{cor}; margin-bottom:12px;">{status}</div>
+                        <div style="font-size:10px; color:#D8CFC0; text-align:left;">
+                        <div style="margin-bottom:4px;">GSS: <span style="color:#F5F0E8; font-weight:700;">{row["overall_experience"]:.0f}%</span></div>
+                        <div style="margin-bottom:4px;">Reputacao: <span style="color:#F5F0E8; font-weight:700;">{row["score_externo"]:.0f}</span></div>
+                        <div>iFood: <span style="color:#F5F0E8; font-weight:700;">{row["pct_pos_if"]:.0f}%</span></div>
+                        </div></div>''', unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
 
 
     # BLOCO 3 — Score Preditivo de Risco
@@ -1876,7 +2026,7 @@ elif aba_sel == "Analises":
             })
 
         # Cards de resumo por filial
-        cols_proj = st.columns(max(len(resultados_proj), 1))
+        cols_proj = st.columns(len(resultados_proj))
         for idx, res in enumerate(resultados_proj):
             total = res["df"]["projecao"].sum()
             low = res["df"]["proj_low"].sum()
