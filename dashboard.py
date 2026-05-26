@@ -1262,11 +1262,15 @@ elif aba_sel == "Vendas":
                 ultimo_dom = hoje_dt - timedelta(days=dias_desde_dom)
                 ultima_seg = ultimo_dom - timedelta(days=6)
                 df_ult = df_dow_base[(df_dow_base["data_dt"] >= ultima_seg) & (df_dow_base["data_dt"] <= ultimo_dom)]
-                # Mesma semana ano anterior
-                seg_ano1 = ultima_seg - timedelta(days=364)
-                dom_ano1 = ultimo_dom - timedelta(days=364)
-                df_ano1 = df_dow_base[(df_dow_base["data_dt"] >= seg_ano1) & (df_dow_base["data_dt"] <= dom_ano1)]
-                sem_label = f"{ultima_seg.strftime('%d/%m')} - {ultimo_dom.strftime('%d/%m/%Y')}"
+                # Numero da semana ISO da ultima semana fechada
+                num_semana = int(ultima_seg.isocalendar()[1])
+                ano_atual = int(ultima_seg.year)
+                ano_anterior = ano_atual - 1
+                # Mesma semana ISO no ano anterior
+                df_dow_base["iso_week"] = df_dow_base["data_dt"].dt.isocalendar().week.astype(int)
+                df_dow_base["iso_year"] = df_dow_base["data_dt"].dt.isocalendar().year.astype(int)
+                df_ano1 = df_dow_base[(df_dow_base["iso_week"] == num_semana) & (df_dow_base["iso_year"] == ano_anterior)]
+                sem_label = f"Sem. {num_semana}/{ano_atual} ({ultima_seg.strftime('%d/%m')} - {ultimo_dom.strftime('%d/%m')}) vs Sem. {num_semana}/{ano_anterior}"
                 if len(df_ult) > 0:
                     g_ult = df_ult.groupby("dia_norm")["venda_salao"].sum().reset_index()
                     g_ult = g_ult.set_index("dia_norm").reindex([d for d in ordem_dias if d in g_ult["dia_norm"].values]).reset_index()
@@ -1276,8 +1280,8 @@ elif aba_sel == "Vendas":
                         g_ano1 = df_ano1.groupby("dia_norm")["venda_salao"].sum().reset_index()
                         g_ano1 = g_ano1.set_index("dia_norm").reindex([d for d in ordem_dias if d in g_ano1["dia_norm"].values]).reset_index()
                         g_ano1["label"] = g_ano1["dia_norm"].map(dict(zip(ordem_dias, labels_dias)))
-                        fig_dow.add_trace(go.Bar(x=g_ano1["label"], y=g_ano1["venda_salao"], name="Ano Anterior", marker_color="#8B7A5A", opacity=0.6, text=g_ano1["venda_salao"].apply(lambda v: f"R$ {v/1000:.0f}k"), textposition="auto", textfont=dict(family="Nunito", size=9, color="white")))
-                    fig_dow.add_trace(go.Bar(x=g_ult["label"], y=g_ult["venda_salao"], name="Semana atual", marker_color=VERDE, text=g_ult["venda_salao"].apply(lambda v: f"R$ {v/1000:.0f}k"), textposition="auto", textfont=dict(family="Nunito", size=9, color="white")))
+                        fig_dow.add_trace(go.Bar(x=g_ano1["label"], y=g_ano1["venda_salao"], name=f"Sem. {num_semana}/{ano_anterior}", marker_color="#8B7A5A", opacity=0.6, text=g_ano1["venda_salao"].apply(lambda v: f"R$ {v/1000:.0f}k"), textposition="auto", textfont=dict(family="Nunito", size=9, color="white")))
+                    fig_dow.add_trace(go.Bar(x=g_ult["label"], y=g_ult["venda_salao"], name=f"Sem. {num_semana}/{ano_atual}", marker_color=VERDE, text=g_ult["venda_salao"].apply(lambda v: f"R$ {v/1000:.0f}k"), textposition="auto", textfont=dict(family="Nunito", size=9, color="white")))
                     fig_dow.update_layout(barmode="group", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=30,b=10,l=10,r=10), title=dict(text=f"Semana: {sem_label}", font=dict(family="Nunito", size=10, color="#8B7A5A"), x=0), xaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM)), yaxis=dict(showgrid=False), legend=dict(font=dict(family="Nunito", size=10, color=MARROM), orientation="h", yanchor="bottom", y=1.02), font=dict(family="Nunito"), height=280)
                     st.plotly_chart(fig_dow, use_container_width=True, key="fig_dow_vd")
                 else:
