@@ -1270,15 +1270,15 @@ elif aba_sel == "Vendas":
                 df_dow_base["iso_week"] = df_dow_base["data_dt"].dt.isocalendar().week.astype(int)
                 df_dow_base["iso_year"] = df_dow_base["data_dt"].dt.isocalendar().year.astype(int)
                 df_ano1 = df_dow_base[(df_dow_base["iso_week"] == num_semana) & (df_dow_base["iso_year"] == ano_anterior)]
-                sem_label = f"Sem. {num_semana}/{ano_atual} ({ultima_seg.strftime('%d/%m')} - {ultimo_dom.strftime('%d/%m')}) vs Sem. {num_semana}/{ano_anterior}"
+                sem_label = f"Sem. {num_semana}/{ano_atual} vs Sem. {num_semana}/{ano_anterior}"
                 if len(df_ult) > 0:
                     g_ult = df_ult.groupby("dia_norm")["venda_salao"].sum().reset_index()
-                    g_ult = g_ult.set_index("dia_norm").reindex([d for d in ordem_dias if d in g_ult["dia_norm"].values]).reset_index()
+                    g_ult = g_ult.set_index("dia_norm").reindex(ordem_dias).reset_index()
                     g_ult["label"] = g_ult["dia_norm"].map(dict(zip(ordem_dias, labels_dias)))
                     fig_dow = go.Figure()
                     if len(df_ano1) > 0:
                         g_ano1 = df_ano1.groupby("dia_norm")["venda_salao"].sum().reset_index()
-                        g_ano1 = g_ano1.set_index("dia_norm").reindex([d for d in ordem_dias if d in g_ano1["dia_norm"].values]).reset_index()
+                        g_ano1 = g_ano1.set_index("dia_norm").reindex(ordem_dias).reset_index()
                         g_ano1["label"] = g_ano1["dia_norm"].map(dict(zip(ordem_dias, labels_dias)))
                         fig_dow.add_trace(go.Bar(x=g_ano1["label"], y=g_ano1["venda_salao"], name=f"Sem. {num_semana}/{ano_anterior}", marker_color="#8B7A5A", opacity=0.6, text=g_ano1["venda_salao"].apply(lambda v: f"R$ {v/1000:.0f}k"), textposition="auto", textfont=dict(family="Nunito", size=9, color="white")))
                     fig_dow.add_trace(go.Bar(x=g_ult["label"], y=g_ult["venda_salao"], name=f"Sem. {num_semana}/{ano_atual}", marker_color=VERDE, text=g_ult["venda_salao"].apply(lambda v: f"R$ {v/1000:.0f}k"), textposition="auto", textfont=dict(family="Nunito", size=9, color="white")))
