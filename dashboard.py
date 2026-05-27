@@ -2242,7 +2242,7 @@ elif aba_sel == "Menu":
                         f'<div style="font-size:13px; font-weight:700; color:{cor_delta};">R$ {row["ct_gross_total_check_avg"]:.0f} ({sinal}R$ {abs(delta_check):.0f} vs media)</div></div>' +
                         f'<div style="flex:1; text-align:center;">' +
                         f'<div style="font-size:9px; color:#8B7A5A;">GROSS SALES</div>' +
-                        f'<div style="font-size:13px; font-weight:700; color:#3D2B1F;">R$ {row["gross_sales"]:,.0f}".replace(",",".")</div></div></div>',
+                        f'<div style="font-size:13px; font-weight:700; color:#3D2B1F;">{("R$ {:,.0f}".format(row["gross_sales"])).replace(",",".")}</div></div></div>',
                         unsafe_allow_html=True
                     )
                 melhor_dog = df_dogs_pot.iloc[0]
