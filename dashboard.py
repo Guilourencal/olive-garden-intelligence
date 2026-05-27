@@ -2170,7 +2170,7 @@ elif aba_sel == "Menu":
             st.markdown('<div class="section-title">Matriz Boston — Visao Completa da Semana</div>', unsafe_allow_html=True)
             st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:12px;">Todos os itens num unico visual. Eixo X = volume de pedidos, Eixo Y = Revenue Score, tamanho = Gross Sales.</div>', unsafe_allow_html=True)
             df_scatter = df_mf[df_mf["revenue_score"].notna() & df_mf["number_of_checks"].notna()].copy()
-        df_scatter = df_scatter.sort_values("revenue_score", ascending=False).head(10)
+            df_scatter = df_scatter.sort_values("revenue_score", ascending=False).head(10)
             fig_scatter = go.Figure()
             for tipo in ["Star","Dog","Puzzle","Horse"]:
                 df_tipo = df_scatter[df_scatter["type"]==tipo]
