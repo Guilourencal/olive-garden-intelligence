@@ -30,6 +30,9 @@ def calcular_modelo_filial(dff, hoje, datas_eventos=set()):
     media = dff_c['venda_salao'].mean()
     fator_dow = dff_c.groupby('dow')['venda_salao'].mean() / media
     fator_mes = dff_c.groupby('mes')['venda_salao'].mean() / media
+    # Fator semana do mes (S1=dias 1-7, S2=8-14, S3=15-21, S4=22-31)
+    dff_c['semana_mes'] = dff_c['data'].dt.day.apply(lambda d: 1 if d<=7 else 2 if d<=14 else 3 if d<=21 else 4)
+    fator_semana_mes = dff_c.groupby('semana_mes')['venda_salao'].mean() / media
     recente = dff_c[dff_c['data'] >= hoje - timedelta(days=28)]
     fator_rec_raw = recente['venda_salao'].mean() / media if len(recente) > 0 else 1.0
     fator_rec = float(np.clip(fator_rec_raw, 0.85, 1.15))
@@ -68,7 +71,7 @@ def calcular_modelo_filial(dff, hoje, datas_eventos=set()):
     peso_a1 = 1 - peso_stl
 
     return {
-        'media': media, 'fator_dow': fator_dow, 'fator_mes': fator_mes,
+        'media': media, 'fator_dow': fator_dow, 'fator_mes': fator_mes, 'fator_semana_mes': fator_semana_mes,
         'fator_rec': fator_rec, 'fator_a1': fator_a1,
         'peso_stl': peso_stl, 'peso_a1': peso_a1
     }
@@ -140,7 +143,9 @@ for filial in sorted(df['filial_curta'].unique()):
         data_alvo = inicio_proj + timedelta(days=d-1)
         dow_d = data_alvo.weekday()
         mes_d = data_alvo.month
-        p_stl = m['media'] * m['fator_dow'].get(dow_d,1.0) * m['fator_mes'].get(mes_d,1.0) * m['fator_rec']
+        sem_d = 1 if data_alvo.day<=7 else 2 if data_alvo.day<=14 else 3 if data_alvo.day<=21 else 4
+        f_sem = float(m['fator_semana_mes'].get(sem_d, 1.0))
+        p_stl = m['media'] * m['fator_dow'].get(dow_d,1.0) * m['fator_mes'].get(mes_d,1.0) * m['fator_rec'] * f_sem
         data_ano1 = data_alvo - timedelta(days=364)
         ano1_row = dff[dff['data'].dt.date == data_ano1.date()]
         if len(ano1_row) > 0 and ano1_row['venda_salao'].values[0] > 0:
