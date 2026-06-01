@@ -961,7 +961,7 @@ elif aba_sel == "Pesquisa":
                 margin=dict(t=20, b=10, l=10, r=10),
                 legend=dict(font=dict(family="Nunito", size=11, color=MARROM), orientation="h", yanchor="bottom", y=1.02),
                 xaxis=dict(title="", tickfont=dict(family="Nunito", size=11, color=MARROM)),
-                yaxis=dict(title="% Topbox", range=[60, 105], showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=11, color=MARROM)),
+                yaxis=dict(title="% Topbox", range=[80, 101], showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=11, color=MARROM)),
                 font=dict(family="Nunito"),
                 height=400,
             )
@@ -998,7 +998,7 @@ elif aba_sel == "Pesquisa":
                     margin=dict(t=40, b=10, l=10, r=10),
                     legend=dict(font=dict(family="Nunito", size=9, color=MARROM), orientation="h", yanchor="bottom", y=-0.5),
                     xaxis=dict(tickfont=dict(family="Nunito", size=9, color=MARROM)),
-                    yaxis=dict(range=[60, 105], showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=9, color=MARROM)),
+                    yaxis=dict(range=[80, 101], showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=9, color=MARROM)),
                     height=280,
                     font=dict(family="Nunito"),
                 )
