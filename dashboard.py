@@ -1790,7 +1790,8 @@ elif aba_sel == "Analises":
     df_perf_c["filial_curta"] = df_perf_c["restaurant"].str.replace("Olive Garden - ", "", regex=False)
     df_perf_c["periodo_curto"] = df_perf_c["periodo"].str.extract(r"(FW\d+ to FW\d+)")
     gss_atual = df_perf_c.sort_values("periodo_curto").groupby("filial_curta").last().reset_index() if len(df_perf_c) > 0 else pd.DataFrame()
-    rep_pub = df.groupby("filial").agg(nota_media=("nota", "mean"), pct_pos=("sentimento", lambda x: (x == "Positivo").sum() / len(x) * 100)).reset_index()
+    df_rep = df[df["sentimento"].isin(["Positivo","Negativo","Neutro"])].copy()
+    rep_pub = df_rep.groupby("filial").agg(nota_media=("nota", "mean"), pct_pos=("sentimento", lambda x: (x == "Positivo").sum() / len(x) * 100)).reset_index()
     rep_pub["score_externo"] = (((rep_pub["nota_media"] - 1) / 4) * 40 + rep_pub["pct_pos"] * 0.6).clip(0, 100).round(1)
     rep_pub["filial_curta"] = rep_pub["filial"].str.replace("Olive Garden - ", "", regex=False)
 
