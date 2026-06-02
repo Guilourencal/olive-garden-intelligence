@@ -799,6 +799,7 @@ elif aba_sel == "Pesquisa":
     pct_d = len(df_comments[df_comments["overall_rating"].isin(["Dissatisfied", "Highly Dissatisfied"])]) / total_p * 100 if total_p > 0 else 0
     data_min = pd.to_datetime(df_comments["survey_date"], errors="coerce").min()
     data_max = pd.to_datetime(df_comments["survey_date"], errors="coerce").max()
+    df_comments_f = df_comments[df_comments["filial"].notna() & (df_comments["filial"] != "nan")].copy()
     periodo_p = f"{data_min.strftime('%d/%m/%Y')} a {data_max.strftime('%d/%m/%Y')}" if pd.notna(data_min) else "—"
 
     st.markdown(f'<div style="font-size:11px; color:#7a5c3a; background:#e8ddc8; padding:4px 12px; border-radius:20px; display:inline-block; margin-bottom:20px;">Período: {periodo_p}</div>', unsafe_allow_html=True)
