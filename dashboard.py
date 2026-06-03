@@ -1030,7 +1030,7 @@ elif aba_sel == "Vendas":
 
         # Cards executivos
         with st.container(border=True):
-            st.markdown('<div class="section-title">Visao Executiva — Salao + iFood</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">Visao Executiva</div>', unsafe_allow_html=True)
             # iFood MTD
             from datetime import date as _date_ve
             _hoje_ve = _date_ve.today()
@@ -1039,157 +1039,114 @@ elif aba_sel == "Vendas":
             if len(df_if_mtd) == 0:
                 df_if_mtd = df_ifood_vendas[df_ifood_vendas["periodo"].str.contains(f"/{_hoje_ve.month:02d}/{_hoje_ve.year}")] if len(df_ifood_vendas) > 0 else pd.DataFrame()
             fat_if_mtd = df_if_mtd["faturamento"].sum() if len(df_if_mtd) > 0 else 0
-            cols_c = st.columns(6)
-            seta_meta = "▲" if pct_meta >= 0 else "▼"
-            cor_meta2 = "#2e6b3e" if pct_meta >= 0 else "#c0392b"
-            seta_ano1 = "▲" if pct_ano1 >= 0 else "▼"
-            cor_ano12 = "#2e6b3e" if pct_ano1 >= 0 else "#c0392b"
-            with cols_c[0]:
-                st.markdown(f'''<div style="background:#3D2B1F; border-radius:10px; padding:20px; color:#F5F0E8;">
-                    <div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:12px;">VENDA SALAO</div>
-                    <div style="font-size:28px; font-weight:800; margin-bottom:8px;">{vt_fmt}</div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1);">
-                    <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:2px;">BUDGET</div>
-                    <div style="font-size:12px; color:#D8CFC0;">{mt_fmt}</div></div>
-                    <div style="font-size:18px; font-weight:700; color:{cor_meta2};">{seta_meta} {pct_meta:+.1f}%</div>
-                    </div></div>''', unsafe_allow_html=True)
-            with cols_c[1]:
-                st.markdown(f'''<div style="background:#3D2B1F; border-radius:10px; padding:20px; color:#F5F0E8;">
-                    <div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:12px;">VENDA SALAO</div>
-                    <div style="font-size:28px; font-weight:800; margin-bottom:8px;">{vt_fmt}</div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1);">
-                    <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:2px;">ANO ANTERIOR</div>
-                    <div style="font-size:12px; color:#D8CFC0;">{va1_fmt}</div></div>
-                    <div style="font-size:18px; font-weight:700; color:{cor_ano12};">{seta_ano1} {pct_ano1:+.1f}%</div>
-                    </div></div>''', unsafe_allow_html=True)
-            with cols_c[2]:
-                hdc_medio = df_vd_f["venda_por_hdc"].mean()
-                hdc_fmt = f"R$ {hdc_medio:.0f}" if pd.notna(hdc_medio) else "-"
-                st.markdown(f'''<div style="background:#3D2B1F; border-radius:10px; padding:20px; color:#F5F0E8;">
-                    <div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:12px;">OPERACAO SALAO</div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-                    <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">GUEST COUNT</div>
-                    <div style="font-size:22px; font-weight:800;">{gc_fmt}</div></div>
-                    <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">TICKET MEDIO</div>
-                    <div style="font-size:22px; font-weight:800; color:#8B9A2E;">{tk_fmt}</div></div>
-                    <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:4px;">VENDA/HDC</div>
-                    <div style="font-size:18px; font-weight:700; color:#8B9A2E;">{hdc_fmt}</div></div>
-                    </div></div>''', unsafe_allow_html=True)
-            with cols_c[3]:
-                from datetime import date
-                hoje_v = date.today()
-                mes_atual = hoje_v.month
-                ano_atual = hoje_v.year
-                df_mes_atual = df_vd[
-                    (df_vd["data"].dt.month == mes_atual) &
-                    (df_vd["data"].dt.year == ano_atual) &
-                    df_vd["filial_curta"].isin(filiais_sel)
-                ].copy()
-                if len(df_mes_atual) > 0:
-                    import calendar
-                    dias_no_mes = calendar.monthrange(ano_atual, mes_atual)[1]
-                    dias_realizados = df_mes_atual["data"].dt.day.max()
-                    dias_restantes = dias_no_mes - dias_realizados
-                    venda_realizada = df_mes_atual["venda_salao"].sum()
-                    # Modelo STL por filial com remocao de outliers por DOW (IQR 10-90)
-                    df_hist = df_vd[(df_vd["venda_salao"] > 0)].copy()
-                    df_hist["dow"] = df_hist["data"].dt.dayofweek
-                    df_hist["mes_n"] = df_hist["data"].dt.month
-                    proj_restante = 0
-                    for fil in filiais_sel:
-                        dff_h = df_hist[df_hist["filial_curta"] == fil].copy()
-                        if len(dff_h) < 30:
-                            continue
-                        # Remover outliers por DOW usando IQR 10-90
-                        clean_parts = []
-                        for dow_v in dff_h["dow"].unique():
-                            grupo = dff_h[dff_h["dow"] == dow_v]
-                            q1 = grupo["venda_salao"].quantile(0.10)
-                            q3 = grupo["venda_salao"].quantile(0.90)
-                            iqr = q3 - q1
-                            clean_parts.append(grupo[(grupo["venda_salao"] >= q1 - 1.5*iqr) & (grupo["venda_salao"] <= q3 + 1.5*iqr)])
-                        dff_clean = pd.concat(clean_parts)
-                        media_fil = dff_clean["venda_salao"].mean()
-                        fator_dow_fil = dff_clean.groupby("dow")["venda_salao"].mean() / media_fil
-                        fator_mes_fil = dff_clean.groupby("mes_n")["venda_salao"].mean() / media_fil
-                        recente_fil = dff_clean[dff_clean["data"] >= dff_clean["data"].max() - pd.Timedelta(days=28)]
-                        fator_rec_fil = recente_fil["venda_salao"].mean() / media_fil if len(recente_fil) > 0 else 1.0
-                        fator_rec_fil = float(np.clip(fator_rec_fil, 0.85, 1.15))
-                        for d in range(dias_realizados + 1, dias_no_mes + 1):
-                            data_d = pd.Timestamp(ano_atual, mes_atual, d)
-                            dow_d = data_d.dayofweek
-                            f_dow = fator_dow_fil.get(dow_d, 1.0)
-                            f_mes = fator_mes_fil.get(mes_atual, 1.0)
-                            proj_restante += media_fil * f_dow * f_mes * fator_rec_fil
-                    proj_total = venda_realizada + proj_restante
-                    budget_mes = df_mes_atual["meta_venda"].sum() / dias_realizados * dias_no_mes
-                    pct_proj_budget = (proj_total / budget_mes - 1) * 100 if budget_mes > 0 else 0
-                    seta_proj = "▲" if pct_proj_budget >= 0 else "▼"
-                    cor_proj = "#2e6b3e" if pct_proj_budget >= 0 else "#c0392b"
-                    proj_fmt = f"R$ {proj_total:,.0f}".replace(",",".")
-                    budget_mes_fmt = f"R$ {budget_mes:,.0f}".replace(",",".")
-                    pct_concluido = int(dias_realizados / dias_no_mes * 100)
-                    st.markdown(f'''<div style="background:#3D2B1F; border-radius:10px; padding:20px; color:#F5F0E8;">
-                        <div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:12px;">PROJECAO DO MES</div>
-                        <div style="font-size:24px; font-weight:800; margin-bottom:8px;">{proj_fmt}</div>
-                        <div style="background:rgba(255,255,255,0.1); border-radius:4px; height:4px; margin-bottom:8px;">
-                            <div style="background:#8B9A2E; width:{pct_concluido}%; height:4px; border-radius:4px;"></div>
-                        </div>
-                        <div style="font-size:9px; color:#D8CFC0; margin-bottom:8px;">{dias_realizados}/{dias_no_mes} dias realizados</div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1);">
-                        <div><div style="font-size:9px; color:#D8CFC0; margin-bottom:2px;">BUDGET MES</div>
-                        <div style="font-size:12px; color:#D8CFC0;">{budget_mes_fmt}</div></div>
-                        <div style="font-size:18px; font-weight:700; color:{cor_proj};">{seta_proj} {pct_proj_budget:+.1f}%</div>
-                        </div></div>''', unsafe_allow_html=True)
+            # Layout 2x3
+            import calendar as _cal_ve
+            from datetime import date as _date_ve2
+            _hoje_ve2 = _date_ve2.today()
+            _dias_no_mes_ve = _cal_ve.monthrange(_hoje_ve2.year, _hoje_ve2.month)[1]
+            df_mes_ve = df_vd[
+                (df_vd["data"].dt.month == _hoje_ve2.month) &
+                (df_vd["data"].dt.year == _hoje_ve2.year) &
+                df_vd["filial_curta"].isin(filiais_sel)
+            ].copy()
+            _dias_realizados_ve = int(df_mes_ve["data"].dt.day.max()) if len(df_mes_ve) > 0 else 0
+            _pct_concluido_ve = int(_dias_realizados_ve / _dias_no_mes_ve * 100) if _dias_no_mes_ve > 0 else 0
+
+            # Linha 1 — totais e projecao
+            col_ve1, col_ve2, col_ve3 = st.columns(3)
+            with col_ve1:
+                fat_total_mtd = vt + fat_if_mtd
+                fat_total_fmt2 = f"R$ {fat_total_mtd:,.0f}".replace(",",".")
+                fat_if_fmt2 = f"R$ {fat_if_mtd:,.0f}".replace(",",".")
+                pct_if = fat_if_mtd / fat_total_mtd * 100 if fat_total_mtd > 0 else 0
+                st.markdown(
+                    f'<div style="background:#1a3320;border-radius:12px;padding:20px;color:#F5F0E8;min-height:130px;">' +
+                    '<div style="font-size:9px;color:#9DC88D;letter-spacing:2px;margin-bottom:8px;">FATURAMENTO TOTAL MTD</div>' +
+                    f'<div style="font-size:32px;font-weight:800;margin-bottom:6px;">{fat_total_fmt2}</div>' +
+                    f'<div style="display:flex;gap:16px;font-size:10px;color:#9DC88D;">' +
+                    f'<span>Salao: {vt_fmt}</span><span>iFood: {fat_if_fmt2}</span></div>' +
+                    f'<div style="font-size:10px;color:#9DC88D;margin-top:4px;">{pct_if:.1f}% via iFood</div></div>',
+                    unsafe_allow_html=True)
+            with col_ve2:
+                if len(df_mes_ve) > 0:
+                    proj_if_ve = (fat_if_mtd / _dias_realizados_ve * (_dias_no_mes_ve - _dias_realizados_ve)) if _dias_realizados_ve > 0 else 0
+                    proj_total_ve = proj_total + proj_if_ve if "proj_total" in dir() else fat_total_mtd
+                    budget_ve = df_mes_ve["meta_venda"].sum() / _dias_realizados_ve * _dias_no_mes_ve if _dias_realizados_ve > 0 else 0
+                    pct_proj_ve = (proj_total_ve / budget_ve - 1) * 100 if budget_ve > 0 else 0
+                    cor_pv = "#8B9A2E" if pct_proj_ve >= 0 else "#c0392b"
+                    seta_pv = "▲" if pct_proj_ve >= 0 else "▼"
+                    proj_ve_fmt = f"R$ {proj_total_ve:,.0f}".replace(",",".")
+                    budget_ve_fmt = f"R$ {budget_ve:,.0f}".replace(",",".")
+                    st.markdown(
+                        f'<div style="background:#1a3320;border-radius:12px;padding:20px;color:#F5F0E8;min-height:130px;">' +
+                        '<div style="font-size:9px;color:#9DC88D;letter-spacing:2px;margin-bottom:8px;">PROJECAO TOTAL DO MES</div>' +
+                        f'<div style="font-size:32px;font-weight:800;margin-bottom:6px;">{proj_ve_fmt}</div>' +
+                        f'<div style="background:rgba(255,255,255,0.15);border-radius:4px;height:4px;margin-bottom:6px;">' +
+                        f'<div style="background:#8B9A2E;width:{_pct_concluido_ve}%;height:4px;border-radius:4px;"></div></div>' +
+                        f'<div style="display:flex;justify-content:space-between;font-size:10px;color:#9DC88D;">' +
+                        f'<span>{_dias_realizados_ve}/{_dias_no_mes_ve} dias realizados</span>' +
+                        f'<span style="color:{cor_pv};font-weight:700;">{seta_pv} {pct_proj_ve:+.1f}% vs budget</span></div></div>',
+                        unsafe_allow_html=True)
                 else:
-                    st.markdown('''<div style="background:#3D2B1F; border-radius:10px; padding:20px; color:#F5F0E8;">
-                        <div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:12px;">PROJECAO DO MES</div>
-                        <div style="font-size:13px; color:#8B7A5A;">Selecione o mes atual para ver a projecao.</div>
-                        </div>''', unsafe_allow_html=True)
-            # Card 5 — Faturamento Total MTD
-            with cols_c[4]:
-                fat_total_mtd = vt + fat_if_mtd if "vt" in dir() else fat_if_mtd
-                fat_total_fmt = f"R$ {fat_total_mtd:,.0f}".replace(",",".")
-                fat_if_fmt = f"R$ {fat_if_mtd:,.0f}".replace(",",".")
-                st.markdown(f'''<div style="background:#1a3320; border-radius:10px; padding:20px; color:#F5F0E8;">
-                    <div style="font-size:9px; color:#9DC88D; letter-spacing:2px; margin-bottom:12px;">FATURAMENTO TOTAL MTD</div>
-                    <div style="font-size:28px; font-weight:800; margin-bottom:8px;">{fat_total_fmt}</div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1);">
-                    <div><div style="font-size:9px; color:#9DC88D; margin-bottom:2px;">IFOOD MTD</div>
-                    <div style="font-size:12px; color:#9DC88D;">{fat_if_fmt}</div></div>
-                    <div style="font-size:11px; color:#9DC88D;">Salao + iFood</div>
-                    </div></div>''', unsafe_allow_html=True)
-            # Card 6 — Projecao Total
-            with cols_c[5]:
-                if len(df_mes_atual) > 0:
-                    import calendar as _cal
-                    _dias_no_mes = _cal.monthrange(_hoje_ve.year, _hoje_ve.month)[1]
-                    _dias_realizados = df_mes_atual["data"].dt.day.max()
-                    _dias_restantes = _dias_no_mes - _dias_realizados
-                    proj_if_restante = (fat_if_mtd / _dias_realizados * _dias_restantes) if _dias_realizados > 0 else 0
-                    proj_total_geral = proj_total + proj_if_restante if "proj_total" in dir() else fat_total_mtd
-                    proj_total_geral_fmt = f"R$ {proj_total_geral:,.0f}".replace(",",".")
-                    budget_total_fmt = f"R$ {budget_mes:,.0f}".replace(",",".") if "budget_mes" in dir() else "—"
-                    pct_proj_total = (proj_total_geral / budget_mes - 1) * 100 if "budget_mes" in dir() and budget_mes > 0 else 0
-                    seta_pt = "▲" if pct_proj_total >= 0 else "▼"
-                    cor_pt = "#2e6b3e" if pct_proj_total >= 0 else "#c0392b"
-                    st.markdown(f'''<div style="background:#1a3320; border-radius:10px; padding:20px; color:#F5F0E8;">
-                        <div style="font-size:9px; color:#9DC88D; letter-spacing:2px; margin-bottom:12px;">PROJECAO TOTAL MES</div>
-                        <div style="font-size:24px; font-weight:800; margin-bottom:8px;">{proj_total_geral_fmt}</div>
-                        <div style="background:rgba(255,255,255,0.1); border-radius:4px; height:4px; margin-bottom:8px;">
-                            <div style="background:#8B9A2E; width:{pct_concluido}%; height:4px; border-radius:4px;"></div>
-                        </div>
-                        <div style="font-size:9px; color:#9DC88D; margin-bottom:8px;">{_dias_realizados}/{_dias_no_mes} dias | iFood projetado</div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1);">
-                        <div><div style="font-size:9px; color:#9DC88D; margin-bottom:2px;">BUDGET MES</div>
-                        <div style="font-size:12px; color:#9DC88D;">{budget_total_fmt}</div></div>
-                        <div style="font-size:18px; font-weight:700; color:{cor_pt};">{seta_pt} {pct_proj_total:+.1f}%</div>
-                        </div></div>''', unsafe_allow_html=True)
-                else:
-                    st.markdown('''<div style="background:#1a3320; border-radius:10px; padding:20px; color:#F5F0E8;">
-                        <div style="font-size:9px; color:#9DC88D; letter-spacing:2px; margin-bottom:12px;">PROJECAO TOTAL MES</div>
-                        <div style="font-size:13px; color:#8B7A5A;">Selecione o mes atual para ver a projecao.</div>
-                        </div>''', unsafe_allow_html=True)
+                    st.markdown(
+                        '<div style="background:#1a3320;border-radius:12px;padding:20px;color:#F5F0E8;min-height:130px;">' +
+                        '<div style="font-size:9px;color:#9DC88D;letter-spacing:2px;margin-bottom:8px;">PROJECAO TOTAL DO MES</div>' +
+                        '<div style="font-size:13px;color:#9DC88D;margin-top:16px;">Sem dados do mes atual.</div></div>',
+                        unsafe_allow_html=True)
+            with col_ve3:
+                hdc_medio_ve = df_vd_f["venda_por_hdc"].mean() if len(df_vd_f) > 0 else 0
+                hdc_fmt_ve = f"R$ {hdc_medio_ve:.0f}" if pd.notna(hdc_medio_ve) else "—"
+                st.markdown(
+                    f'<div style="background:#3D2B1F;border-radius:12px;padding:20px;color:#F5F0E8;min-height:130px;">' +
+                    '<div style="font-size:9px;color:#D8CFC0;letter-spacing:2px;margin-bottom:8px;">OPERACAO SALAO</div>' +
+                    f'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px;">' +
+                    '<div><div style="font-size:9px;color:#D8CFC0;margin-bottom:2px;">GUEST COUNT</div>' +
+                    f'<div style="font-size:24px;font-weight:800;">{gc_fmt}</div></div>' +
+                    '<div><div style="font-size:9px;color:#D8CFC0;margin-bottom:2px;">TICKET MEDIO</div>' +
+                    f'<div style="font-size:24px;font-weight:800;color:#8B9A2E;">{tk_fmt}</div></div>' +
+                    '<div><div style="font-size:9px;color:#D8CFC0;margin-bottom:2px;">VENDA/HDC</div>' +
+                    f'<div style="font-size:20px;font-weight:700;color:#8B9A2E;">{hdc_fmt_ve}</div></div>' +
+                    '</div></div>',
+                    unsafe_allow_html=True)
+
+            st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+
+            # Linha 2 — comparativos
+            col_ve4, col_ve5, col_ve6 = st.columns(3)
+            with col_ve4:
+                seta_m = "▲" if pct_meta >= 0 else "▼"
+                cor_m = "#2e6b3e" if pct_meta >= 0 else "#c0392b"
+                st.markdown(
+                    f'<div style="background:#3D2B1F;border-radius:12px;padding:16px;color:#F5F0E8;">' +
+                    '<div style="font-size:9px;color:#D8CFC0;letter-spacing:2px;margin-bottom:6px;">VENDA SALAO VS BUDGET</div>' +
+                    f'<div style="font-size:26px;font-weight:800;margin-bottom:6px;">{vt_fmt}</div>' +
+                    f'<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">' +
+                    f'<span style="font-size:11px;color:#D8CFC0;">Budget: {mt_fmt}</span>' +
+                    f'<span style="font-size:16px;font-weight:700;color:{cor_m};">{seta_m} {pct_meta:+.1f}%</span></div></div>',
+                    unsafe_allow_html=True)
+            with col_ve5:
+                seta_a = "▲" if pct_ano1 >= 0 else "▼"
+                cor_a = "#2e6b3e" if pct_ano1 >= 0 else "#c0392b"
+                st.markdown(
+                    f'<div style="background:#3D2B1F;border-radius:12px;padding:16px;color:#F5F0E8;">' +
+                    '<div style="font-size:9px;color:#D8CFC0;letter-spacing:2px;margin-bottom:6px;">VENDA SALAO VS ANO ANTERIOR</div>' +
+                    f'<div style="font-size:26px;font-weight:800;margin-bottom:6px;">{vt_fmt}</div>' +
+                    f'<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">' +
+                    f'<span style="font-size:11px;color:#D8CFC0;">AA: {va1_fmt}</span>' +
+                    f'<span style="font-size:16px;font-weight:700;color:{cor_a};">{seta_a} {pct_ano1:+.1f}%</span></div></div>',
+                    unsafe_allow_html=True)
+            with col_ve6:
+                ped_if = int(df_if_mtd["pedidos"].sum()) if len(df_if_mtd) > 0 else 0
+                tm_if = fat_if_mtd / ped_if if ped_if > 0 else 0
+                fat_if_fmt3 = f"R$ {fat_if_mtd:,.0f}".replace(",",".")
+                st.markdown(
+                    f'<div style="background:#3D2B1F;border-radius:12px;padding:16px;color:#F5F0E8;">' +
+                    '<div style="font-size:9px;color:#D8CFC0;letter-spacing:2px;margin-bottom:6px;">IFOOD MTD</div>' +
+                    f'<div style="font-size:26px;font-weight:800;margin-bottom:6px;">{fat_if_fmt3}</div>' +
+                    f'<div style="display:flex;gap:16px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">' +
+                    f'<span style="font-size:11px;color:#D8CFC0;">{ped_if} pedidos</span>' +
+                    f'<span style="font-size:11px;color:#8B9A2E;">TM R$ {tm_if:.0f}</span></div></div>',
+                    unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
 
