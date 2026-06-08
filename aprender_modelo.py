@@ -130,6 +130,9 @@ for fil_ev, d_ini, d_fim in eventos_db:
     while d <= d_fim:
         if fil_curta:
             eventos_por_filial.setdefault(fil_curta, set()).add(d)
+        else:
+            for _f in ['Aricanduva','Center Norte','Dom Pedro','Guarulhos GRU2','Guarulhos GRU3','Morumbi']:
+                eventos_por_filial.setdefault(_f, set()).add(d)
         d = _date(d.year, d.month, d.day + 1) if d.day < 28 else (_date(d.year, d.month+1, 1) if d.month < 12 else _date(d.year+1, 1, 1))
 
 for filial in sorted(df['filial_curta'].unique()):
