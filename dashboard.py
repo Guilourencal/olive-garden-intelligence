@@ -1520,9 +1520,8 @@ elif aba_sel == "Vendas":
                             partes = p.split("-")
                             d_ini = datetime.strptime(partes[0].strip(), "%d/%m/%Y")
                             mes_ano_key = f"{d_ini.month:02d}/{d_ini.year}"
-                            fat_if_fil = df_v[df_v["periodo"]==p][df_v["filial"]==filial_full]["faturamento"].sum() if "filial" in df_v.columns else 0
-                            salao_fil = venda_salao_mes[venda_salao_mes["mes_ano"]==mes_ano_key]
-                            salao_fil_v = df_vd_share[df_vd_share["mes_ano"]==mes_ano_key & df_vd_share["filial"].str.contains(filial_if)]["venda_salao"].sum() if len(salao_fil)>0 else 0
+                            fat_if_fil = df_v[(df_v["periodo"]==p) & (df_v["filial"]==filial_full)]["faturamento"].sum() if "filial" in df_v.columns else 0
+                            salao_fil_v = df_vd_share[(df_vd_share["mes_ano"]==mes_ano_key) & (df_vd_share["filial"].str.contains(filial_if, na=False))]["venda_salao"].sum()
                             total_fil = salao_fil_v + fat_if_fil
                             share_fil.append(fat_if_fil/total_fil*100 if total_fil>0 else 0)
                         except:
