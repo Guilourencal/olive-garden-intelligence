@@ -1111,12 +1111,12 @@ elif aba_sel == "Vendas":
             ].copy()
             _dias_realizados_ve = int(df_mes_ve["data"].dt.day.max()) if len(df_mes_ve) > 0 else 0
             _pct_conc_ve = int(_dias_realizados_ve / _dias_no_mes_ve * 100) if _dias_no_mes_ve > 0 else 0
-            fat_total_mtd = vt + fat_if_mtd
+            fat_total_mtd = vt + fat_if_ytd
             fat_total_fmt2 = f"R$ {fat_total_mtd:,.0f}".replace(",",".")
-            fat_if_fmt2 = f"R$ {fat_if_mtd:,.0f}".replace(",",".")
-            pct_if2 = fat_if_mtd / fat_total_mtd * 100 if fat_total_mtd > 0 else 0
-            ped_if2 = int(df_if_mtd["pedidos"].sum()) if len(df_if_mtd) > 0 else 0
-            tm_if2 = fat_if_mtd / ped_if2 if ped_if2 > 0 else 0
+            fat_if_fmt2 = f"R$ {fat_if_ytd:,.0f}".replace(",",".")
+            pct_if2 = fat_if_ytd / fat_total_mtd * 100 if fat_total_mtd > 0 else 0
+            ped_if2 = int(df_if_ytd["pedidos"].sum()) if len(df_if_ytd) > 0 else 0
+            tm_if2 = fat_if_ytd / ped_if2 if ped_if2 > 0 else 0
             seta_m2 = "▲" if pct_meta >= 0 else "▼"
             cor_m2 = "#4CAF7D" if pct_meta >= 0 else "#E57373"
             seta_a2 = "▲" if pct_ano1 >= 0 else "▼"
