@@ -1062,7 +1062,7 @@ elif aba_sel == "Vendas":
                 meses_num = {"jan":"01","fev":"02","mar":"03","abr":"04","mai":"05","jun":"06","jul":"07","ago":"08","set":"09","out":"10","nov":"11","dez":"12"}
                 meses_num_sel = [meses_num[m] for m in meses_sel if m in meses_num]
                 if meses_num_sel and len(meses_num_sel) < 12:
-                    df_if_ytd = df_if_ytd[df_if_ytd["periodo"].str[:2].isin(meses_num_sel)]
+                    df_if_ytd = df_if_ytd[df_if_ytd["periodo"].str[3:5].isin(meses_num_sel)]
             else:
                 df_if_ytd = pd.DataFrame()
             fat_if_ytd = df_if_ytd["faturamento"].sum() if len(df_if_ytd) > 0 else 0
