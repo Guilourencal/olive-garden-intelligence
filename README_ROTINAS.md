@@ -103,3 +103,10 @@ git checkout v-estavel-20260518 -- dashboard.py
 ---
 
 *Ultima atualizacao: 19/05/2026*
+
+### Atualizar Reclamacoes Buzzmonitor (semanal):
+`powershell
+# 1. Salvar arquivo xlsx em:
+#    C:\olive-garden-reviews\data\reclamacoes\
+python importar_reclamacoes.py
+`
