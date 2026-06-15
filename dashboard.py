@@ -934,7 +934,7 @@ elif aba_sel == "Vendas":
             fat_if_mtd = df_if_mtd["faturamento"].sum() if len(df_if_mtd) > 0 else 0
             # iFood filtrado — mesmo periodo do salao (anos e meses selecionados)
             if len(df_ifood_vendas) > 0:
-                df_if_ytd = df_ifood_vendas.copy()
+                df_if_ytd = df_ifood_vendas[df_ifood_vendas["logistica"] == "Entrega parceira"].copy()
                 # Filtrar por ano
                 df_if_ytd = df_if_ytd[df_if_ytd["periodo"].str.contains("|".join([str(a) for a in anos_sel]))]
                 # Filtrar por mes se nao for todos os meses
