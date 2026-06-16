@@ -461,8 +461,9 @@ if aba_sel == "Reviews":
     # BLOCO 5 — VOZ DO CLIENTE
     with st.container(border=True):
         st.markdown('<div class="section-title">Voz do Cliente</div>', unsafe_allow_html=True)
-        st.markdown('<div style="font-size:12px;color:#8B7A5A;margin-bottom:12px;">Reclamacoes reais — filtradas por unidade, tema e canal acima.</div>', unsafe_allow_html=True)
-        df_voz = df_rf.sort_values("data", ascending=False).head(50)
+        st.markdown('<div style="font-size:12px;color:#8B7A5A;margin-bottom:12px;">Reclamacoes reais do Buzzmonitor (Google + Instagram) — filtradas por unidade, tema e canal acima.</div>', unsafe_allow_html=True)
+        df_voz = df_rf.sort_values("data", ascending=False).head(100)
+        html_voz = ""
         for _, row in df_voz.iterrows():
             nota_v = row["avaliacao"]
             cor_nota_v = "#2e6b3e" if pd.notna(nota_v) and nota_v >= 3 else "#B8923A" if pd.notna(nota_v) and nota_v >= 2 else VERMELHO
@@ -470,7 +471,7 @@ if aba_sel == "Reviews":
             canal_icon = "📱" if row["canal"] == "instagram" else "🔍"
             tema_badge = row["tema"] if pd.notna(row["tema"]) else ""
             subtema_badge = row["subtema"] if pd.notna(row["subtema"]) else ""
-            st.markdown(
+            html_voz += (
                 f'<div style="padding:12px 0;border-bottom:1px solid #e8ddc8;">' +
                 f'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
                 f'<div style="display:flex;gap:8px;align-items:center;">' +
@@ -483,9 +484,9 @@ if aba_sel == "Reviews":
                 f'<span style="font-size:10px;color:#8B7A5A;">{canal_icon} {str(row["data"])[:10]}</span>' +
                 f'</div></div>' +
                 f'<div style="font-size:12px;color:#3D2B1F;line-height:1.5;">{str(row["comentario"])[:300]}{"..." if len(str(row["comentario"])) > 300 else ""}</div></div>',
-                unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
+                f'<div style="font-size:12px;color:#3D2B1F;line-height:1.5;">{str(row["comentario"])[:300]}{"..." if len(str(row["comentario"])) > 300 else ""}</div></div>'
+            )
+        st.markdown(f'<div style="height:420px;overflow-y:auto;padding-right:8px;">{html_voz}</div>', unsafe_allow_html=True)
 
     # BLOCO 6 — REPUTACAO DIGITAL
     with st.container(border=True):
