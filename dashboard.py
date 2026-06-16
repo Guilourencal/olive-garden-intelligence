@@ -2521,8 +2521,8 @@ elif aba_sel == "Fila":
                 fig_esp_g = go.Figure(go.Scatter(
                     x=esp_grupo["pessoas"], y=esp_grupo["duracao_minutos"],
                     mode="lines+markers+text",
-                    line=dict(color=DOURADO, width=2),
-                    marker=dict(size=8, color=DOURADO),
+                    line=dict(color="#B8923A", width=2),
+                    marker=dict(size=8, color="#B8923A"),
                     text=esp_grupo["duracao_minutos"].apply(lambda v: f"{v:.0f}min"),
                     textposition="top center",
                     textfont=dict(family="Nunito", size=10, color=MARROM)
@@ -2549,7 +2549,7 @@ elif aba_sel == "Fila":
             fig_evo_f.add_trace(go.Bar(x=evo_mes["mes"], y=evo_mes["total"], name="Total Filas", marker_color="#8B7A5A", opacity=0.6))
             fig_evo_f.add_trace(go.Bar(x=evo_mes["mes"], y=evo_mes["sentados"], name="Sentados", marker_color=VERDE))
             fig_evo_f.add_trace(go.Scatter(x=evo_mes["mes"], y=evo_mes["tx_conv"], name="Taxa Conv. %",
-                mode="lines+markers", line=dict(color=DOURADO, width=2), marker=dict(size=8),
+                mode="lines+markers", line=dict(color="#B8923A", width=2), marker=dict(size=8),
                 yaxis="y2"))
             fig_evo_f.update_layout(
                 barmode="overlay",
@@ -2557,7 +2557,7 @@ elif aba_sel == "Fila":
                 margin=dict(t=10,b=10,l=10,r=60),
                 xaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM), showgrid=False),
                 yaxis=dict(showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=10)),
-                yaxis2=dict(overlaying="y", side="right", ticksuffix="%", showgrid=False, tickfont=dict(family="Nunito", size=10, color=DOURADO)),
+                yaxis2=dict(overlaying="y", side="right", ticksuffix="%", showgrid=False, tickfont=dict(family="Nunito", size=10, color="#B8923A")),
                 legend=dict(font=dict(family="Nunito", size=10, color=MARROM), orientation="h", yanchor="bottom", y=1.02),
                 font=dict(family="Nunito"), height=320
             )
