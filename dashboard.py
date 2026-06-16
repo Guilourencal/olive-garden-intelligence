@@ -492,7 +492,7 @@ if aba_sel == "Reviews":
         st.markdown('<div class="section-title">Reputacao Digital — iFood, Google e TripAdvisor</div>', unsafe_allow_html=True)
         st.markdown('<div style="font-size:12px;color:#8B7A5A;margin-bottom:12px;">Reviews coletados das plataformas digitais — complemento às reclamacoes do Buzzmonitor.</div>', unsafe_allow_html=True)
 
-        df_rev = df_reviews.copy()
+        df_rev = df.copy()
         df_rev = df_rev[df_rev["sentimento"].notna()]
 
         # KPIs por plataforma
