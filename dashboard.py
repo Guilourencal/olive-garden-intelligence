@@ -468,7 +468,7 @@ if aba_sel == "Reviews":
             nota_v = row["avaliacao"]
             cor_nota_v = "#2e6b3e" if pd.notna(nota_v) and nota_v >= 3 else "#B8923A" if pd.notna(nota_v) and nota_v >= 2 else VERMELHO
             estrelas = "★" * int(nota_v) if pd.notna(nota_v) else "—"
-            canal_icon = "📱" if row["canal"] == "instagram" else "🔍"
+            canal_icon = "📱 Instagram" if row["canal"] == "instagram" else "🔍 Google"
             tema_badge = row["tema"] if pd.notna(row["tema"]) else ""
             subtema_badge = row["subtema"] if pd.notna(row["subtema"]) else ""
             html_voz += (
