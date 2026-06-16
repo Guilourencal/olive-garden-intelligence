@@ -211,6 +211,13 @@ def carregar_menu_analysis():
     return df
 
 @st.cache_data(ttl=300)
+def carregar_fila_espera():
+    conn = get_conn()
+    df = pd.read_sql("SELECT * FROM fila_espera ORDER BY dia_chegada DESC, hora_chegada DESC", conn)
+    conn.close()
+    return df
+
+@st.cache_data(ttl=300)
 def carregar_reclamacoes():
     conn = get_conn()
     df = pd.read_sql("SELECT * FROM reclamacoes_buzzmonitor ORDER BY data DESC", conn)
@@ -237,6 +244,7 @@ df_ifood_tags = carregar_ifood_tags()
 df_vendas_diarias = carregar_vendas_diarias()
 df_menu = carregar_menu_analysis()
 df_reclamacoes = carregar_reclamacoes()
+df_fila = carregar_fila_espera()
 
 verificar_senha()
 if "aba_sel" not in st.session_state:
@@ -251,7 +259,7 @@ with st.sidebar:
     )
     st.markdown('<div style="height:1px; background:rgba(255,255,255,0.1); margin-bottom:10px;"></div>', unsafe_allow_html=True)
 
-    for aba in ["Reviews", "Social", "Pesquisa", "Analises", "Vendas", "OlivIA", "Menu"]:
+    for aba in ["Reviews", "Social", "Pesquisa", "Analises", "Vendas", "OlivIA", "Menu", "Fila"]:
         if st.button(aba, key=f"btn_{aba}", use_container_width=True):
             st.session_state.aba_sel = aba
             st.rerun()
