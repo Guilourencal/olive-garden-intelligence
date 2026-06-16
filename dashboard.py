@@ -483,7 +483,6 @@ if aba_sel == "Reviews":
                 f'<span style="font-size:11px;color:{cor_nota_v};font-weight:700;">{estrelas}</span>' +
                 f'<span style="font-size:10px;color:#8B7A5A;">{canal_icon} {str(row["data"])[:10]}</span>' +
                 f'</div></div>' +
-                f'<div style="font-size:12px;color:#3D2B1F;line-height:1.5;">{str(row["comentario"])[:300]}{"..." if len(str(row["comentario"])) > 300 else ""}</div></div>',
                 f'<div style="font-size:12px;color:#3D2B1F;line-height:1.5;">{str(row["comentario"])[:300]}{"..." if len(str(row["comentario"])) > 300 else ""}</div></div>'
             )
         st.markdown(f'<div style="height:420px;overflow-y:auto;padding-right:8px;">{html_voz}</div>', unsafe_allow_html=True)
