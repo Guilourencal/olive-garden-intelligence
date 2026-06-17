@@ -110,3 +110,12 @@ git checkout v-estavel-20260518 -- dashboard.py
 #    C:\olive-garden-reviews\data\reclamacoes\
 python importar_reclamacoes.py
 `
+
+### Atualizar iFood (diario):
+`powershell
+# 1. Salvar arquivo mensal acumulado em data\ifood_vendas\
+python importar_ifood_vendas.py
+
+# 2. Salvar arquivo diario em data\ifood_diario\
+python importar_ifood_diario.py
+`
