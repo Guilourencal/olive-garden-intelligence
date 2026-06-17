@@ -1488,12 +1488,14 @@ elif aba_sel == "Vendas":
         with st.container(border=True):
             st.markdown('<div class="section-title">Vendas por Dia da Semana</div>', unsafe_allow_html=True)
             st.markdown('<div style="font-size:12px;color:#8B7A5A;margin-bottom:12px;">Distribuicao estimada do faturamento por dia da semana no periodo selecionado.</div>', unsafe_allow_html=True)
-            df_dias_v = df_ifood_dias[df_ifood_dias["periodo"] == periodo_sel_v].copy()
+            # Usar periodo mais recente (mes corrente)
+            periodo_mes_atual = periodos[-1] if periodos else periodo_sel_v
+            df_dias_v = df_ifood_dias[df_ifood_dias["periodo"] == periodo_mes_atual].copy()
             if len(df_dias_v) > 0:
                 ordem_dias = ["Segunda","Terca","Quarta","Quinta","Sexta","Sabado","Domingo"]
                 df_dias_v["dia_norm"] = df_dias_v["dia_semana"].str.normalize("NFKD").str.encode("ascii","ignore").str.decode("ascii").str.strip()
                 dias_g = df_dias_v.groupby("dia_norm")["pedidos"].sum().reset_index()
-                fat_total_per = df_v[df_v["periodo"]==periodo_sel_v]["faturamento"].sum()
+                fat_total_per = df_v[df_v["periodo"]==periodo_mes_atual]["faturamento"].sum()
                 ped_total_per = dias_g["pedidos"].sum()
                 dias_g["fat_est"] = dias_g["pedidos"] / ped_total_per * fat_total_per if ped_total_per > 0 else 0
                 dias_g = dias_g.set_index("dia_norm").reindex([d for d in ordem_dias if d in dias_g.index]).reset_index()
