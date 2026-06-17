@@ -96,6 +96,20 @@ print(f"\nArquivos encontrados: {len(arquivos)}")
 for arquivo in arquivos:
     nome = os.path.basename(arquivo)
     print(f"\nImportando: {nome}")
+    # Limpar registros do mesmo mes/ano antes de reimportar
+    try:
+        df_tmp = pd.read_excel(arquivo, sheet_name="Vendas", header=0, nrows=1)
+        periodo_novo = str(df_tmp.iloc[0, 0])
+        if "/" in periodo_novo:
+            mes_ano = periodo_novo.split("/")[1].strip()[:7]
+            cur.execute("DELETE FROM ifood_vendas WHERE periodo LIKE %s", (f"%{mes_ano}%",))
+            cur.execute("DELETE FROM ifood_horarios WHERE periodo LIKE %s", (f"%{mes_ano}%",))
+            cur.execute("DELETE FROM ifood_pagamentos WHERE periodo LIKE %s", (f"%{mes_ano}%",))
+            cur.execute("DELETE FROM ifood_dias WHERE periodo LIKE %s", (f"%{mes_ano}%",))
+            conn.commit()
+            print(f"  Limpeza: removidos registros de {mes_ano}")
+    except Exception as e:
+        print(f"  Aviso limpeza: {e}")
     
     # Vendas
     df = pd.read_excel(arquivo, sheet_name='Vendas', header=0)
