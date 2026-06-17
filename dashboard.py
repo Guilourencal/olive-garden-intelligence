@@ -1488,8 +1488,12 @@ elif aba_sel == "Vendas":
         with st.container(border=True):
             st.markdown('<div class="section-title">Vendas por Dia da Semana</div>', unsafe_allow_html=True)
             st.markdown('<div style="font-size:12px;color:#8B7A5A;margin-bottom:12px;">Distribuicao estimada do faturamento por dia da semana no periodo selecionado.</div>', unsafe_allow_html=True)
-            # Usar periodo mais recente (mes corrente)
-            periodo_mes_atual = periodos[-1] if periodos else periodo_sel_v
+            # Usar periodo mais recente (mes corrente) — ordenar por data
+            from datetime import datetime as _dt
+            def _parse_per(p):
+                try: return _dt.strptime(p.split("-")[1].strip(), "%d/%m/%Y")
+                except: return _dt(2000,1,1)
+            periodo_mes_atual = max(periodos, key=_parse_per) if periodos else periodo_sel_v
             df_dias_v = df_ifood_dias[df_ifood_dias["periodo"] == periodo_mes_atual].copy()
             if len(df_dias_v) > 0:
                 ordem_dias = ["Segunda","Terca","Quarta","Quinta","Sexta","Sabado","Domingo"]
