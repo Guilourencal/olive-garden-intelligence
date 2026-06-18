@@ -1552,7 +1552,11 @@ elif aba_sel == "Vendas":
                     d_ini = datetime.strptime(partes[0].strip(), "%d/%m/%Y")
                     mes_ano_key = f"{d_ini.month:02d}/{d_ini.year}"
                     fat_if_p = df_v[df_v["periodo"] == p]["faturamento"].sum()
-                    salao_p = venda_salao_mes[venda_salao_mes["mes_ano"] == mes_ano_key]["salao"].sum()
+                    # Apenas filiais com iFood
+                    filiais_com_ifood = ["Olive Garden - Morumbi","Olive Garden - Center Norte","Olive Garden - Aricanduva","Olive Garden - Dom Pedro"]
+                    venda_salao_ifood = df_vd_share[df_vd_share["filial"].isin(filiais_com_ifood)].groupby("mes_ano")["venda_salao"].sum().reset_index()
+                    venda_salao_ifood.columns = ["mes_ano","salao"]
+                    salao_p = venda_salao_ifood[venda_salao_ifood["mes_ano"] == mes_ano_key]["salao"].sum()
                     total_p = salao_p + fat_if_p
                     share_p = fat_if_p / total_p * 100 if total_p > 0 else 0
                     mes_label_s = mes_map_share.get(f"{d_ini.month:02d}", p[:3])
