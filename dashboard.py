@@ -1292,9 +1292,11 @@ elif aba_sel == "Vendas":
             df_mensal["mes_label"] = pd.to_datetime(df_mensal["data"]).dt.strftime("%b")
             df_2025 = df_mensal[df_mensal["ano"]==2025].groupby(["mes_num","mes_label"])["venda_salao"].sum().reset_index().sort_values("mes_num")
             df_2026 = df_mensal[df_mensal["ano"]==2026].groupby(["mes_num","mes_label"])["venda_salao"].sum().reset_index().sort_values("mes_num")
+            df_budget = df_mensal[df_mensal["ano"]==2026].groupby(["mes_num","mes_label"])["meta_venda"].sum().reset_index().sort_values("mes_num")
             fig_mens = go.Figure()
             fig_mens.add_trace(go.Bar(x=df_2025["mes_label"], y=df_2025["venda_salao"], name="2025", marker_color="#8B7A5A", opacity=0.7))
             fig_mens.add_trace(go.Bar(x=df_2026["mes_label"], y=df_2026["venda_salao"], name="2026", marker_color=VERDE))
+            fig_mens.add_trace(go.Scatter(x=df_budget["mes_label"], y=df_budget["meta_venda"], name="Budget", mode="lines+markers", line=dict(color="#B8923A", width=2, dash="dot"), marker=dict(size=8, color="#B8923A", symbol="diamond")))
             fig_mens.update_layout(barmode="group", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), xaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM)), yaxis=dict(showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=10, color=MARROM)), legend=dict(font=dict(family="Nunito", size=11, color=MARROM), orientation="h", yanchor="bottom", y=1.02), font=dict(family="Nunito"), height=300)
             st.plotly_chart(fig_mens, use_container_width=True, key="fig_mens_vd")
 
