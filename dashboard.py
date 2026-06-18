@@ -1171,10 +1171,10 @@ elif aba_sel == "Vendas":
             st.markdown(f'''
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;box-sizing:border-box;">
                 <div style="background:#1a3320;border-radius:12px;padding:20px;color:#F5F0E8;box-sizing:border-box;">
-                    <div style="font-size:9px;color:#9DC88D;letter-spacing:2px;margin-bottom:8px;">FATURAMENTO TOTAL MTD</div>
+                    <div style="font-size:9px;color:#9DC88D;letter-spacing:2px;margin-bottom:8px;">FATURAMENTO TOTAL YTD</div>
                     <div style="font-size:30px;font-weight:800;margin-bottom:8px;letter-spacing:-0.5px;">{fat_total_fmt2}</div>
                     <div style="font-size:10px;color:#9DC88D;margin-bottom:4px;">Salao: {vt_fmt} &nbsp;|&nbsp; iFood: {fat_if_fmt2}</div>
-                    <div style="border-top:1px solid rgba(255,255,255,0.12);padding-top:8px;font-size:10px;color:#9DC88D;">{pct_if2:.1f}% do faturamento via iFood</div>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:10px;color:#9DC88D;"><span>VS Budget: <b style=\"color:{cor_m2}\">{seta_m2} {pct_meta:+.1f}%</b></span><span>VS AA: <b style=\"color:{cor_a2}\">{seta_a2} {pct_ano1:+.1f}%</b></span></div><div style="border-top:1px solid rgba(255,255,255,0.12);padding-top:8px;font-size:10px;color:#9DC88D;">{pct_if2:.1f}% do faturamento via iFood</div>
                 </div>
                 <div style="background:#1a3320;border-radius:12px;padding:20px;color:#F5F0E8;box-sizing:border-box;">
                     <div style="font-size:9px;color:#9DC88D;letter-spacing:2px;margin-bottom:8px;">PROJECAO TOTAL DO MES</div>
@@ -1208,7 +1208,7 @@ elif aba_sel == "Vendas":
                     </div>
                 </div>
                 <div style="background:#3D2B1F;border-radius:12px;padding:20px;color:#F5F0E8;box-sizing:border-box;">
-                    <div style="font-size:9px;color:#D8CFC0;letter-spacing:2px;margin-bottom:8px;">IFOOD MTD</div>
+                    <div style="font-size:9px;color:#D8CFC0;letter-spacing:2px;margin-bottom:8px;">IFOOD YTD</div>
                     <div style="font-size:28px;font-weight:800;margin-bottom:8px;">{fat_if_fmt2}</div>
                     <div style="display:flex;justify-content:space-between;border-top:1px solid rgba(255,255,255,0.12);padding-top:8px;">
                         <span style="font-size:10px;color:#D8CFC0;">{ped_if2} pedidos</span>
