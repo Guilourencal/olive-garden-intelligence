@@ -1804,11 +1804,7 @@ Depois apresente a analise. Se nao precisar de SQL, responda diretamente."""
                                     # Segunda chamada — analise com os dados
                                     messages_llm2 = messages_llm + [
                                         {"role": "assistant", "content": resposta1},
-                                        {"role": "user", "content": f"Aqui estao os dados retornados pelo banco:
-
-{tabela}
-
-Agora apresente a analise executiva completa com a tabela e insights."}
+                                        {"role": "user", "content": "Aqui estao os dados retornados pelo banco:\n\n" + tabela + "\nAgora apresente a analise executiva completa com a tabela e insights."}
                                     ]
                                     resp2 = client.messages.create(
                                         model="claude-sonnet-4-6",
