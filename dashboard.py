@@ -1656,261 +1656,187 @@ elif aba_sel == "Vendas":
                 fig_pag.update_layout(paper_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), legend=dict(font=dict(family="Nunito", size=11, color=MARROM)), font=dict(family="Nunito"), height=320)
                 st.plotly_chart(fig_pag, use_container_width=True, key="fig_pag_v")
 elif aba_sel == "OlivIA":
-    import base64 as b64
-    with open("assets/Olivia_Fundo_Branco_Header.png", "rb") as img_f:
-        olivia_img = b64.b64encode(img_f.read()).decode("utf-8")
-    st.markdown(
-        f"""<div style="background:#3D2B1F; border-radius:16px; overflow:hidden; display:flex; align-items:stretch; min-height:280px; margin-bottom:24px;">
-        <div style="flex:1; padding:52px 40px 52px 56px; display:flex; flex-direction:column; justify-content:center;">
-        <div style="font-size:10px; letter-spacing:5px; color:#8B9A2E; text-transform:uppercase; margin-bottom:16px; font-family:Arial,sans-serif;">Agente de inteligencia - Olive Garden Brasil</div>
-        <div style="margin-bottom:12px; line-height:1;">
-        <span style="font-family:Georgia,serif; font-size:72px; font-weight:800; letter-spacing:2px; color:#F5F0E8;">Oliv<span style="color:#8B9A2E;">ia</span></span>
-        </div>
-        <div style="width:64px; height:2px; background:#8B9A2E; margin-bottom:20px;"></div>
-        <div style="font-size:14px; color:#D8CFC0; line-height:1.8; max-width:420px; font-family:Arial,sans-serif;">Analiso reviews, redes sociais, pesquisa interna e noticias do mercado para gerar insights estrategicos em tempo real.</div>
-        </div>
-        <div style="width:320px; flex-shrink:0; display:flex; align-items:flex-end; justify-content:center; overflow:hidden;">
-        <img src="data:image/png;base64,{olivia_img}" style="height:300px; object-fit:contain; object-position:bottom; margin-bottom:-4px;"/>
-        </div>
-        </div>""",
-        unsafe_allow_html=True
-    )
-    def preparar_contexto():
-        # Reviews publicos
-        total_reviews = len(df)
-        nota_media = df["nota"].mean()
-        pct_pos = len(df[df["sentimento"] == "Positivo"]) / len(df) * 100
-        pct_neg = len(df[df["sentimento"] == "Negativo"]) / len(df) * 100
-        ranking = df.groupby("filial").agg(nota_media=("nota","mean"), total=("nota","count"), pct_pos=("sentimento", lambda x: (x=="Positivo").sum()/len(x)*100)).reset_index()
-        ranking["indice"] = (((ranking["nota_media"]-1)/4)*40 + ranking["pct_pos"]*0.6).clip(0,100).round(1)
-        ranking = ranking.sort_values("indice", ascending=False)
-        temas = df["tema"].dropna().str.split(", ").explode()
-        temas = temas[~temas.isin(["Sem tema","Geral"])]
-        top_temas = temas.value_counts().head(5).to_dict()
-        negativos = df[df["sentimento"] == "Negativo"]["texto"].dropna().head(5).tolist()
+    st.markdown('<div style="font-weight:800; font-size:26px; color:#3D2B1F; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:4px;">OlivIA</div>', unsafe_allow_html=True)
+    st.markdown('<div style="font-size:13px; color:#8B9A2E; letter-spacing:0.1em; margin-bottom:20px;">ANALISTA DE DADOS VIRTUAL — OLIVE GARDEN BRASIL</div>', unsafe_allow_html=True)
 
-        # Social
-        total_social = len(df_social)
-        pct_pos_social = len(df_social[df_social["sentimento"] == "Positivo"]) / total_social * 100 if total_social > 0 else 0
+    import anthropic as _anthropic
+    import json as _json
 
-        # Pesquisa interna
-        perf_data = ""
-        if len(df_perf) > 0:
-            df_perf_ctx = df_perf[df_perf["restaurant"] != "nan"].copy()
-            periodos_perf = sorted(df_perf_ctx["periodo"].unique())
-            ultimo_periodo = periodos_perf[-1] if periodos_perf else ""
-            df_perf_ult = df_perf_ctx[df_perf_ctx["periodo"] == ultimo_periodo]
-            for _, row in df_perf_ult.iterrows():
-                perf_data += f"\n- {row['restaurant']}: Exp.Geral {row['overall_experience']:.1f}% | Sabor {row['taste']:.1f}% | Atendimento {row['service']:.1f}% | Valor {row['value']:.1f}% | Velocidade {row['speed_of_service']:.1f}%"
+    # Inicializar historico na sessao
+    if "olivia_messages" not in st.session_state:
+        st.session_state.olivia_messages = []
 
-        pesquisa_data = ""
-        if len(df_comments) > 0:
-            df_com_ctx = df_comments[df_comments["filial"].notna() & (df_comments["filial"] != "nan")]
-            sat_ctx = df_com_ctx.groupby("filial").apply(lambda x: len(x[x["overall_rating"] == "Highly Satisfied"]) / len(x) * 100).reset_index()
-            sat_ctx.columns = ["filial", "pct_hs"]
-            for _, row in sat_ctx.iterrows():
-                pesquisa_data += f"\n- {row['filial']}: {row['pct_hs']:.1f}% Highly Satisfied"
+    # System prompt com schema completo do banco
+    OLIVIA_SYSTEM = """Voce e a OlivIA, analista de dados virtual do Olive Garden Brasil.
+Voce tem acesso ao banco de dados PostgreSQL (Supabase) com as seguintes tabelas:
 
-        # Vendas diarias - ultimo mes disponivel
-        vendas_data = ""
-        hdc_data = ""
-        if len(df_vendas_diarias) > 0:
-            df_vd_ctx = df_vendas_diarias.copy()
-            df_vd_ctx["data"] = pd.to_datetime(df_vd_ctx["data"])
-            ultimo_mes_vd = df_vd_ctx["data"].max().month
-            ultimo_ano_vd = df_vd_ctx["data"].max().year
-            df_vd_mes = df_vd_ctx[(df_vd_ctx["data"].dt.month == ultimo_mes_vd) & (df_vd_ctx["data"].dt.year == ultimo_ano_vd)]
-            vd_rank = df_vd_mes.groupby("filial").agg(venda_salao=("venda_salao","sum"), meta=("meta_venda","sum"), gc=("gc_salao","sum"), hdc=("venda_por_hdc","mean")).reset_index()
-            vd_rank["pct_meta"] = ((vd_rank["venda_salao"]/vd_rank["meta"]-1)*100).round(1)
-            vd_rank["filial_curta"] = vd_rank["filial"].str.replace("Olive Garden - ","",regex=False)
-            vd_rank = vd_rank.sort_values("venda_salao", ascending=False)
-            total_vd = vd_rank["venda_salao"].sum()
-            total_meta = vd_rank["meta"].sum()
-            pct_meta_rede = (total_vd/total_meta-1)*100 if total_meta > 0 else 0
-            vendas_data += f"\nRede: R$ {total_vd:,.0f} ({pct_meta_rede:+.1f}% vs Budget)"
-            for _, row in vd_rank.iterrows():
-                vendas_data += f"\n- {row['filial_curta']}: R$ {row['venda_salao']:,.0f} ({row['pct_meta']:+.1f}% vs Budget) | GC: {int(row['gc'])} | HDC: R$ {row['hdc']:.0f}"
+1. vendas_diarias — colunas: data, filial, ano, mes, venda_salao, meta_venda, venda_ano1, gc_salao, ticket_total, hdc, venda_por_hdc
+   Filiais: Olive Garden - Morumbi, Olive Garden - Center Norte, Olive Garden - Dom Pedro, Olive Garden - Aricanduva, Olive Garden - Guarulhos GRU2, Olive Garden - Guarulhos GRU3
+   Siglas: MOR=Morumbi, CNO=Center Norte, DPO=Dom Pedro, ARI=Aricanduva, GRU2=Guarulhos GRU2, GRU3=Guarulhos GRU3
 
-        # iFood vendas - periodo mais recente
-        ifood_data = ""
-        if len(df_ifood_vendas) > 0:
-            df_if_ctx = df_ifood_vendas[df_ifood_vendas["logistica"] == "Entrega parceira"].copy()
-            df_if_ctx["filial_curta"] = df_if_ctx["filial"].str.replace("Olive Garden - ","",regex=False)
-            periodos_if = sorted(df_if_ctx["periodo"].unique())
-            ultimo_per_if = periodos_if[-1] if periodos_if else ""
-            df_if_ult = df_if_ctx[df_if_ctx["periodo"] == ultimo_per_if]
-            fat_total = df_if_ult["faturamento"].sum()
-            ped_total = int(df_if_ult["pedidos"].sum())
-            tkt_medio = fat_total / ped_total if ped_total > 0 else 0
-            ifood_data += f"\nPeriodo: {ultimo_per_if} | Faturamento: R$ {fat_total:,.0f} | Pedidos: {ped_total} | Ticket Medio: R$ {tkt_medio:.0f}"
-            for _, row in df_if_ult.sort_values("faturamento", ascending=False).iterrows():
-                ifood_data += f"\n- {row['filial_curta']}: R$ {row['faturamento']:,.0f} | {int(row['pedidos'])} pedidos"
+2. ifood_vendas — colunas: periodo, filial, logistica, pedidos, faturamento, taxa_entrega, ticket_medio, novos_clientes
+   Apenas 4 filiais tem iFood: Morumbi, Center Norte, Dom Pedro, Aricanduva
 
-        # Tags qualidade iFood
-        tags_data = ""
-        if len(df_ifood_tags) > 0:
-            periodos_tags = sorted(df_ifood_tags["periodo"].unique())
-            ultimo_per_tags = periodos_tags[-1] if periodos_tags else ""
-            df_tags_ctx = df_ifood_tags[df_ifood_tags["periodo"] == ultimo_per_tags]
-            pos_medio = df_tags_ctx[df_tags_ctx["tipo"]=="positiva"].groupby("tag")["pct_sim"].mean().sort_values(ascending=False)
-            neg_medio = df_tags_ctx[df_tags_ctx["tipo"]=="negativa"].groupby("tag")["pct_sim"].mean().sort_values(ascending=False)
-            tags_data += "\nAtributos positivos (% clientes que marcaram):"
-            for tag, pct in pos_medio.items():
-                tags_data += f"\n  {tag}: {pct:.1f}%"
-            tags_data += "\nProblemas reportados:"
-            for tag, pct in neg_medio.items():
-                tags_data += f"\n  {tag}: {pct:.1f}%"
+3. ifood_diario — colunas: data, filial, pedidos, faturamento, taxa_entrega, ticket_medio, novos_clientes
+   Dados diarios do iFood do mes corrente
 
-        # Indice de saude por filial
-        saude_data = ""
-        try:
-            df_perf_ult2 = df_perf[df_perf["restaurant"] != "nan"].copy()
-            df_perf_ult2["filial_curta"] = df_perf_ult2["restaurant"].str.replace("Olive Garden - ","",regex=False)
-            gss_ult = df_perf_ult2.sort_values("periodo").groupby("filial_curta").last().reset_index()
-            rep_ult = ranking.copy()
-            rep_ult["filial_curta"] = rep_ult["filial"].str.replace("Olive Garden - ","",regex=False)
-            saude = rep_ult.merge(gss_ult[["filial_curta","overall_experience"]], on="filial_curta", how="left")
-            saude["indice_saude"] = (saude["indice"].fillna(70)*0.5 + saude["overall_experience"].fillna(80)*0.5).round(1)
-            saude = saude.sort_values("indice_saude", ascending=False)
-            for _, row in saude.iterrows():
-                status = "SAUDAVEL" if row["indice_saude"] >= 80 else "ATENCAO" if row["indice_saude"] >= 70 else "CRITICO"
-                saude_data += f"\n- {row['filial_curta']}: {row['indice_saude']:.1f} [{status}] | Rep: {row['indice']:.1f} | GSS: {row['overall_experience']:.1f}%"
-        except:
-            pass
+4. reclamacoes_buzzmonitor — colunas: data, comentario, canal, sentimento, avaliacao, unidade, unidade_curta, tema, subtema
+   Canal: google_my_business ou instagram. Periodo: jan-jun 2026
 
-        import datetime
-        hoje = datetime.datetime.now().strftime("%d/%m/%Y")
+5. reviews — colunas: filial, plataforma, nota, sentimento, texto, data
+   Plataformas: iFood (761 reviews, nota 4.8), Google Reviews (30), TripAdvisor (113)
 
-        contexto = f"""
-Voce e a OlivIA, consultora especialista em brand intelligence e gestao de restaurantes do Olive Garden Brasil.
-Data de referencia: {hoje}
-Sua missao: analisar os dados abaixo e gerar insights estrategicos REAIS, especificos e acionaveis.
-Sempre que possivel, cite numeros concretos, compare filiais e aponte causas e recomendacoes.
-Estruture respostas com: DIAGNOSTICO | CAUSA PROVAVEL | RECOMENDACAO | FILIAL EM DESTAQUE.
+6. pesquisa_performance — colunas: periodo, restaurant, overall_experience, value, service, taste, speed_of_service, clean, soup_salad_refill, breadstick_refill
+   Metricas em percentual (0-100)
 
-=== SAUDE DA REDE (cruzamento GSS interno + Reputacao publica) ===
-{saude_data}
+7. pesquisa_comments — colunas: survey_date, filial, overall_rating, verbatim, period
+   overall_rating: Highly Satisfied, Satisfied, Dissatisfied, Highly Dissatisfied
 
-=== REVIEWS PUBLICOS ({total_reviews} reviews) ===
-Nota media: {nota_media:.2f}/5 | Positivo: {pct_pos:.1f}% | Negativo: {pct_neg:.1f}%
-Ranking de reputacao:
-{ranking[["filial","indice","nota_media","pct_pos"]].to_string(index=False)}
-Temas mais citados: {top_temas}
-Comentarios negativos recentes:
-{chr(10).join([f"- {{t[:200]}}" for t in negativos])}
+8. fila_espera — colunas: dia_chegada, hora_chegada, pessoas, duracao_minutos, status, unidade
+   Status: Sentado, Cancelado por solicitacao do cliente, Cancelado pelo cliente, Cancelado por no-show do cliente
 
-=== PESQUISA INTERNA GSS (ultimo periodo) ===
-Highly Satisfied por filial:{pesquisa_data}
-Performance por dimensao:{perf_data}
+9. menu_analysis — colunas: semana_ref, item, type, number_of_checks, gross_sales, ct_gross_total_check_avg, check_uplift, revenue_score
+   type (Boston): Star, Plow Horse, Puzzle, Dog
 
-=== VENDAS SALAO (mes atual) ===
-{vendas_data}
+10. projecoes_historico — colunas: data_alvo, filial, valor_projetado, valor_realizado, erro_pct
+    Projecoes de vendas dos proximos 28 dias
 
-=== iFOOD DELIVERY (periodo mais recente) ===
-{ifood_data}
+11. calendario_eventos — colunas: data_inicio, data_fim, filial, nome_evento, tipo, observacao
 
-=== QUALIDADE iFOOD POR TAGS ===
-{tags_data}
+Regras:
+- Responda SEMPRE em portugues brasileiro
+- Para perguntas sobre dados, gere uma query SQL e apresente os resultados em tabela markdown + analise
+- Use linguagem executiva, direta e objetiva
+- Quando nao souber, diga claramente
+- Nunca execute UPDATE, DELETE, DROP ou INSERT — apenas SELECT
+- Contexto atual: junho 2026, Copa do Mundo em andamento, rede com 6 filiais em SP
 
-=== INSTAGRAM ===
-Total comentarios: {total_social} | Sentimento positivo: {pct_pos_social:.1f}%
+Formato da resposta:
+1. Breve introducao (1 linha)
+2. Tabela com os dados (markdown)
+3. Analise executiva (3-5 bullets com insights)
 """
-        return contexto
 
-    # Inicializa histórico do chat
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
-
-    if "analise_gerada" not in st.session_state:
-        st.session_state.analise_gerada = False
-
-    ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-    client_ai = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-
-    contexto = preparar_contexto()
-
-    # Botoes de analise rapida
-    st.markdown("<br>", unsafe_allow_html=True)
-    with st.container(border=True):
-        st.markdown('<div class="section-title">Analises Rapidas</div>', unsafe_allow_html=True)
-        st.markdown('<div style="font-size:11px; color:#8B7A5A; margin-bottom:12px;">Clique para gerar uma analise especifica com base nos dados reais.</div>', unsafe_allow_html=True)
-        col_b1, col_b2, col_b3 = st.columns(3)
-        col_b4, col_b5, col_b6 = st.columns(3)
-        analise_rapida = None
-        with col_b1:
-            if st.button("📊 Briefing Executivo", use_container_width=True, key="btn_briefing"):
-                analise_rapida = """Gere um briefing executivo completo sobre a saude da marca Olive Garden Brasil. Estruture em: 1. SAUDE GERAL DA MARCA (use indices e numeros reais) | 2. DESTAQUES POSITIVOS (filiais e dimensoes que se destacam) | 3. PONTOS DE ATENCAO (o que requer acao imediata, cite filiais especificas) | 4. PERFORMANCE FINANCEIRA (vendas vs budget, iFood, tendencias) | 5. DIVERGENCIAS INTERNO vs EXTERNO (onde GSS e reputacao publica diferem) | 6. TOP 3 RECOMENDACOES PRIORITARIAS (acoes concretas ordenadas por impacto). Seja direto como consultor senior apresentando para o CEO. Use dados reais, evite generalidades."""
-        with col_b2:
-            if st.button("🚨 Filial em Alerta", use_container_width=True, key="btn_alerta"):
-                analise_rapida = """Identifique qual filial esta em situacao mais critica hoje. Analise todos os indicadores disponiveis: reputacao publica, GSS interno, vendas vs budget, iFood. Explique o diagnostico com numeros reais, aponte as causas provaveis e recomende 3 acoes especificas e imediatas para essa filial."""
-        with col_b3:
-            if st.button("⭐ Melhor Performance", use_container_width=True, key="btn_melhor"):
-                analise_rapida = """Identifique qual filial esta performando melhor em todos os indicadores. Analise reputacao, GSS, vendas e iFood. O que essa filial esta fazendo diferente? Quais praticas poderiam ser replicadas para as demais unidades? Seja especifico e use os numeros reais dos dados."""
-        with col_b4:
-            if st.button("🍽️ Voz do Cliente", use_container_width=True, key="btn_voz"):
-                analise_rapida = """Analise o que os clientes estao dizendo sobre o Olive Garden Brasil. Use os reviews publicos, comentarios do Instagram e tags do iFood. Quais os principais elogios? Quais as principais reclamacoes? Existe algum tema recorrente que a gestao deveria priorizar? Cite exemplos reais dos comentarios."""
-        with col_b5:
-            if st.button("💰 Analise Financeira", use_container_width=True, key="btn_financeiro"):
-                analise_rapida = """Analise a performance financeira do Olive Garden Brasil. Use os dados de vendas do salao vs budget, dados do iFood e compare filiais. Quais unidades estao acima do budget? Quais estao abaixo? Qual a relacao entre reputacao e performance financeira? Aponte oportunidades de melhoria de receita."""
-        with col_b6:
-            if st.button("📦 Performance iFood", use_container_width=True, key="btn_ifood"):
-                analise_rapida = """Analise a performance do Olive Garden no iFood. Use os dados de faturamento, pedidos, ticket medio, tags de qualidade e horarios de pico. Quais filiais se destacam? Quais tem problemas de qualidade? O que os dados de tags revelam sobre a experiencia de delivery? Recomende acoes especificas."""
-
-        if analise_rapida:
-            with st.spinner("OlivIA esta analisando os dados..."):
-                response = client_ai.messages.create(
-                    model="claude-sonnet-4-20250514",
-                    max_tokens=4000,
-                    system=contexto,
-                    messages=[{"role": "user", "content": analise_rapida}]
-                )
-                st.session_state.chat_history = [{"role": "assistant", "content": response.content[0].text}]
-                st.rerun()
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # Exibe historico do chat
-    for msg in st.session_state.chat_history:
-        if msg["role"] == "user":
-            st.markdown(
-                f'<div style="background:#e8ddc8; border-radius:10px; padding:12px 16px; margin-bottom:8px; text-align:right;">'
-                f'<div style="font-size:13px; color:#3D2B1F;">{msg["content"]}</div>'
-                f'</div>',
-                unsafe_allow_html=True
+    # Conexao ao banco para execucao de queries
+    def _executar_query(sql):
+        try:
+            import psycopg2
+            conn = psycopg2.connect(
+                host="aws-1-sa-east-1.pooler.supabase.com",
+                port=6543,
+                user="postgres.rvauallshhozpruvusrr",
+                password="olivegarden2233@",
+                database="postgres"
             )
-        else:
-            with st.container(border=True):
-                st.markdown(msg["content"])
+            cur = conn.cursor()
+            cur.execute(sql)
+            cols = [d[0] for d in cur.description]
+            rows = cur.fetchall()
+            cur.close()
+            conn.close()
+            return cols, rows
+        except Exception as e:
+            return None, str(e)
 
-    # Input do chat
-    st.markdown("<br>", unsafe_allow_html=True)
-    with st.container(border=True):
-        st.markdown('<div class="section-title">Pergunte a OlivIA</div>', unsafe_allow_html=True)
-        st.markdown('<div style="font-size:11px; color:#8B7A5A; margin-bottom:12px;">Exemplos: "Qual filial precisa de atencao urgente?" • "O que os clientes mais elogiam?" • "Como esta o iFood do Morumbi?" • "Compare Center Norte e Aricanduva"</div>', unsafe_allow_html=True)
-        pergunta = st.text_input("", placeholder="Digite sua pergunta sobre os dados do Olive Garden Brasil...", key="pergunta_ia", label_visibility="collapsed")
-        col_env1, col_env2 = st.columns([1,4])
-        with col_env1:
-            if st.button("Enviar", key="btn_enviar", use_container_width=True):
-                if pergunta:
-                    st.session_state.chat_history.append({"role": "user", "content": pergunta})
-                    with st.spinner("OlivIA esta analisando..."):
-                        mensagens = []
-                        for msg in st.session_state.chat_history:
-                            mensagens.append({"role": msg["role"], "content": msg["content"]})
-                        response = client_ai.messages.create(
-                            model="claude-sonnet-4-20250514",
-                            max_tokens=2000,
-                            system=contexto,
-                            messages=mensagens
-                        )
-                        st.session_state.chat_history.append({"role": "assistant", "content": response.content[0].text})
-                    st.rerun()
-        with col_env2:
-            if st.button("🗑️ Limpar conversa", key="btn_limpar2", use_container_width=False):
-                st.session_state.chat_history = []
-                st.rerun()
-        if st.button("🗑️ Limpar conversa", key="btn_limpar"):
-            st.session_state.chat_history = []
+    # Exibir historico
+    for msg in st.session_state.olivia_messages:
+        with st.chat_message(msg["role"], avatar="🫒" if msg["role"] == "assistant" else "👤"):
+            st.markdown(msg["content"])
+
+    # Input do usuario
+    pergunta = st.chat_input("Faça uma pergunta sobre os dados do Olive Garden...")
+
+    if pergunta:
+        # Adicionar pergunta ao historico
+        st.session_state.olivia_messages.append({"role": "user", "content": pergunta})
+        with st.chat_message("user", avatar="👤"):
+            st.markdown(pergunta)
+
+        with st.chat_message("assistant", avatar="🫒"):
+            with st.spinner("OlivIA analisando..."):
+                try:
+                    client = _anthropic.Anthropic()
+
+                    # Montar historico para o LLM
+                    messages_llm = []
+                    for m in st.session_state.olivia_messages[:-1]:
+                        messages_llm.append({"role": m["role"], "content": m["content"]})
+
+                    # Primeira chamada — gerar SQL
+                    messages_llm.append({
+                        "role": "user",
+                        "content": f"""{pergunta}
+
+Se precisar de dados do banco, responda PRIMEIRO com um bloco SQL assim:
+`sql
+SELECT ...
+`
+Depois apresente a analise. Se nao precisar de SQL, responda diretamente."""
+                    })
+
+                    resp1 = client.messages.create(
+                        model="claude-sonnet-4-6",
+                        max_tokens=2000,
+                        system=OLIVIA_SYSTEM,
+                        messages=messages_llm
+                    )
+                    resposta1 = resp1.content[0].text
+
+                    # Verificar se tem SQL
+                    resposta_final = resposta1
+                    if "`sql" in resposta1.lower():
+                        import re as _re
+                        sql_match = _re.search(r"`sql\s*(.*?)\s*`", resposta1, _re.DOTALL | _re.IGNORECASE)
+                        if sql_match:
+                            sql = sql_match.group(1).strip()
+                            # Seguranca — apenas SELECT
+                            sql_upper = sql.upper().strip()
+                            if any(sql_upper.startswith(w) for w in ["UPDATE","DELETE","DROP","INSERT","ALTER","TRUNCATE"]):
+                                resposta_final = "Nao posso executar operacoes de escrita no banco."
+                            else:
+                                cols, rows = _executar_query(sql)
+                                if cols and isinstance(rows, list):
+                                    # Montar tabela markdown
+                                    tabela = "| " + " | ".join(cols) + " |
+"
+                                    tabela += "| " + " | ".join(["---"]*len(cols)) + " |
+"
+                                    for row in rows[:50]:
+                                        tabela += "| " + " | ".join([str(v) if v is not None else "—" for v in row]) + " |
+"
+
+                                    # Segunda chamada — analise com os dados
+                                    messages_llm2 = messages_llm + [
+                                        {"role": "assistant", "content": resposta1},
+                                        {"role": "user", "content": f"Aqui estao os dados retornados pelo banco:
+
+{tabela}
+
+Agora apresente a analise executiva completa com a tabela e insights."}
+                                    ]
+                                    resp2 = client.messages.create(
+                                        model="claude-sonnet-4-6",
+                                        max_tokens=2000,
+                                        system=OLIVIA_SYSTEM,
+                                        messages=messages_llm2
+                                    )
+                                    resposta_final = resp2.content[0].text
+                                else:
+                                    resposta_final = f"Erro ao consultar o banco: {rows}"
+
+                    st.markdown(resposta_final)
+                    st.session_state.olivia_messages.append({"role": "assistant", "content": resposta_final})
+
+                except Exception as e:
+                    erro = f"Erro na OlivIA: {str(e)}"
+                    st.error(erro)
+                    st.session_state.olivia_messages.append({"role": "assistant", "content": erro})
+
+    # Botao limpar historico
+    if st.session_state.olivia_messages:
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🗑️ Limpar conversa", key="limpar_olivia"):
+            st.session_state.olivia_messages = []
             st.rerun()
 
 elif aba_sel == "Analises":
