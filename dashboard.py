@@ -1730,6 +1730,16 @@ Formato da resposta:
 1. Breve introducao (1 linha)
 2. Tabela com os dados (markdown)
 3. Analise executiva (3-5 bullets com insights)
+Regras SQL importantes para PostgreSQL/Supabase:
+- Use ROUND(valor::numeric, 2) para arredondamento — NUNCA ROUND(double_precision, integer)
+- Para percentuais: ROUND((a::numeric / NULLIF(b::numeric,0)) * 100, 1)
+- Datas: EXTRACT(year FROM data), EXTRACT(month FROM data)
+- Filiais sempre com nome completo: "Olive Garden - Morumbi" etc
+- Para YTD 2026: WHERE EXTRACT(year FROM data) = 2026
+- Para mes corrente: WHERE EXTRACT(month FROM data) = 6 AND EXTRACT(year FROM data) = 2026
+- Sempre use aliases claros nas colunas (AS faturamento_total, etc)
+- Limite resultados com LIMIT 50 quando nao for agregacao
+
 """
 
     # Conexao ao banco para execucao de queries
