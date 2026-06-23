@@ -1797,14 +1797,10 @@ Depois apresente a analise. Se nao precisar de SQL, responda diretamente."""
                                 cols, rows = _executar_query(sql)
                                 if cols and isinstance(rows, list):
                                     # Montar tabela markdown
-                                    tabela = "| " + " | ".join(cols) + " |
-"
-                                    tabela += "| " + " | ".join(["---"]*len(cols)) + " |
-"
+                                    tabela = "| " + " | ".join(cols) + " |\n"
+                                    tabela += "| " + " | ".join(["---"]*len(cols)) + " |\n"
                                     for row in rows[:50]:
-                                        tabela += "| " + " | ".join([str(v) if v is not None else "—" for v in row]) + " |
-"
-
+                                        tabela += "| " + " | ".join([str(v) if v is not None else "\u2014" for v in row]) + " |\n"
                                     # Segunda chamada — analise com os dados
                                     messages_llm2 = messages_llm + [
                                         {"role": "assistant", "content": resposta1},
