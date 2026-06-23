@@ -1739,6 +1739,16 @@ Regras SQL importantes para PostgreSQL/Supabase:
 - Para mes corrente: WHERE EXTRACT(month FROM data) = 6 AND EXTRACT(year FROM data) = 2026
 - Sempre use aliases claros nas colunas (AS faturamento_total, etc)
 - Limite resultados com LIMIT 50 quando nao for agregacao
+- Para cruzar vendas_diarias com ifood_vendas, use EXTRACT(month FROM data) para o mes de vendas_diarias e extraia o mes do campo periodo de ifood_vendas com EXTRACT(month FROM TO_DATE(SPLIT_PART(periodo, ' - ', 1), 'DD/MM/YYYY'))
+- O campo mes em vendas_diarias e VARCHAR (ex: "jan", "fev") — nunca faca join direto com numeros
+- Para cruzar por mes/ano entre tabelas, sempre use EXTRACT nas datas
+- Exemplo de join correto entre vendas e ifood:
+  SELECT EXTRACT(month FROM v.data) as mes_num, SUM(v.venda_salao) as salao, SUM(i.faturamento) as ifood
+  FROM vendas_diarias v
+  LEFT JOIN ifood_vendas i ON EXTRACT(month FROM TO_DATE(SPLIT_PART(i.periodo, ' - ', 1), 'DD/MM/YYYY')) = EXTRACT(month FROM v.data)
+  AND i.logistica = 'Entrega parceira'
+  WHERE EXTRACT(year FROM v.data) = 2026
+  GROUP BY mes_num ORDER BY mes_num
 
 """
 
