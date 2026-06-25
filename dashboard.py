@@ -1823,7 +1823,7 @@ Depois apresente a analise. Se nao precisar de SQL, responda diretamente."""
                     resp1 = client.messages.create(
                         model="claude-sonnet-4-6",
                         max_tokens=2000,
-                        system=OLIVIA_SYSTEM,
+                        system=OLIVIA_SYSTEM + _contexto_dinamico,
                         messages=messages_llm
                     )
                     resposta1 = resp1.content[0].text
@@ -1855,7 +1855,7 @@ Depois apresente a analise. Se nao precisar de SQL, responda diretamente."""
                                     resp2 = client.messages.create(
                                         model="claude-sonnet-4-6",
                                         max_tokens=2000,
-                                        system=OLIVIA_SYSTEM,
+                                        system=OLIVIA_SYSTEM + _contexto_dinamico,
                                         messages=messages_llm2
                                     )
                                     resposta_final = resp2.content[0].text
