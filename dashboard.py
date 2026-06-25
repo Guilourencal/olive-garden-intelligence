@@ -1658,7 +1658,7 @@ elif aba_sel == "Vendas":
 elif aba_sel == "OlivIA":
     import anthropic as _anthropic
     import json as _json
-    with open("static/Olivia_Header_Novo.png", "rb") as _f:
+    with open("static/olivia_banner_final.png", "rb") as _f:
         import base64 as _b64
         _olivia_b64 = _b64.b64encode(_f.read()).decode()
     st.markdown(f'<img src="data:image/png;base64,{_olivia_b64}" style="width:100%;border-radius:16px;margin-bottom:20px;box-shadow:0 4px 20px rgba(0,0,0,0.15);" />', unsafe_allow_html=True)
