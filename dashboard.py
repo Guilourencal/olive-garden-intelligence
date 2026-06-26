@@ -14,7 +14,7 @@ def verificar_senha():
             st.markdown('<div style="text-align:center; font-size:11px; letter-spacing:0.2em; color:#8B9A2E; text-transform:uppercase; margin-bottom:16px;">Brand Intelligence</div>', unsafe_allow_html=True)
             senha = st.text_input("Senha de acesso", type="password", key="senha_input")
             if st.button("Entrar", use_container_width=True):
-                if senha == os.getenv("DASHBOARD_PASSWORD", "olivegarden2026"):
+                if senha == os.getenv("DASHBOARD_PASSWORD"):
                     st.session_state.autenticado = True
                     st.rerun()
                 else:
