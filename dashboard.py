@@ -1855,7 +1855,7 @@ ORDER BY share_ifood DESC
     def _executar_query(sql):
         try:
             import psycopg2
-            conn = get_conn()
+            conn = get_conn_ro()
             cur = conn.cursor()
             cur.execute(sql)
             cols = [d[0] for d in cur.description]

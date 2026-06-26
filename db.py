@@ -34,3 +34,12 @@ def get_conn():
         password=_get("SUPABASE_PASSWORD"),
         dbname=_get("SUPABASE_DB", "postgres"),
     )
+
+def get_conn_ro():
+    return psycopg2.connect(
+        host=_get("SUPABASE_HOST"),
+        port=_get("SUPABASE_PORT", "6543"),
+        user=_get("SUPABASE_USER_RO"),
+        password=_get("SUPABASE_PASSWORD_RO"),
+        dbname=_get("SUPABASE_DB", "postgres"),
+    )
