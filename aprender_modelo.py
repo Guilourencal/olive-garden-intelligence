@@ -1,16 +1,8 @@
-﻿import psycopg2
+import psycopg2
+from db import get_conn
 import pandas as pd
 import numpy as np
 from datetime import date, timedelta
-
-def get_conn():
-    return psycopg2.connect(
-        host='aws-1-sa-east-1.pooler.supabase.com',
-        port=6543,
-        user='postgres.rvauallshhozpruvusrr',
-        password='olivegarden2233@',
-        database='postgres'
-    )
 
 def calcular_modelo_filial(dff, hoje, datas_eventos=set()):
     dff = dff[(dff["venda_salao"] > 0) & (~dff["data"].dt.date.isin(datas_eventos))].copy()

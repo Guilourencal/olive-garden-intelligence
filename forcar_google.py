@@ -1,4 +1,5 @@
 import psycopg2
+from db import get_conn
 import pandas as pd
 from transformers import pipeline
 import torch
@@ -66,13 +67,7 @@ print(f"\nDistribuição:")
 print(df["sentimento"].value_counts().to_string())
 
 # Inserir no banco
-conn = psycopg2.connect(
-    host="aws-1-sa-east-1.pooler.supabase.com",
-    port=6543,
-    user="postgres.rvauallshhozpruvusrr",
-    password="olivegarden2233@",
-    database="postgres"
-)
+conn = get_conn()
 cur = conn.cursor()
 
 # Normalizar nomes das filiais

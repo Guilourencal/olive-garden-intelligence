@@ -1,4 +1,5 @@
-﻿import pandas as pd
+import pandas as pd
+from db import get_conn
 import psycopg2
 import glob
 import os
@@ -33,13 +34,7 @@ def normalizar_filial(nome):
             return v
     return nome.title()
 
-conn = psycopg2.connect(
-    host='aws-1-sa-east-1.pooler.supabase.com',
-    port=6543,
-    user='postgres.rvauallshhozpruvusrr',
-    password='olivegarden2233@',
-    database='postgres'
-)
+conn = get_conn()
 cur = conn.cursor()
 
 arquivos = glob.glob(os.path.join(PASTA, "*.xlsx"))

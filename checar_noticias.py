@@ -1,11 +1,6 @@
-﻿import psycopg2
-conn = psycopg2.connect(
-    host='aws-1-sa-east-1.pooler.supabase.com',
-    port=6543,
-    user='postgres.rvauallshhozpruvusrr',
-    password='olivegarden2233@',
-    database='postgres'
-)
+import psycopg2
+from db import get_conn
+conn = get_conn()
 cur = conn.cursor()
 cur.execute('SELECT categoria, titulo, publicado_em FROM noticias ORDER BY publicado_em DESC')
 for row in cur.fetchall():

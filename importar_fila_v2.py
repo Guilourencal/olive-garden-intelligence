@@ -1,4 +1,5 @@
-﻿import pandas as pd, psycopg2, re
+import pandas as pd, psycopg2, re
+from db import get_conn
 
 df = pd.read_html(r'data\fila_espera\Report_Espera_YTD_Jun16.xls')[0]
 
@@ -12,7 +13,7 @@ def parse_duracao(d):
     if m: total += int(m.group(1))
     return total if total > 0 else None
 
-conn = psycopg2.connect(host='aws-1-sa-east-1.pooler.supabase.com',port=6543,user='postgres.rvauallshhozpruvusrr',password='olivegarden2233@',database='postgres')
+conn = get_conn()
 cur = conn.cursor()
 
 ins = dup = err = 0

@@ -1,4 +1,5 @@
-﻿import streamlit as st
+import streamlit as st
+from db import get_conn
 import os
 from dotenv import load_dotenv
 load_dotenv()
@@ -123,15 +124,6 @@ STOPWORDS_PT = {
     "back", "well", "even", "never", "always", "got", "duas", "vontade", "principal", "porém",
     "recomendo",
 }
-
-def get_conn():
-    return psycopg2.connect(
-        host="aws-1-sa-east-1.pooler.supabase.com",
-        port=6543,
-        user="postgres.rvauallshhozpruvusrr",
-        password="olivegarden2233@",
-        database="postgres"
-    )
 
 @st.cache_data(ttl=300)
 def carregar_reviews():
@@ -1679,7 +1671,7 @@ elif aba_sel == "OlivIA":
     def _gerar_contexto_banco():
         try:
             import psycopg2 as _pg
-            _conn = _pg.connect(host="aws-1-sa-east-1.pooler.supabase.com",port=6543,user="postgres.rvauallshhozpruvusrr",password="olivegarden2233@",database="postgres")
+            _conn = get_conn()
             _cur = _conn.cursor()
 
             # iFood
@@ -1863,13 +1855,7 @@ ORDER BY share_ifood DESC
     def _executar_query(sql):
         try:
             import psycopg2
-            conn = psycopg2.connect(
-                host="aws-1-sa-east-1.pooler.supabase.com",
-                port=6543,
-                user="postgres.rvauallshhozpruvusrr",
-                password="olivegarden2233@",
-                database="postgres"
-            )
+            conn = get_conn()
             cur = conn.cursor()
             cur.execute(sql)
             cols = [d[0] for d in cur.description]

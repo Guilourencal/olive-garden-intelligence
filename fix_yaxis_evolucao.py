@@ -1,0 +1,5 @@
+﻿lines = open('dashboard.py', 'r', encoding='utf-8').readlines()
+lines[963] = lines[963].replace('range=[60, 105]', 'range=[80, 101]')
+lines[1000] = lines[1000].replace('range=[60, 105]', 'range=[80, 101]')
+open('dashboard.py', 'w', encoding='utf-8').write(''.join(lines))
+print('OK')

@@ -1,0 +1,8 @@
+﻿lines = open('dashboard.py', 'r', encoding='utf-8').readlines()
+lines[1113] = lines[1113].replace('fat_if_mtd', 'fat_if_ytd')
+lines[1115] = lines[1115].replace('fat_if_mtd', 'fat_if_ytd')
+lines[1116] = lines[1116].replace('fat_if_mtd', 'fat_if_ytd')
+lines[1117] = lines[1117].replace('df_if_mtd', 'df_if_ytd').replace('fat_if_mtd', 'fat_if_ytd')
+lines[1118] = lines[1118].replace('fat_if_mtd', 'fat_if_ytd')
+open('dashboard.py', 'w', encoding='utf-8').write(''.join(lines))
+print('OK')

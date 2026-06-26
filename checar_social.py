@@ -1,14 +1,9 @@
-﻿import psycopg2
+import psycopg2
+from db import get_conn
 import pandas as pd
 from datetime import datetime
 
-conn = psycopg2.connect(
-    host='aws-1-sa-east-1.pooler.supabase.com',
-    port=6543,
-    user='postgres.rvauallshhozpruvusrr',
-    password='olivegarden2233@',
-    database='postgres'
-)
+conn = get_conn()
 cur = conn.cursor()
 
 cur.execute('DELETE FROM social')

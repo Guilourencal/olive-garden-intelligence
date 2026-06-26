@@ -1,10 +1,5 @@
-﻿import psycopg2
-conn = psycopg2.connect(
-    host='db.rvauallshhozpruvusrr.supabase.co',
-    port=5432,
-    user='postgres',
-    password='olivegarden2233@',
-    database='postgres'
-)
+import psycopg2
+from db import get_conn
+conn = get_conn()
 print('Conectado!')
 conn.close()

@@ -1,13 +1,8 @@
 import psycopg2
+from db import get_conn
 import pandas as pd
 
-conn = psycopg2.connect(
-    host="aws-1-sa-east-1.pooler.supabase.com",
-    port=6543,
-    user="postgres.rvauallshhozpruvusrr",
-    password="olivegarden2233@",
-    database="postgres"
-)
+conn = get_conn()
 
 df = pd.read_sql("SELECT nota, sentimento, texto FROM reviews", conn)
 conn.close()

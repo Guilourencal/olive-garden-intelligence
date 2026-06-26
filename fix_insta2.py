@@ -1,7 +1,0 @@
-﻿content = open('coletar_instagram.py', 'r', encoding='utf-8').read()
-content = content.replace('"resultsLimit": 20,', '"resultsLimit": 100,')
-content = content.replace('"resultsLimit": 50,', '"resultsLimit": 200,')
-content = content.replace('urls_posts[:20]', 'urls_posts[:100]')
-content = content.replace('urls_posts[:50]', 'urls_posts[:100]')
-open('coletar_instagram.py', 'w', encoding='utf-8').write(content)
-print('Feito!')

@@ -1,17 +1,9 @@
-﻿import pandas as pd
+import pandas as pd
+from db import get_conn
 import psycopg2
 from datetime import datetime
 import os
 import re
-
-def get_conn():
-    return psycopg2.connect(
-        host='aws-1-sa-east-1.pooler.supabase.com',
-        port=6543,
-        user='postgres.rvauallshhozpruvusrr',
-        password='olivegarden2233@',
-        database='postgres'
-    )
 
 # Criar tabela
 conn = get_conn()

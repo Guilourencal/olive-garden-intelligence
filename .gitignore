@@ -7,3 +7,12 @@ backups/
 data/
 *.csv
 *.log
+
+.env
+.streamlit/secrets.toml
+# Backups e ferramentas locais de migracao (senha antiga, ja morta)
+*backup*.py
+_backup_seguranca_*/
+migrar_seguranca.py
+migrar_restantes.py
+__pycache__/

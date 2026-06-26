@@ -1,0 +1,5 @@
+﻿lines = open('dashboard.py', 'r', encoding='utf-8').readlines()
+lines.insert(1316, '            df_hdc = df_mes_hdc.groupby("filial_curta").agg(venda_por_hdc=("venda_por_hdc","mean"), venda_salao=("venda_salao","sum")).reset_index()\n')
+lines.insert(1317, '            df_hdc["nr_assentos"] = df_hdc["filial_curta"].map(ASSENTOS)\n')
+open('dashboard.py', 'w', encoding='utf-8').write(''.join(lines))
+print('OK')

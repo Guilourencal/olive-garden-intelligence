@@ -1,0 +1,5 @@
+﻿lines = open('dashboard.py', 'r', encoding='utf-8').readlines()
+idx = next(i for i, l in enumerate(lines) if '_gerar_contexto_banco' in l and 'def ' in l)
+print(f'Funcao na linha {idx+1}')
+idx_fim = next(i for i in range(idx, idx+50) if '_contexto_dinamico = _gerar_contexto_banco()' in lines[i])
+print(f'Fim na linha {idx_fim+1}')

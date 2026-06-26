@@ -1,14 +1,9 @@
-﻿import pandas as pd
+import pandas as pd
+from db import get_conn
 import psycopg2
 from datetime import timedelta
 
-conn = psycopg2.connect(
-    host='aws-1-sa-east-1.pooler.supabase.com',
-    port=6543,
-    user='postgres.rvauallshhozpruvusrr',
-    password='olivegarden2233@',
-    database='postgres'
-)
+conn = get_conn()
 df = pd.read_sql("SELECT * FROM vendas_diarias ORDER BY data, filial", conn)
 conn.close()
 

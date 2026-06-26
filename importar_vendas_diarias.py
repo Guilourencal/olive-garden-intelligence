@@ -1,4 +1,5 @@
-﻿import pandas as pd
+import pandas as pd
+from db import get_conn
 import psycopg2
 from datetime import datetime
 
@@ -23,13 +24,7 @@ df = df[df['data'].notna()].copy()
 print(f'Linhas de 2025+: {len(df)}')
 print(f'Filiais: {df["restaurante"].unique()}')
 
-conn = psycopg2.connect(
-    host='aws-1-sa-east-1.pooler.supabase.com',
-    port=6543,
-    user='postgres.rvauallshhozpruvusrr',
-    password='olivegarden2233@',
-    database='postgres'
-)
+conn = get_conn()
 cur = conn.cursor()
 
 ins = dup = err = 0
