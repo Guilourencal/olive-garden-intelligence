@@ -1,5 +1,5 @@
 import streamlit as st
-from db import get_conn
+from db import get_conn, get_conn_ro
 import os
 from dotenv import load_dotenv
 load_dotenv()
