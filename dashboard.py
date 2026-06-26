@@ -1077,6 +1077,12 @@ elif aba_sel == "Vendas":
                 meses_num_sel = [meses_num[m] for m in meses_sel if m in meses_num]
                 if meses_num_sel and len(meses_num_sel) < 12:
                     df_if_ytd = df_if_ytd[df_if_ytd["periodo"].str[3:5].isin(meses_num_sel)]
+                # Filtrar por filial
+                filiais_ifood_full = ["Olive Garden - " + f for f in filiais_sel if f in ["Morumbi","Center Norte","Dom Pedro","Aricanduva"]]
+                if filiais_ifood_full:
+                    df_if_ytd = df_if_ytd[df_if_ytd["filial"].isin(filiais_ifood_full)]
+                else:
+                    df_if_ytd = pd.DataFrame()
             else:
                 df_if_ytd = pd.DataFrame()
             fat_if_ytd = df_if_ytd["faturamento"].sum() if len(df_if_ytd) > 0 else 0
