@@ -1040,21 +1040,7 @@ elif aba_sel == "Vendas":
         va1 = df_vd_f["venda_ano1"].sum()
         gc = df_vd_f["gc_salao"].sum()
         tk = vt / gc if gc > 0 else 0
-        # iFood YTD antecipado para pct_meta correto (salao + iFood vs budget)
-        _meses_num_ve = {"jan":"01","fev":"02","mar":"03","abr":"04","mai":"05","jun":"06","jul":"07","ago":"08","set":"09","out":"10","nov":"11","dez":"12"}
-        _meses_num_sel_ve = [_meses_num_ve[m] for m in meses_sel if m in _meses_num_ve]
-        _filiais_if_ve = ["Olive Garden - " + f for f in filiais_sel if f in ["Morumbi","Center Norte","Dom Pedro","Aricanduva"]]
-        if len(df_ifood_vendas) > 0 and _filiais_if_ve:
-            _df_if_ve = df_ifood_vendas[df_ifood_vendas["logistica"] == "Entrega parceira"].copy()
-            _df_if_ve = _df_if_ve[_df_if_ve["periodo"].str.contains("|".join([str(a) for a in anos_sel]))]
-            if _meses_num_sel_ve and len(_meses_num_sel_ve) < 12:
-                _df_if_ve = _df_if_ve[_df_if_ve["periodo"].str[3:5].isin(_meses_num_sel_ve)]
-            _df_if_ve = _df_if_ve[_df_if_ve["filial"].isin(_filiais_if_ve)]
-            _fat_if_ve = _df_if_ve["faturamento"].sum()
-        else:
-            _fat_if_ve = 0
-        vt_total = vt + _fat_if_ve
-        pct_meta = (vt_total/mt - 1)*100 if mt > 0 else 0
+        pct_meta = 0  # calculado apos fat_if_ytd
         pct_ano1 = (vt/va1 - 1)*100 if va1 > 0 else 0
         vt_fmt = f"R$ {vt:,.0f}".replace(",",".")
         vt_total_fmt = f"R$ {vt_total:,.0f}".replace(",",".")
@@ -1093,6 +1079,10 @@ elif aba_sel == "Vendas":
             else:
                 df_if_ytd = pd.DataFrame()
             fat_if_ytd = df_if_ytd["faturamento"].sum() if len(df_if_ytd) > 0 else 0
+            # vt_total e pct_meta calculados aqui, com fat_if_ytd ja filtrado por ano/mes/filial
+            vt_total = vt + fat_if_ytd
+            vt_total_fmt = f"R$ {vt_total:,.0f}".replace(",",".")
+            pct_meta = (vt_total/mt - 1)*100 if mt > 0 else 0
             # Calcular projecao salao para o mes atual
             import numpy as _np_proj
             import calendar as _cal_proj
