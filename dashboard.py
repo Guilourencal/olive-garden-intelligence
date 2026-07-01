@@ -1288,12 +1288,23 @@ elif aba_sel == "Vendas":
                 df_mensal = df_mensal[df_mensal["filial_curta"].isin(filiais_sel)]
             df_mensal["mes_num"] = pd.to_datetime(df_mensal["data"]).dt.month
             df_mensal["mes_label"] = pd.to_datetime(df_mensal["data"]).dt.strftime("%b")
+            # 2025: salao puro (sem dado de iFood 2025 no banco)
             df_2025 = df_mensal[df_mensal["ano"]==2025].groupby(["mes_num","mes_label"])["venda_salao"].sum().reset_index().sort_values("mes_num")
+            df_2025["total"] = df_2025["venda_salao"]
+            # 2026: salao + iFood (Entrega parceira, 4 filiais)
             df_2026 = df_mensal[df_mensal["ano"]==2026].groupby(["mes_num","mes_label"])["venda_salao"].sum().reset_index().sort_values("mes_num")
+            _df_if_mens = df_ifood_vendas[df_ifood_vendas["logistica"]=="Entrega parceira"].copy()
+            _df_if_mens["mes_num"] = _df_if_mens["periodo"].apply(lambda p: int(p.split("/")[1]))
+            _df_if_mens["ano_if"] = _df_if_mens["periodo"].apply(lambda p: int(p.split("/")[2].split(" ")[0]))
+            _df_if_agg = _df_if_mens[_df_if_mens["ano_if"]==2026].groupby("mes_num")["faturamento"].sum().reset_index()
+            _df_if_agg.columns = ["mes_num","fat_ifood"]
+            df_2026 = df_2026.merge(_df_if_agg, on="mes_num", how="left")
+            df_2026["fat_ifood"] = df_2026["fat_ifood"].fillna(0)
+            df_2026["total"] = df_2026["venda_salao"] + df_2026["fat_ifood"]
             df_budget = df_mensal[df_mensal["ano"]==2026].groupby(["mes_num","mes_label"])["meta_venda"].sum().reset_index().sort_values("mes_num")
             fig_mens = go.Figure()
-            fig_mens.add_trace(go.Bar(x=df_2025["mes_label"], y=df_2025["venda_salao"], name="2025", marker_color="#8B7A5A", opacity=0.7))
-            fig_mens.add_trace(go.Bar(x=df_2026["mes_label"], y=df_2026["venda_salao"], name="2026", marker_color=VERDE))
+            fig_mens.add_trace(go.Bar(x=df_2025["mes_label"], y=df_2025["total"], name="2025 (Salao)", marker_color="#8B7A5A", opacity=0.7))
+            fig_mens.add_trace(go.Bar(x=df_2026["mes_label"], y=df_2026["total"], name="2026 (Salao+iFood)", marker_color=VERDE))
             fig_mens.add_trace(go.Scatter(x=df_budget["mes_label"], y=df_budget["meta_venda"], name="Budget", mode="lines+markers", line=dict(color="#B8923A", width=2, dash="dot"), marker=dict(size=8, color="#B8923A", symbol="diamond")))
             fig_mens.update_layout(barmode="group", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), xaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM)), yaxis=dict(showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=10, color=MARROM)), legend=dict(font=dict(family="Nunito", size=11, color=MARROM), orientation="h", yanchor="bottom", y=1.02), font=dict(family="Nunito"), height=300)
             st.plotly_chart(fig_mens, use_container_width=True, key="fig_mens_vd")
