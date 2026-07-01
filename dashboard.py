@@ -1293,7 +1293,11 @@ elif aba_sel == "Vendas":
             df_2025["total"] = df_2025["venda_salao"]
             # 2026: salao + iFood (Entrega parceira, 4 filiais)
             df_2026 = df_mensal[df_mensal["ano"]==2026].groupby(["mes_num","mes_label"])["venda_salao"].sum().reset_index().sort_values("mes_num")
-            _df_if_mens = df_ifood_vendas[df_ifood_vendas["logistica"]=="Entrega parceira"].copy()
+            _filiais_if_sel = ["Olive Garden - " + f for f in filiais_sel]
+            _df_if_mens = df_ifood_vendas[
+                (df_ifood_vendas["logistica"]=="Entrega parceira") &
+                (df_ifood_vendas["filial"].isin(_filiais_if_sel))
+            ].copy()
             _df_if_mens["mes_num"] = _df_if_mens["periodo"].apply(lambda p: int(p.split("/")[1]))
             _df_if_mens["ano_if"] = _df_if_mens["periodo"].apply(lambda p: int(p.split("/")[2].split(" ")[0]))
             _df_if_agg = _df_if_mens[_df_if_mens["ano_if"]==2026].groupby("mes_num")["faturamento"].sum().reset_index()
