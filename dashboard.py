@@ -1043,7 +1043,6 @@ elif aba_sel == "Vendas":
         pct_meta = 0  # calculado apos fat_if_ytd
         pct_ano1 = (vt/va1 - 1)*100 if va1 > 0 else 0
         vt_fmt = f"R$ {vt:,.0f}".replace(",",".")
-        vt_total_fmt = f"R$ {vt_total:,.0f}".replace(",",".")
         mt_fmt = f"R$ {mt:,.0f}".replace(",",".")
         va1_fmt = f"R$ {va1:,.0f}".replace(",",".")
         tk_fmt = f"R$ {tk:.0f}"
