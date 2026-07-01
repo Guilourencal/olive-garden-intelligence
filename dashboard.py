@@ -1493,6 +1493,72 @@ elif aba_sel == "Vendas":
             st.plotly_chart(fig_evo2, use_container_width=True, key="fig_evo_v2")
 
         st.markdown("<br>", unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown('<div class="section-title">Evolucao de Receita iFood por Unidade</div>', unsafe_allow_html=True)
+            st.markdown('<div style="font-size:12px;color:#8B7A5A;margin-bottom:12px;">Faturamento mensal iFood (Entrega parceira) por filial. Mes parcial projetado para o mes cheio (linha tracejada).</div>', unsafe_allow_html=True)
+            _cores_fil = {
+                "Olive Garden - Morumbi":       "#2a78d6",
+                "Olive Garden - Center Norte":  "#1baf7a",
+                "Olive Garden - Dom Pedro":     "#B8923A",
+                "Olive Garden - Aricanduva":    "#e34948",
+            }
+            _filiais_if = ["Olive Garden - Morumbi","Olive Garden - Center Norte","Olive Garden - Dom Pedro","Olive Garden - Aricanduva"]
+            _mes_map3 = {"01":"Jan","02":"Fev","03":"Mar","04":"Abr","05":"Mai","06":"Jun","07":"Jul","08":"Ago","09":"Set","10":"Out","11":"Nov","12":"Dez"}
+            _evo_fil = {f: [] for f in _filiais_if}
+            _meses3 = []
+            for _p3 in periodos:
+                try:
+                    _pt3 = _p3.split("-")
+                    _di3 = datetime.strptime(_pt3[0].strip(), "%d/%m/%Y")
+                    _df3 = datetime.strptime(_pt3[1].strip(), "%d/%m/%Y")
+                    _dd3 = (_df3 - _di3).days + 1
+                    _dm3 = calendar.monthrange(_di3.year, _di3.month)[1]
+                    _ml3 = _mes_map3.get(f"{_di3.month:02d}", _p3)
+                    _isp3 = _dd3 < _dm3
+                except:
+                    _ml3 = _p3[:3]; _isp3 = False; _dd3 = 30; _dm3 = 30
+                _meses3.append(_ml3)
+                for _f3 in _filiais_if:
+                    _fat3 = df_v[(df_v["periodo"]==_p3)&(df_v["filial"]==_f3)]["faturamento"].sum()
+                    _fat_adj3 = _fat3/_dd3*_dm3 if _isp3 and _fat3>0 else _fat3
+                    _evo_fil[_f3].append({"fat": _fat3, "fat_adj": _fat_adj3, "parcial": _isp3})
+            fig_evo_fil = go.Figure()
+            for _f3 in _filiais_if:
+                _nome3 = _f3.replace("Olive Garden - ","")
+                _cor3 = _cores_fil[_f3]
+                _vals_r = [e["fat"] for e in _evo_fil[_f3]]
+                _vals_a = [e["fat_adj"] for e in _evo_fil[_f3]]
+                _isp_list = [e["parcial"] for e in _evo_fil[_f3]]
+                _x_real = [_meses3[i] for i in range(len(_meses3)) if not _isp_list[i]]
+                _y_real = [_vals_r[i] for i in range(len(_meses3)) if not _isp_list[i]]
+                if _x_real:
+                    fig_evo_fil.add_trace(go.Scatter(
+                        x=_x_real, y=_y_real, mode="lines+markers", name=_nome3,
+                        line=dict(color=_cor3, width=2), marker=dict(size=7, color=_cor3),
+                        legendgroup=_nome3, showlegend=True))
+                for i in range(len(_meses3)):
+                    if _isp_list[i] and _vals_r[i] > 0:
+                        _x_ant = _meses3[i-1] if i > 0 else None
+                        _y_ant = _vals_r[i-1] if i > 0 else None
+                        if _x_ant:
+                            fig_evo_fil.add_trace(go.Scatter(
+                                x=[_x_ant, _meses3[i]], y=[_y_ant, _vals_a[i]],
+                                mode="lines+markers+text", name=_nome3+" (proj)",
+                                line=dict(color=_cor3, width=2, dash="dot"),
+                                marker=dict(size=7, color=_cor3, symbol="diamond"),
+                                text=["", f"R$ {_vals_a[i]:,.0f}".replace(",",".")],
+                                textposition="top center",
+                                textfont=dict(family="Nunito", size=10, color=_cor3),
+                                legendgroup=_nome3, showlegend=False))
+            fig_evo_fil.update_layout(
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                margin=dict(t=30,b=10,l=10,r=10), height=360,
+                xaxis=dict(tickfont=dict(family="Nunito", size=12, color=MARROM), showgrid=False),
+                yaxis=dict(showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=11, color=MARROM),
+                           tickformat=",.0f", tickprefix="R$ "),
+                legend=dict(font=dict(family="Nunito", size=11, color=MARROM), orientation="h", yanchor="bottom", y=1.02),
+                font=dict(family="Nunito"))
+            st.plotly_chart(fig_evo_fil, use_container_width=True, key="fig_evo_fil_ifood")
 
         with st.container(border=True):
             st.markdown('<div class="section-title">Vendas Diarias — Mes Corrente</div>', unsafe_allow_html=True)
