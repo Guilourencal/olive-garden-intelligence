@@ -53,6 +53,8 @@ st.markdown("""
 [data-testid="stSidebar"] { background-color: #4D3321; border-right: 3px solid #8B9A2E; }
 [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label { color: #D8CFC0 !important; }
 [data-testid="stSidebar"] .stSelectbox > div > div { background-color: #5a3f2a; color: #F5F0E8; border: 1px solid #8B9A2E; border-radius: 6px; }
+[data-baseweb="select"] [data-baseweb="popover"] ul { max-height: 400px !important; overflow-y: auto !important; }
+[data-baseweb="popover"] { z-index: 9999 !important; }
 [data-testid="stSidebar"] button { border-radius: 20px !important; border: 1px solid rgba(255,255,255,0.15) !important; background: rgba(255,255,255,0.08) !important; color: #D8CFC0 !important; font-size: 13px !important; font-weight: 600 !important; letter-spacing: 0.05em !important; margin-bottom: 4px !important; }
 [data-testid="stSidebar"] button:hover { background: rgba(139,154,46,0.3) !important; color: white !important; border-color: #8B9A2E !important; }
 [data-testid="stMetricLabel"] { font-size: 11px !important; letter-spacing: 0.1em; text-transform: uppercase; color: #5C3D1E !important; }
