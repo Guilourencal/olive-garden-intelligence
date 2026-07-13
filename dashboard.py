@@ -280,12 +280,12 @@ with st.sidebar:
     sentimento_sel = "Todos"
 
     if aba_sel == "Reviews":
-        st.markdown('<div class="sidebar-label">Plataforma</div>', unsafe_allow_html=True)
-        plataformas = ["Todas"] + sorted(df["plataforma"].dropna().unique().tolist())
-        plataforma_sel = st.selectbox("Plataforma", plataformas, key="plat", label_visibility="collapsed")
         st.markdown('<div class="sidebar-label">Filial</div>', unsafe_allow_html=True)
         filiais = ["Todas"] + sorted(df["filial"].dropna().unique().tolist())
         filial_sel = st.selectbox("Filial", filiais, key="filial", label_visibility="collapsed")
+        st.markdown('<div class="sidebar-label">Plataforma</div>', unsafe_allow_html=True)
+        plataformas = ["Todas"] + sorted(df["plataforma"].dropna().unique().tolist())
+        plataforma_sel = st.selectbox("Plataforma", plataformas, key="plat", label_visibility="collapsed")
         st.markdown('<div class="sidebar-label">Sentimento</div>', unsafe_allow_html=True)
         sentimento_sel = st.selectbox("Sentimento", ["Todos", "Positivo", "Negativo"], key="sent", label_visibility="collapsed")
 
