@@ -578,13 +578,12 @@ if aba_sel == "Reviews":
         st.markdown("<br>", unsafe_allow_html=True)
 
         # Filtros reviews
-        col_rf1, col_rf2, col_rf3 = st.columns(3)
+        col_rf1, col_rf2 = st.columns(2)
         with col_rf1:
             plat_sel_rev = st.selectbox("Plataforma:", ["Todas","iFood","Google Reviews","TripAdvisor"], key="rev_plat")
         with col_rf2:
             sent_sel_rev = st.selectbox("Sentimento:", ["Todos","Positivo","Neutro","Negativo"], key="rev_sent")
-        with col_rf3:
-            fil_sel_rev = st.selectbox("Filial:", ["Todas"] + sorted(df_rev["filial"].dropna().unique().tolist()), key="rev_fil")
+        fil_sel_rev = st.selectbox("Filial:", ["Todas"] + sorted(df_rev["filial"].dropna().unique().tolist()), key="rev_fil")
 
         df_rev_f = df_rev.copy()
         if plat_sel_rev != "Todas":
