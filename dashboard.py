@@ -585,7 +585,8 @@ if aba_sel == "Reviews":
             plat_sel_rev = st.selectbox("Plataforma:", ["Todas","iFood","Google Reviews","TripAdvisor"], key="rev_plat")
         with col_rf2:
             sent_sel_rev = st.selectbox("Sentimento:", ["Todos","Positivo","Neutro","Negativo"], key="rev_sent")
-        fil_sel_rev = st.selectbox("Filial:", ["Todas"] + sorted(df_rev["filial"].dropna().unique().tolist()), key="rev_fil")
+        fil_sel_display = st.radio("Filial:", ["Todas"] + sorted([f.replace("Olive Garden - ", "") for f in df_rev["filial"].dropna().unique().tolist() if f]), horizontal=True, key="rev_fil")
+        fil_sel_rev = "Todas" if fil_sel_display == "Todas" else "Olive Garden - " + fil_sel_display
 
         df_rev_f = df_rev.copy()
         if plat_sel_rev != "Todas":
