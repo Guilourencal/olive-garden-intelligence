@@ -442,25 +442,43 @@ if aba_sel == "Reviews":
         df_evo_recl = df_rf.copy()
         df_evo_recl["mes"] = df_evo_recl["data"].dt.to_period("M").astype(str)
         cores_un = {"Morumbi":"#B8923A","Center Norte":"#4A90D9","Dom Pedro":"#2e6b3e","Aricanduva":"#c0392b","Guarulhos GRU3":"#8B7A5A","Guarulhos GRU2":"#9B59B6"}
+        # Total por mes (para calcular %)
+        df_total_mes = df_evo_recl.groupby("mes").size().reset_index(name="total")
         fig_evo_recl = go.Figure()
         for un in unidades_ord:
             df_un_evo = df_evo_recl[df_evo_recl["unidade_curta"]==un].groupby("mes").size().reset_index(name="n")
             if len(df_un_evo) == 0:
                 continue
+            df_un_evo = df_un_evo.merge(df_total_mes, on="mes", how="left")
+            df_un_evo["pct"] = (df_un_evo["n"] / df_un_evo["total"] * 100).round(1)
+            cor = cores_un.get(un, MARROM)
             fig_evo_recl.add_trace(go.Scatter(
                 x=df_un_evo["mes"], y=df_un_evo["n"],
                 mode="lines+markers", name=un,
-                line=dict(color=cores_un.get(un, MARROM), width=2),
-                marker=dict(size=7, color=cores_un.get(un, MARROM))
+                line=dict(color=cor, width=2),
+                marker=dict(size=7, color=cor),
+                yaxis="y1", legendgroup=un, showlegend=True
+            ))
+            fig_evo_recl.add_trace(go.Scatter(
+                x=df_un_evo["mes"], y=df_un_evo["pct"],
+                mode="lines", name=f"{un} %",
+                line=dict(color=cor, width=1.5, dash="dot"),
+                yaxis="y2", legendgroup=un, showlegend=False,
+                hovertemplate="%{y:.1f}%<extra>" + un + " share</extra>"
             ))
         fig_evo_recl.update_layout(
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-            margin=dict(t=10,b=10,l=10,r=10),
+            margin=dict(t=10,b=10,l=10,r=60),
             xaxis=dict(tickfont=dict(family="Nunito", size=10, color=MARROM), showgrid=False),
-            yaxis=dict(showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=10, color=MARROM)),
+            yaxis=dict(title="Reclamacoes", showgrid=True, gridcolor="#E8DCC8",
+                       tickfont=dict(family="Nunito", size=10, color=MARROM)),
+            yaxis2=dict(title="Share %", overlaying="y", side="right", showgrid=False,
+                        tickfont=dict(family="Nunito", size=10, color=MARROM),
+                        ticksuffix="%", range=[0, 100]),
             legend=dict(font=dict(family="Nunito", size=10, color=MARROM), orientation="h", yanchor="bottom", y=1.02),
-            font=dict(family="Nunito"), height=300
+            font=dict(family="Nunito"), height=320
         )
+        st.markdown('<div style="font-size:10px;color:#8B7A5A;margin-bottom:4px;">Linha solida = volume ? Linha tracejada = % do total da rede</div>', unsafe_allow_html=True)
         st.plotly_chart(fig_evo_recl, use_container_width=True, key="fig_evo_recl")
 
     st.markdown("<br>", unsafe_allow_html=True)
