@@ -474,7 +474,7 @@ if aba_sel == "Reviews":
                        tickfont=dict(family="Nunito", size=10, color=MARROM)),
             yaxis2=dict(title="Share %", overlaying="y", side="right", showgrid=False,
                         tickfont=dict(family="Nunito", size=10, color=MARROM),
-                        ticksuffix="%", range=[0, 100]),
+                        ticksuffix="%", range=[0, 60]),
             legend=dict(font=dict(family="Nunito", size=10, color=MARROM), orientation="h", yanchor="bottom", y=1.02),
             font=dict(family="Nunito"), height=320
         )
