@@ -50,13 +50,49 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap');
 * { font-family: 'Nunito', sans-serif; }
 [data-testid="stAppViewContainer"] { background-color: #F5F0E8; }
-[data-testid="stSidebar"] { background-color: #4D3321; border-right: 3px solid #8B9A2E; }
-[data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label { color: #D8CFC0 !important; }
-[data-testid="stSidebar"] .stSelectbox > div > div { background-color: #5a3f2a; color: #F5F0E8; border: 1px solid #8B9A2E; border-radius: 6px; }
+/* ── SIDEBAR BASE ── */
+[data-testid="stSidebar"] { background-color: #3D2710; border-right: 2px solid rgba(139,154,46,0.35); }
+[data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label { color: #C8BFB0 !important; }
+/* ── BOTÕES DE NAVEGAÇÃO ── */
+[data-testid="stSidebar"] button {
+  border-radius: 6px !important;
+  border: none !important;
+  background: transparent !important;
+  color: #A89880 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  padding: 7px 12px !important;
+  margin-bottom: 1px !important;
+  transition: all 0.15s ease !important;
+  border-left: 2px solid transparent !important;
+}
+[data-testid="stSidebar"] button:hover {
+  background: rgba(139,154,46,0.12) !important;
+  color: #C8D870 !important;
+  border-left: 2px solid #8B9A2E !important;
+}
+/* ── SELECTBOX ── */
+[data-testid="stSidebar"] .stSelectbox > div > div {
+  background-color: rgba(255,255,255,0.05) !important;
+  color: #E8DCC8 !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(139,154,46,0.4) !important;
+  border-radius: 0 !important;
+  font-size: 12px !important;
+  padding: 6px 8px !important;
+}
 [data-baseweb="select"] [data-baseweb="popover"] ul { max-height: 400px !important; overflow-y: auto !important; }
 [data-baseweb="popover"] { z-index: 9999 !important; }
-[data-testid="stSidebar"] button { border-radius: 20px !important; border: 1px solid rgba(255,255,255,0.15) !important; background: rgba(255,255,255,0.08) !important; color: #D8CFC0 !important; font-size: 13px !important; font-weight: 600 !important; letter-spacing: 0.05em !important; margin-bottom: 4px !important; }
-[data-testid="stSidebar"] button:hover { background: rgba(139,154,46,0.3) !important; color: white !important; border-color: #8B9A2E !important; }
+/* ── ABA ATIVA ── */
+.nav-ativo { background:rgba(139,154,46,0.15); border-left:3px solid #8B9A2E !important;
+  border-radius:6px; padding:7px 12px; margin-bottom:1px;
+  font-size:11px; font-weight:800; letter-spacing:0.1em;
+  text-transform:uppercase; color:#8B9A2E; display:block; }
+/* ── SIDEBAR LABEL ── */
+.sidebar-label { font-size:9px; letter-spacing:0.18em; text-transform:uppercase;
+  color:rgba(139,154,46,0.7); margin:14px 0 3px; font-weight:700; }
 [data-testid="stMetricLabel"] { font-size: 11px !important; letter-spacing: 0.1em; text-transform: uppercase; color: #5C3D1E !important; }
 [data-testid="stMetricValue"] { font-weight: 800 !important; font-size: 28px !important; color: #3D2B1F !important; }
 [data-testid="metric-container"] { background: white; border-radius: 12px; padding: 20px; border-bottom: 3px solid #8B9A2E; box-shadow: 0 2px 8px rgba(61,43,31,0.08); }
@@ -261,14 +297,16 @@ with st.sidebar:
     )
     st.markdown('<div style="height:1px; background:rgba(255,255,255,0.1); margin-bottom:10px;"></div>', unsafe_allow_html=True)
 
-    for aba in ["Reviews", "Social", "Pesquisa", "Analises", "Vendas", "OlivIA", "Menu", "Fila"]:
-        if st.button(aba, key=f"btn_{aba}", use_container_width=True):
-            st.session_state.aba_sel = aba
-            st.rerun()
-
     aba_sel = st.session_state.aba_sel
+    for aba in ["Reviews", "Social", "Pesquisa", "Analises", "Vendas", "OlivIA", "Menu", "Fila"]:
+        if aba == aba_sel:
+            st.markdown(f'<span class="nav-ativo">{aba}</span>', unsafe_allow_html=True)
+        else:
+            if st.button(aba, key=f"btn_{aba}", use_container_width=True):
+                st.session_state.aba_sel = aba
+                st.rerun()
 
-    st.markdown('<div style="height:1px; background:rgba(255,255,255,0.1); margin:10px 0;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:1px;background:linear-gradient(90deg,transparent,rgba(139,154,46,0.5),transparent);margin:14px 0 10px;"></div>', unsafe_allow_html=True)
 
     sent_social_sel = "Todos"
     post_sel = "Todos"
