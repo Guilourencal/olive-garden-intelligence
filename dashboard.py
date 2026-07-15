@@ -1312,7 +1312,15 @@ elif aba_sel == "Vendas":
         with col_r1:
             with st.container(border=True):
                 st.markdown('<div class="section-title">Performance vs Budget por Filial</div>', unsafe_allow_html=True)
-                df_rank_vd = df_vd_f.groupby("filial_curta").agg(venda_salao=("venda_salao","sum"), meta_venda=("meta_venda","sum")).reset_index()
+                # Filtra so o mes corrente para comparar com budget mensal
+                from datetime import date as _date_rank
+                _hoje_rank = _date_rank.today()
+                _df_rank_mes = df_vd[
+                    (df_vd["data"].dt.month == _hoje_rank.month) &
+                    (df_vd["data"].dt.year  == _hoje_rank.year) &
+                    df_vd["filial_curta"].isin(filiais_sel)
+                ]
+                df_rank_vd = _df_rank_mes.groupby("filial_curta").agg(venda_salao=("venda_salao","sum"), meta_venda=("meta_venda","sum")).reset_index()
                 # Budget fixo e projecao gerencial da tabela projecoes_gerenciais
                 try:
                     _conn_rank = get_conn()
