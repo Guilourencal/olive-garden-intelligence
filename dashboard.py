@@ -1413,15 +1413,24 @@ elif aba_sel == "Vendas":
             df_2026["fat_ifood"] = df_2026["fat_ifood"].fillna(0)
             df_2026["total"] = df_2026["venda_salao"] + df_2026["fat_ifood"]
             df_budget = df_mensal[df_mensal["ano"]==2026].groupby(["mes_num","mes_label"])["meta_venda"].sum().reset_index().sort_values("mes_num")
-            # Substitui budget do mes corrente pelo valor fixo da tabela projecoes_gerenciais
+            # Budget: usa projecoes_gerenciais para meses com entrada, meta_venda para os demais
             try:
                 _conn_budg4 = get_conn()
                 _cur_budg4 = _conn_budg4.cursor()
                 _cur_budg4.execute("SELECT mes, SUM(budget_mes) FROM projecoes_gerenciais GROUP BY mes")
                 _budg_mes = {r[0].month: r[1] for r in _cur_budg4.fetchall()}
                 _conn_budg4.close()
-                df_budget["budget_fix"] = df_budget["mes_num"].map(lambda m: _budg_mes.get(int(m), None))
-                df_budget["meta_final"] = df_budget.apply(lambda r: r["budget_fix"] if r["budget_fix"] else r["meta_venda"], axis=1)
+                df_budget["budget_fix"] = df_budget["mes_num"].map(lambda m: _budg_mes.get(int(m)))
+                df_budget["meta_final"] = df_budget.apply(
+                    lambda r: r["budget_fix"] if pd.notna(r["budget_fix"]) and r["budget_fix"] > 0 else r["meta_venda"], axis=1)
+                # Para meses futuros sem meta_venda no banco, usa budget da tabela
+                import calendar as _cal_budg
+                from datetime import date as _dt_budg
+                _ano_sel = max(anos_sel) if anos_sel else _dt_budg.today().year
+                _hoje_mes = _dt_budg.today().month
+                for _mi, _ml in zip(df_budget["mes_num"], df_budget["mes_label"]):
+                    if int(_mi) > _hoje_mes and int(_mi) in _budg_mes:
+                        df_budget.loc[df_budget["mes_num"]==_mi, "meta_final"] = _budg_mes[int(_mi)]
             except:
                 df_budget["meta_final"] = df_budget["meta_venda"]
             fig_mens = go.Figure()
