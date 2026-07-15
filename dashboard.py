@@ -1419,22 +1419,26 @@ elif aba_sel == "Vendas":
             _rede_meta_ytd  = _df_ytd_s["meta_ytd"].sum()
             _rede_pct_ytd   = (_rede_total_ytd / _rede_meta_ytd - 1) * 100 if _rede_meta_ytd > 0 else 0
             for _, _row in _df_ytd_s.iterrows():
-                _cor_ytd  = "#2e6b3e" if _row["pct_ytd"] >= 0 else "#c0392b"
-                _pct_bar  = min(abs(_row["pct_ytd"]) * 2, 100)
+                _pos_ytd  = _row["pct_ytd"] >= 0
+                _cor_ytd  = "#2e6b3e" if _pos_ytd else "#c0392b"
+                _half_bar = min(abs(_row["pct_ytd"]) / 12 * 50, 50)
                 _vd_ytd   = f"R$ {_row['total_ytd']:,.0f}".replace(",",".")
                 _mt_ytd   = f"R$ {_row['meta_ytd']:,.0f}".replace(",",".")
-                _seta_ytd = "▲" if _row["pct_ytd"] >= 0 else "▼"
-                st.markdown(f'''<div style="padding:10px 0;border-bottom:1px solid #e8ddc8;">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-    <span style="font-size:12px;font-weight:700;color:#3D2B1F;">{_row["filial_curta"]}</span>
-    <div style="text-align:right;">
-      <span style="font-size:12px;color:#3D2B1F;">{_vd_ytd}</span>
-      <span style="font-size:11px;color:#8B7A5A;"> / Meta: {_mt_ytd}</span>
-      <span style="font-size:12px;font-weight:700;color:{_cor_ytd};margin-left:8px;">{_seta_ytd} {_row["pct_ytd"]:+.1f}%</span>
+                _seta_ytd = "▲" if _pos_ytd else "▼"
+                _bar_html = (f'<div style="position:absolute;left:50%;top:0;height:100%;width:{_half_bar:.1f}%;background:{_cor_ytd};border-radius:0 3px 3px 0;"></div>'
+                            if _pos_ytd else
+                            f'<div style="position:absolute;right:50%;top:0;height:100%;width:{_half_bar:.1f}%;background:{_cor_ytd};border-radius:3px 0 0 3px;"></div>')
+                st.markdown(f'''<div style="padding:10px 0;border-bottom:0.5px solid #e8ddc8;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+    <span style="font-size:12px;font-weight:600;color:#3D2B1F;">{_row["filial_curta"]}</span>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="font-size:11px;color:#8B7A5A;">{_vd_ytd} / Meta {_mt_ytd}</span>
+      <span style="font-size:12px;font-weight:700;color:{_cor_ytd};min-width:52px;text-align:right;">{_seta_ytd} {_row["pct_ytd"]:+.1f}%</span>
     </div>
   </div>
-  <div style="background:#e8ddc8;border-radius:4px;height:6px;width:100%;">
-    <div style="background:{_cor_ytd};border-radius:4px;height:6px;width:{_pct_bar}%;"></div>
+  <div style="position:relative;height:6px;background:#e8ddc8;border-radius:3px;overflow:hidden;">
+    <div style="position:absolute;left:50%;top:0;height:100%;width:1.5px;background:#8B7A5A;transform:translateX(-50%);z-index:2;"></div>
+    {_bar_html}
   </div>
 </div>''', unsafe_allow_html=True)
             _cor_r  = "#2e6b3e" if _rede_pct_ytd >= 0 else "#c0392b"
