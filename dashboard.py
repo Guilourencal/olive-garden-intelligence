@@ -549,7 +549,7 @@ if aba_sel == "Reviews":
                 f'<span style="font-size:11px;color:{cor_nota_v};font-weight:700;">{estrelas}</span>' +
                 f'<span style="font-size:10px;color:#8B7A5A;">{canal_icon} {str(row["data"])[:10]}</span>' +
                 f'</div></div>' +
-                f'<div style="font-size:12px;color:#3D2B1F;line-height:1.5;">{str(row["comentario"])[:300]}{"..." if len(str(row["comentario"])) > 300 else ""}</div></div>'
+                f'<div style="font-size:12px;color:#3D2B1F;line-height:1.5;">{str(row["comentario"])[:600]}{"..." if len(str(row["comentario"])) > 600 else ""}</div></div>'
             )
         st.markdown(f'<div style="height:420px;overflow-y:auto;padding-right:8px;">{html_voz}</div>', unsafe_allow_html=True)
 
@@ -667,7 +667,7 @@ if aba_sel == "Reviews":
                 f'<span style="font-size:9px;background:#e8ddc8;color:#3D2B1F;padding:2px 6px;border-radius:4px;">{row["plataforma"]}</span>' +
                 f'</div>' +
                 f'<span style="font-size:12px;color:{cor_r};font-weight:700;">{estrelas_r}</span></div>' +
-                f'<div style="font-size:12px;color:#3D2B1F;line-height:1.5;">{texto_r[:250]}{"..." if len(texto_r)>250 else ""}</div></div>',
+                f'<div style="font-size:12px;color:#3D2B1F;line-height:1.5;">{texto_r[:600]}{"..." if len(texto_r)>600 else ""}</div></div>',
                 unsafe_allow_html=True)
 
 elif aba_sel == "Social":
