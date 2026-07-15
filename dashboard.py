@@ -1210,7 +1210,13 @@ elif aba_sel == "Vendas":
             if len(df_mes_ve) > 0:
                 proj_if_ve = (fat_if_mtd / _dias_realizados_ve * (_dias_no_mes_ve - _dias_realizados_ve)) if _dias_realizados_ve > 0 else 0
                 proj_total_ve = proj_total + proj_if_ve if "proj_total" in dir() else fat_total_mtd
-                budget_ve = df_mes_ve["meta_venda"].sum() / _dias_realizados_ve * _dias_no_mes_ve if _dias_realizados_ve > 0 else 0
+                # Budget fixo = soma da meta de TODOS os dias do mes (nao so os realizados)
+                _df_mes_budget = df_vd[
+                    (df_vd["data"].dt.month == _hoje_ve2.month) &
+                    (df_vd["data"].dt.year == _hoje_ve2.year) &
+                    df_vd["filial_curta"].isin(filiais_sel)
+                ]
+                budget_ve = _df_mes_budget["meta_venda"].sum() if len(_df_mes_budget) > 0 else 0
                 pct_proj_ve = (proj_total_ve / budget_ve - 1) * 100 if budget_ve > 0 else 0
                 cor_pv2 = "#4CAF7D" if pct_proj_ve >= 0 else "#E57373"
                 seta_pv2 = "▲" if pct_proj_ve >= 0 else "▼"
