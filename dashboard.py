@@ -541,7 +541,7 @@ if aba_sel == "Reviews":
                 f'<div style="padding:12px 0;border-bottom:1px solid #e8ddc8;">' +
                 f'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
                 f'<div style="display:flex;gap:8px;align-items:center;">' +
-                f'<span style="font-size:11px;font-weight:800;color:#fff;background:#3D2B1F;padding:2px 8px;border-radius:4px;letter-spacing:0.03em;">{row["unidade_curta"]}</span>' +
+                f'<span style="font-size:11px;font-weight:800;color:#fff;background:{"#3D2B1F" if row["unidade_curta"] else "#8B7A5A"};padding:2px 8px;border-radius:4px;letter-spacing:0.03em;">{row["unidade_curta"] if row["unidade_curta"] else "Não Identificada"}</span>' +
                 f'<span style="font-size:9px;background:#e8ddc8;color:#3D2B1F;padding:2px 6px;border-radius:4px;">{tema_badge}</span>' +
                 (f'<span style="font-size:9px;background:#f5e8e8;color:#8B2E2E;padding:2px 6px;border-radius:4px;">{subtema_badge}</span>' if subtema_badge else "") +
                 f'</div>' +
