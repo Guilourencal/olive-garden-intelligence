@@ -1387,6 +1387,71 @@ elif aba_sel == "Vendas":
 
         st.markdown("<br>", unsafe_allow_html=True)
 
+        # YTD Performance vs Budget por Filial
+        with st.container(border=True):
+            st.markdown('<div class="section-title">Performance YTD por Filial — Salao + iFood vs Meta</div>', unsafe_allow_html=True)
+            st.markdown('<div style="font-size:11px;color:#8B7A5A;margin-bottom:12px;">Acumulado 2026 — venda realizada (salao + iFood) vs meta acumulada do periodo.</div>', unsafe_allow_html=True)
+            _df_ytd_s = df_vd[
+                (df_vd["data"].dt.year == 2026) &
+                df_vd["filial_curta"].isin(filiais_sel)
+            ].groupby("filial_curta").agg(
+                salao=("venda_salao","sum"),
+                meta_ytd=("meta_venda","sum")
+            ).reset_index()
+            _filiais_if_ytd = ["Olive Garden - " + f for f in filiais_sel if f in ["Morumbi","Center Norte","Dom Pedro","Aricanduva"]]
+            if len(df_ifood_vendas) > 0 and _filiais_if_ytd:
+                _df_if_ytd2 = df_ifood_vendas[
+                    (df_ifood_vendas["logistica"]=="Entrega parceira") &
+                    (df_ifood_vendas["periodo"].str.contains("2026")) &
+                    (df_ifood_vendas["filial"].isin(_filiais_if_ytd))
+                ].copy()
+                _df_if_ytd2["filial_curta"] = _df_if_ytd2["filial"].str.replace("Olive Garden - ","",regex=False)
+                _df_if_agg_ytd = _df_if_ytd2.groupby("filial_curta")["faturamento"].sum().reset_index()
+                _df_if_agg_ytd.columns = ["filial_curta","fat_if_ytd2"]
+                _df_ytd_s = _df_ytd_s.merge(_df_if_agg_ytd, on="filial_curta", how="left")
+                _df_ytd_s["fat_if_ytd2"] = _df_ytd_s["fat_if_ytd2"].fillna(0)
+            else:
+                _df_ytd_s["fat_if_ytd2"] = 0
+            _df_ytd_s["total_ytd"] = _df_ytd_s["salao"] + _df_ytd_s["fat_if_ytd2"]
+            _df_ytd_s["pct_ytd"] = ((_df_ytd_s["total_ytd"] / _df_ytd_s["meta_ytd"] - 1) * 100).round(1)
+            _df_ytd_s = _df_ytd_s.sort_values("pct_ytd", ascending=False)
+            _rede_total_ytd = _df_ytd_s["total_ytd"].sum()
+            _rede_meta_ytd  = _df_ytd_s["meta_ytd"].sum()
+            _rede_pct_ytd   = (_rede_total_ytd / _rede_meta_ytd - 1) * 100 if _rede_meta_ytd > 0 else 0
+            for _, _row in _df_ytd_s.iterrows():
+                _cor_ytd  = "#2e6b3e" if _row["pct_ytd"] >= 0 else "#c0392b"
+                _pct_bar  = min(abs(_row["pct_ytd"]) * 2, 100)
+                _vd_ytd   = f"R$ {_row['total_ytd']:,.0f}".replace(",",".")
+                _mt_ytd   = f"R$ {_row['meta_ytd']:,.0f}".replace(",",".")
+                _seta_ytd = "▲" if _row["pct_ytd"] >= 0 else "▼"
+                st.markdown(f'''<div style="padding:10px 0;border-bottom:1px solid #e8ddc8;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+    <span style="font-size:12px;font-weight:700;color:#3D2B1F;">{_row["filial_curta"]}</span>
+    <div style="text-align:right;">
+      <span style="font-size:12px;color:#3D2B1F;">{_vd_ytd}</span>
+      <span style="font-size:11px;color:#8B7A5A;"> / Meta: {_mt_ytd}</span>
+      <span style="font-size:12px;font-weight:700;color:{_cor_ytd};margin-left:8px;">{_seta_ytd} {_row["pct_ytd"]:+.1f}%</span>
+    </div>
+  </div>
+  <div style="background:#e8ddc8;border-radius:4px;height:6px;width:100%;">
+    <div style="background:{_cor_ytd};border-radius:4px;height:6px;width:{_pct_bar}%;"></div>
+  </div>
+</div>''', unsafe_allow_html=True)
+            _cor_r  = "#2e6b3e" if _rede_pct_ytd >= 0 else "#c0392b"
+            _seta_r = "▲" if _rede_pct_ytd >= 0 else "▼"
+            st.markdown(f'''<div style="padding:10px 0;margin-top:4px;border-top:2px solid #3D2B1F;">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <span style="font-size:13px;font-weight:800;color:#3D2B1F;">REDE TOTAL</span>
+    <div style="text-align:right;">
+      <span style="font-size:13px;font-weight:700;color:#3D2B1F;">R$ {_rede_total_ytd:,.0f}</span>
+      <span style="font-size:12px;color:#8B7A5A;"> / Meta: R$ {_rede_meta_ytd:,.0f}</span>
+      <span style="font-size:13px;font-weight:800;color:{_cor_r};margin-left:8px;">{_seta_r} {_rede_pct_ytd:+.1f}%</span>
+    </div>
+  </div>
+</div>'''.replace(",","."), unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
         # Comparativo mensal 2025 vs 2026
         with st.container(border=True):
             st.markdown('<div class="section-title">Comparativo Mensal 2025 vs 2026</div>', unsafe_allow_html=True)
