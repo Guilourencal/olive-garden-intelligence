@@ -1387,14 +1387,38 @@ elif aba_sel == "Vendas":
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # YTD Performance vs Budget por Filial
+        # Performance vs Budget por Filial com toggle Semanal/Mensal/Anual
         with st.container(border=True):
-            st.markdown('<div class="section-title">Performance YTD por Filial — Salao + iFood vs Meta</div>', unsafe_allow_html=True)
-            st.markdown('<div style="font-size:11px;color:#8B7A5A;margin-bottom:12px;">Acumulado 2026 — venda realizada (salao + iFood) vs meta acumulada do periodo.</div>', unsafe_allow_html=True)
-            _df_ytd_s = df_vd[
-                (df_vd["data"].dt.year == 2026) &
-                df_vd["filial_curta"].isin(filiais_sel)
-            ].groupby("filial_curta").agg(
+            st.markdown('<div class="section-title">Performance por Filial — Salao + iFood vs Meta</div>', unsafe_allow_html=True)
+            _visao_perf = st.radio("", ["Semanal", "Mensal", "Anual (YTD)"], horizontal=True, key="visao_perf_ytd")
+            from datetime import date as _dt_perf
+            import calendar as _cal_perf
+            _hoje_perf = _dt_perf.today()
+            if _visao_perf == "Semanal":
+                _iso_cal = _hoje_perf.isocalendar()
+                _inicio_sem = _hoje_perf - pd.Timedelta(days=_hoje_perf.weekday())
+                _fim_sem = _inicio_sem + pd.Timedelta(days=6)
+                _label_periodo = f"Semana {_iso_cal[1]} ({_inicio_sem.strftime('%d/%m')} a {_fim_sem.strftime('%d/%m/%Y')})"
+                _df_ytd_base = df_vd[
+                    (df_vd["data"].dt.isocalendar().week == _hoje_perf.isocalendar()[1]) &
+                    (df_vd["data"].dt.year == _hoje_perf.year) &
+                    df_vd["filial_curta"].isin(filiais_sel)
+                ]
+            elif _visao_perf == "Mensal":
+                _label_periodo = _hoje_perf.strftime("%B/%Y")
+                _df_ytd_base = df_vd[
+                    (df_vd["data"].dt.month == _hoje_perf.month) &
+                    (df_vd["data"].dt.year == _hoje_perf.year) &
+                    df_vd["filial_curta"].isin(filiais_sel)
+                ]
+            else:
+                _label_periodo = f"YTD {_hoje_perf.year}"
+                _df_ytd_base = df_vd[
+                    (df_vd["data"].dt.year == _hoje_perf.year) &
+                    df_vd["filial_curta"].isin(filiais_sel)
+                ]
+            st.markdown(f'<div style="font-size:11px;color:#8B7A5A;margin-bottom:12px;">{_label_periodo} — venda realizada (salao + iFood) vs meta do periodo.</div>', unsafe_allow_html=True)
+            _df_ytd_s = _df_ytd_base.groupby("filial_curta").agg(
                 salao=("venda_salao","sum"),
                 meta_ytd=("meta_venda","sum")
             ).reset_index()
