@@ -1210,7 +1210,20 @@ elif aba_sel == "Vendas":
             if len(df_mes_ve) > 0:
                 proj_if_ve = (fat_if_mtd / _dias_realizados_ve * (_dias_no_mes_ve - _dias_realizados_ve)) if _dias_realizados_ve > 0 else 0
                 proj_total_ve = proj_total + proj_if_ve if "proj_total" in dir() else fat_total_mtd
-                budget_ve = df_mes_ve["meta_venda"].sum() / _dias_realizados_ve * _dias_no_mes_ve if _dias_realizados_ve > 0 else 0
+                # Budget fixo da tabela projecoes_gerenciais (nao oscila)
+                try:
+                    _conn_budg = get_conn()
+                    _cur_budg = _conn_budg.cursor()
+                    _cur_budg.execute("""
+                        SELECT SUM(budget_mes) FROM projecoes_gerenciais
+                        WHERE mes = %s AND filial = ANY(%s)
+                    """, (str(_hoje_ve2.replace(day=1)),
+                          ["Olive Garden - " + f for f in filiais_sel]))
+                    _budg_row = _cur_budg.fetchone()
+                    budget_ve = float(_budg_row[0]) if _budg_row and _budg_row[0] else 0
+                    _conn_budg.close()
+                except:
+                    budget_ve = df_mes_ve["meta_venda"].sum() / _dias_realizados_ve * _dias_no_mes_ve if _dias_realizados_ve > 0 else 0
                 pct_proj_ve = (proj_total_ve / budget_ve - 1) * 100 if budget_ve > 0 else 0
                 cor_pv2 = "#4CAF7D" if pct_proj_ve >= 0 else "#E57373"
                 seta_pv2 = "▲" if pct_proj_ve >= 0 else "▼"
