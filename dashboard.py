@@ -1313,13 +1313,25 @@ elif aba_sel == "Vendas":
             with st.container(border=True):
                 st.markdown('<div class="section-title">Performance vs Budget por Filial</div>', unsafe_allow_html=True)
                 df_rank_vd = df_vd_f.groupby("filial_curta").agg(venda_salao=("venda_salao","sum"), meta_venda=("meta_venda","sum")).reset_index()
-                df_rank_vd["pct_meta"] = ((df_rank_vd["venda_salao"]/df_rank_vd["meta_venda"]-1)*100).round(1)
+                # Budget fixo e projecao gerencial da tabela projecoes_gerenciais
+                try:
+                    _conn_rank = get_conn()
+                    _cur_rank = _conn_rank.cursor()
+                    _cur_rank.execute("SELECT filial, budget_mes, proj_gerencial FROM projecoes_gerenciais WHERE mes = date_trunc('month', CURRENT_DATE)")
+                    _budg_fil = {r[0].replace("Olive Garden - ",""): {"budget": r[1], "proj": r[2]} for r in _cur_rank.fetchall()}
+                    _conn_rank.close()
+                except:
+                    _budg_fil = {}
+                df_rank_vd["budget_fix"] = df_rank_vd["filial_curta"].map(lambda f: _budg_fil.get(f, {}).get("budget") or df_rank_vd.loc[df_rank_vd["filial_curta"]==f, "meta_venda"].values[0])
+                df_rank_vd["proj_ger"]   = df_rank_vd["filial_curta"].map(lambda f: _budg_fil.get(f, {}).get("proj"))
+                df_rank_vd["pct_meta"] = ((df_rank_vd["venda_salao"]/df_rank_vd["budget_fix"]-1)*100).round(1)
                 df_rank_vd = df_rank_vd.sort_values("pct_meta", ascending=True)
                 for _, row in df_rank_vd.iterrows():
                     cor_b = "#2e6b3e" if row["pct_meta"] >= 0 else "#c0392b"
                     seta_b = "▲" if row["pct_meta"] >= 0 else "▼"
                     vd_fmt = f"R$ {row['venda_salao']:,.0f}".replace(",",".")
-                    st.markdown(f'<div style="padding:8px 0; border-bottom:1px solid #e8ddc8; display:flex; justify-content:space-between; align-items:center;"><span style="font-size:12px; font-weight:700; color:#3D2B1F;">{row["filial_curta"]}</span><div style="text-align:right;"><div style="font-size:12px; color:#3D2B1F;">{vd_fmt}</div><div style="font-size:12px; color:{cor_b}; font-weight:700;">{seta_b} {row["pct_meta"]:+.1f}% vs Budget</div></div></div>', unsafe_allow_html=True)
+                    proj_str = f" | Proj: R$ {row['proj_ger']:,.0f}".replace(",",".") if row["proj_ger"] else ""
+                    st.markdown(f'<div style="padding:8px 0; border-bottom:1px solid #e8ddc8; display:flex; justify-content:space-between; align-items:center;"><span style="font-size:12px; font-weight:700; color:#3D2B1F;">{row["filial_curta"]}</span><div style="text-align:right;"><div style="font-size:12px; color:#3D2B1F;">{vd_fmt}{proj_str}</div><div style="font-size:12px; color:{cor_b}; font-weight:700;">{seta_b} {row["pct_meta"]:+.1f}% vs Budget</div></div></div>', unsafe_allow_html=True)
 
         # Sazonalidade por dia da semana
         with col_r2:
@@ -1381,10 +1393,21 @@ elif aba_sel == "Vendas":
             df_2026["fat_ifood"] = df_2026["fat_ifood"].fillna(0)
             df_2026["total"] = df_2026["venda_salao"] + df_2026["fat_ifood"]
             df_budget = df_mensal[df_mensal["ano"]==2026].groupby(["mes_num","mes_label"])["meta_venda"].sum().reset_index().sort_values("mes_num")
+            # Substitui budget do mes corrente pelo valor fixo da tabela projecoes_gerenciais
+            try:
+                _conn_budg4 = get_conn()
+                _cur_budg4 = _conn_budg4.cursor()
+                _cur_budg4.execute("SELECT mes, SUM(budget_mes) FROM projecoes_gerenciais GROUP BY mes")
+                _budg_mes = {r[0].month: r[1] for r in _cur_budg4.fetchall()}
+                _conn_budg4.close()
+                df_budget["budget_fix"] = df_budget["mes_num"].map(lambda m: _budg_mes.get(int(m), None))
+                df_budget["meta_final"] = df_budget.apply(lambda r: r["budget_fix"] if r["budget_fix"] else r["meta_venda"], axis=1)
+            except:
+                df_budget["meta_final"] = df_budget["meta_venda"]
             fig_mens = go.Figure()
             fig_mens.add_trace(go.Bar(x=df_2025["mes_label"], y=df_2025["total"], name="2025 (Salao)", marker_color="#8B7A5A", opacity=0.7))
             fig_mens.add_trace(go.Bar(x=df_2026["mes_label"], y=df_2026["total"], name="2026 (Salao+iFood)", marker_color=VERDE))
-            fig_mens.add_trace(go.Scatter(x=df_budget["mes_label"], y=df_budget["meta_venda"], name="Budget", mode="lines+markers", line=dict(color="#B8923A", width=2, dash="dot"), marker=dict(size=8, color="#B8923A", symbol="diamond")))
+            fig_mens.add_trace(go.Scatter(x=df_budget["mes_label"], y=df_budget["meta_final"], name="Budget", mode="lines+markers", line=dict(color="#B8923A", width=2, dash="dot"), marker=dict(size=8, color="#B8923A", symbol="diamond")))
             fig_mens.update_layout(barmode="group", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), xaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM)), yaxis=dict(showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=10, color=MARROM)), legend=dict(font=dict(family="Nunito", size=11, color=MARROM), orientation="h", yanchor="bottom", y=1.02), font=dict(family="Nunito"), height=300)
             st.plotly_chart(fig_mens, use_container_width=True, key="fig_mens_vd")
 
