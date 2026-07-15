@@ -1321,6 +1321,18 @@ elif aba_sel == "Vendas":
                     df_vd["filial_curta"].isin(filiais_sel)
                 ]
                 df_rank_vd = _df_rank_mes.groupby("filial_curta").agg(venda_salao=("venda_salao","sum"), meta_venda=("meta_venda","sum")).reset_index()
+                # Adiciona iFood por filial (Entrega parceira, mes corrente)
+                if len(df_if_mtd) > 0:
+                    _df_if_rank = df_if_mtd[df_if_mtd["logistica"]=="Entrega parceira"].copy()
+                    _df_if_rank["filial_curta"] = _df_if_rank["filial"].str.replace("Olive Garden - ","",regex=False)
+                    _df_if_rank = _df_if_rank[_df_if_rank["filial_curta"].isin(filiais_sel)]
+                    _df_if_agg_rank = _df_if_rank.groupby("filial_curta")["faturamento"].sum().reset_index()
+                    _df_if_agg_rank.columns = ["filial_curta","fat_ifood"]
+                    df_rank_vd = df_rank_vd.merge(_df_if_agg_rank, on="filial_curta", how="left")
+                    df_rank_vd["fat_ifood"] = df_rank_vd["fat_ifood"].fillna(0)
+                else:
+                    df_rank_vd["fat_ifood"] = 0
+                df_rank_vd["total_mes"] = df_rank_vd["venda_salao"] + df_rank_vd["fat_ifood"]
                 # Budget fixo e projecao gerencial da tabela projecoes_gerenciais
                 try:
                     _conn_rank = get_conn()
@@ -1332,12 +1344,12 @@ elif aba_sel == "Vendas":
                     _budg_fil = {}
                 df_rank_vd["budget_fix"] = df_rank_vd["filial_curta"].map(lambda f: _budg_fil.get(f, {}).get("budget") or df_rank_vd.loc[df_rank_vd["filial_curta"]==f, "meta_venda"].values[0])
                 df_rank_vd["proj_ger"]   = df_rank_vd["filial_curta"].map(lambda f: _budg_fil.get(f, {}).get("proj"))
-                df_rank_vd["pct_meta"] = ((df_rank_vd["venda_salao"]/df_rank_vd["budget_fix"]-1)*100).round(1)
+                df_rank_vd["pct_meta"] = ((df_rank_vd["total_mes"]/df_rank_vd["budget_fix"]-1)*100).round(1)
                 df_rank_vd = df_rank_vd.sort_values("pct_meta", ascending=True)
                 for _, row in df_rank_vd.iterrows():
                     cor_b = "#2e6b3e" if row["pct_meta"] >= 0 else "#c0392b"
                     seta_b = "▲" if row["pct_meta"] >= 0 else "▼"
-                    vd_fmt = f"R$ {row['venda_salao']:,.0f}".replace(",",".")
+                    vd_fmt = f"R$ {row['total_mes']:,.0f}".replace(",",".")
                     proj_str = f" | Proj: R$ {row['proj_ger']:,.0f}".replace(",",".") if row["proj_ger"] else ""
                     st.markdown(f'<div style="padding:8px 0; border-bottom:1px solid #e8ddc8; display:flex; justify-content:space-between; align-items:center;"><span style="font-size:12px; font-weight:700; color:#3D2B1F;">{row["filial_curta"]}</span><div style="text-align:right;"><div style="font-size:12px; color:#3D2B1F;">{vd_fmt}{proj_str}</div><div style="font-size:12px; color:{cor_b}; font-weight:700;">{seta_b} {row["pct_meta"]:+.1f}% vs Budget</div></div></div>', unsafe_allow_html=True)
 
