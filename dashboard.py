@@ -581,31 +581,8 @@ if aba_sel == "Reviews":
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # Distribuicao de notas
-        col_d1, col_d2 = st.columns(2)
-        with col_d1:
-            st.markdown('<div style="font-size:11px;font-weight:700;color:#8B9A2E;margin-bottom:8px;">Distribuicao de Notas por Plataforma</div>', unsafe_allow_html=True)
-            fig_notas = go.Figure()
-            for plat, cor in plataformas:
-                df_plat = df_rev[df_rev["plataforma"]==plat]
-                dist = df_plat["nota"].dropna().value_counts().sort_index()
-                fig_notas.add_trace(go.Bar(
-                    x=[str(int(n))+"★" for n in dist.index],
-                    y=dist.values,
-                    name=plat,
-                    marker_color=cor
-                ))
-            fig_notas.update_layout(
-                barmode="group",
-                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                margin=dict(t=10,b=10,l=10,r=10),
-                xaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM), showgrid=False),
-                yaxis=dict(showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=10, color=MARROM)),
-                legend=dict(font=dict(family="Nunito", size=10, color=MARROM), orientation="h", yanchor="bottom", y=1.02),
-                font=dict(family="Nunito"), height=260
-            )
-            st.plotly_chart(fig_notas, use_container_width=True, key="fig_notas_rev")
-        with col_d2:
+        # Sentimento por Plataforma (largura total)
+        if True:
             st.markdown('<div style="font-size:11px;font-weight:700;color:#8B9A2E;margin-bottom:8px;">Sentimento por Plataforma</div>', unsafe_allow_html=True)
             sent_data = []
             for plat, cor in plataformas:
