@@ -1415,9 +1415,13 @@ elif aba_sel == "Vendas":
             st.markdown(f'<div style="font-size:11px;color:#8B7A5A;margin-bottom:12px;">{_label_my} — venda realizada (salao + iFood) vs meta do periodo.</div>', unsafe_allow_html=True)
             _filiais_if_ytd = ["Olive Garden - " + f for f in filiais_sel if f in ["Morumbi","Center Norte","Dom Pedro","Aricanduva"]]
             if len(df_ifood_vendas) > 0 and _filiais_if_ytd:
+                # Filtro de periodo: MTD = mes corrente, YTD = ano inteiro
+                _if_periodo_filter = (f"{_hoje_my.month:02d}/{_hoje_my.year}" 
+                                     if _visao_mtd_ytd == "MTD" 
+                                     else str(_hoje_my.year))
                 _df_if_ytd2 = df_ifood_vendas[
                     (df_ifood_vendas["logistica"]=="Entrega parceira") &
-                    (df_ifood_vendas["periodo"].str.contains("2026")) &
+                    (df_ifood_vendas["periodo"].str.contains(_if_periodo_filter)) &
                     (df_ifood_vendas["filial"].isin(_filiais_if_ytd))
                 ].copy()
                 _df_if_ytd2["filial_curta"] = _df_if_ytd2["filial"].str.replace("Olive Garden - ","",regex=False)
