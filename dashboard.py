@@ -1440,7 +1440,9 @@ elif aba_sel == "Vendas":
             for _, _row in _df_ytd_s.iterrows():
                 _pos_ytd  = _row["pct_ytd"] >= 0
                 _cor_ytd  = "#2e6b3e" if _pos_ytd else "#c0392b"
-                _half_bar = min(abs(_row["pct_ytd"]) / 12 * 50, 50)
+                _max_pct_abs = max(_df_ytd_s["pct_ytd"].abs().max(), 1)
+                _escala = max(_max_pct_abs, 5)  # minimo 5% para nao exagerar barras pequenas
+                _half_bar = min(abs(_row["pct_ytd"]) / _escala * 50, 50)
                 _vd_ytd   = f"R$ {_row['total_ytd']:,.0f}".replace(",",".")
                 _mt_ytd   = f"R$ {_row['meta_ytd']:,.0f}".replace(",",".")
                 _seta_ytd = "▲" if _pos_ytd else "▼"
