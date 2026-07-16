@@ -581,35 +581,6 @@ if aba_sel == "Reviews":
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # Sentimento por Plataforma (largura total)
-        if True:
-            st.markdown('<div style="font-size:11px;font-weight:700;color:#8B9A2E;margin-bottom:8px;">Sentimento por Plataforma</div>', unsafe_allow_html=True)
-            sent_data = []
-            for plat, cor in plataformas:
-                df_plat = df_rev[df_rev["plataforma"]==plat]
-                for sent in ["Positivo","Neutro","Negativo"]:
-                    n_sent = len(df_plat[df_plat["sentimento"]==sent])
-                    sent_data.append({"plataforma":plat,"sentimento":sent,"n":n_sent})
-            df_sent = pd.DataFrame(sent_data)
-            cores_sent = {"Positivo":"#2e6b3e","Neutro":"#B8923A","Negativo":VERMELHO}
-            fig_sent = go.Figure()
-            for sent in ["Positivo","Neutro","Negativo"]:
-                df_s = df_sent[df_sent["sentimento"]==sent]
-                fig_sent.add_trace(go.Bar(
-                    x=df_s["plataforma"], y=df_s["n"],
-                    name=sent, marker_color=cores_sent[sent]
-                ))
-            fig_sent.update_layout(
-                barmode="stack",
-                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                margin=dict(t=10,b=10,l=10,r=10),
-                xaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM), showgrid=False),
-                yaxis=dict(showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=10, color=MARROM)),
-                legend=dict(font=dict(family="Nunito", size=10, color=MARROM), orientation="h", yanchor="bottom", y=1.02),
-                font=dict(family="Nunito"), height=260
-            )
-            st.plotly_chart(fig_sent, use_container_width=True, key="fig_sent_rev")
-
         st.markdown("<br>", unsafe_allow_html=True)
 
         # Filtros reviews
