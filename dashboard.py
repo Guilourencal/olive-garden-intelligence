@@ -1403,16 +1403,6 @@ elif aba_sel == "Vendas":
                     salao=("venda_salao","sum"),
                     meta_ytd=("meta_venda","sum")
                 ).reset_index()
-                # MTD: usa budget mensal fixo como meta de referencia
-                try:
-                    _conn_bmy = get_conn()
-                    _cur_bmy = _conn_bmy.cursor()
-                    _cur_bmy.execute("SELECT filial, budget_mes FROM projecoes_gerenciais WHERE mes = date_trunc('month', CURRENT_DATE)")
-                    _bmy = {r[0].replace("Olive Garden - ",""): r[1] for r in _cur_bmy.fetchall()}
-                    _conn_bmy.close()
-                    _df_ytd_s["meta_ytd"] = _df_ytd_s["filial_curta"].map(lambda f: _bmy.get(f, _df_ytd_s.loc[_df_ytd_s["filial_curta"]==f,"meta_ytd"].values[0]))
-                except:
-                    pass
             else:
                 _label_my = f"YTD — 01/01/{_hoje_my.year} a {_hoje_my.strftime('%d/%m/%Y')}"
                 _df_ytd_s = df_vd[
