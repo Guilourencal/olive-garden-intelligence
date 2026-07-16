@@ -1387,17 +1387,32 @@ elif aba_sel == "Vendas":
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # YTD Performance vs Budget por Filial
+        # MTD / YTD Performance vs Budget por Filial
         with st.container(border=True):
-            st.markdown('<div class="section-title">Performance YTD por Filial — Salao + iFood vs Meta</div>', unsafe_allow_html=True)
-            st.markdown('<div style="font-size:11px;color:#8B7A5A;margin-bottom:12px;">Acumulado 2026 — venda realizada (salao + iFood) vs meta acumulada do periodo.</div>', unsafe_allow_html=True)
-            _df_ytd_s = df_vd[
-                (df_vd["data"].dt.year == 2026) &
-                df_vd["filial_curta"].isin(filiais_sel)
-            ].groupby("filial_curta").agg(
-                salao=("venda_salao","sum"),
-                meta_ytd=("meta_venda","sum")
-            ).reset_index()
+            st.markdown('<div class="section-title">Performance por Filial — Salao + iFood vs Meta</div>', unsafe_allow_html=True)
+            _visao_mtd_ytd = st.radio("", ["MTD", "YTD"], horizontal=True, key="visao_mtd_ytd")
+            from datetime import date as _dt_my
+            _hoje_my = _dt_my.today()
+            if _visao_mtd_ytd == "MTD":
+                _label_my = f"MTD — 01/{_hoje_my.month:02d}/{_hoje_my.year} a {_hoje_my.strftime('%d/%m/%Y')}"
+                _df_ytd_s = df_vd[
+                    (df_vd["data"].dt.month == _hoje_my.month) &
+                    (df_vd["data"].dt.year == _hoje_my.year) &
+                    df_vd["filial_curta"].isin(filiais_sel)
+                ].groupby("filial_curta").agg(
+                    salao=("venda_salao","sum"),
+                    meta_ytd=("meta_venda","sum")
+                ).reset_index()
+            else:
+                _label_my = f"YTD — 01/01/{_hoje_my.year} a {_hoje_my.strftime('%d/%m/%Y')}"
+                _df_ytd_s = df_vd[
+                    (df_vd["data"].dt.year == _hoje_my.year) &
+                    df_vd["filial_curta"].isin(filiais_sel)
+                ].groupby("filial_curta").agg(
+                    salao=("venda_salao","sum"),
+                    meta_ytd=("meta_venda","sum")
+                ).reset_index()
+            st.markdown(f'<div style="font-size:11px;color:#8B7A5A;margin-bottom:12px;">{_label_my} — venda realizada (salao + iFood) vs meta do periodo.</div>', unsafe_allow_html=True)
             _filiais_if_ytd = ["Olive Garden - " + f for f in filiais_sel if f in ["Morumbi","Center Norte","Dom Pedro","Aricanduva"]]
             if len(df_ifood_vendas) > 0 and _filiais_if_ytd:
                 _df_if_ytd2 = df_ifood_vendas[
