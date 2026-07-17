@@ -1480,6 +1480,132 @@ elif aba_sel == "Vendas":
 
         st.markdown("<br>", unsafe_allow_html=True)
 
+        # Visao Diaria — Ultimas 5 Semanas
+        with st.container(border=True):
+            st.markdown('<div class="section-title">Visao Diaria — Ultimas 5 Semanas</div>', unsafe_allow_html=True)
+            st.markdown('<div style="font-size:11px;color:#8B7A5A;margin-bottom:12px;">Venda diaria do salao + iFood nas ultimas 5 semanas ISO. Linha tracejada = meta diaria.</div>', unsafe_allow_html=True)
+            from datetime import date as _dt_sem, timedelta as _td_sem
+            _hoje_sem = _dt_sem.today()
+            _ini_sem_atual = _hoje_sem - _td_sem(days=_hoje_sem.weekday())
+            _ini_5sem = _ini_sem_atual - _td_sem(weeks=4)
+            _df_diario = df_vd[
+                (df_vd["data"].dt.date >= _ini_5sem) &
+                df_vd["filial_curta"].isin(filiais_sel)
+            ].groupby("data").agg(
+                salao=("venda_salao","sum"),
+                meta=("meta_venda","sum")
+            ).reset_index().sort_values("data")
+            if len(df_ifood_diario) > 0:
+                _df_id5 = df_ifood_diario.copy()
+                _df_id5["data"] = pd.to_datetime(_df_id5["data"])
+                _filiais_if5 = ["Olive Garden - " + f for f in filiais_sel if f in ["Morumbi","Center Norte","Dom Pedro","Aricanduva"]]
+                _df_id5 = _df_id5[_df_id5["filial"].isin(_filiais_if5)]
+                _df_id5 = _df_id5[_df_id5["data"].dt.date >= _ini_5sem]
+                _df_id5_agg = _df_id5.groupby("data")["faturamento"].sum().reset_index()
+                _df_id5_agg.columns = ["data","fat_if"]
+                _df_diario = _df_diario.merge(_df_id5_agg, on="data", how="left")
+                _df_diario["fat_if"] = _df_diario["fat_if"].fillna(0)
+            else:
+                _df_diario["fat_if"] = 0
+            _df_diario["total"] = _df_diario["salao"] + _df_diario["fat_if"]
+            _cores_semana = ["#2a78d6","#1baf7a","#B8923A","#8B5E9E","#c0392b"]
+            _df_diario["semana_idx"] = _df_diario["data"].apply(
+                lambda d: min(int((d.date() - _ini_5sem).days // 7), 4))
+            _df_diario["dia_label"] = _df_diario["data"].dt.strftime("%d/%m")
+            _df_diario["dow"] = _df_diario["data"].dt.strftime("%a")
+            _df_diario["label"] = _df_diario["dia_label"] + "<br>" + _df_diario["dow"]
+            fig_diario = go.Figure()
+            for si in range(5):
+                _df_s = _df_diario[_df_diario["semana_idx"]==si]
+                if len(_df_s) == 0: continue
+                _sem_label = f"S{si+1} ({_df_s['dia_label'].iloc[0]})"
+                fig_diario.add_trace(go.Bar(
+                    x=_df_s["label"], y=_df_s["total"],
+                    name=_sem_label, marker_color=_cores_semana[si],
+                    text=_df_s["total"].apply(lambda v: f"R${v/1000:.0f}k"),
+                    textposition="outside", textfont=dict(size=9, family="Nunito")
+                ))
+            fig_diario.add_trace(go.Scatter(
+                x=_df_diario["label"], y=_df_diario["meta"],
+                mode="lines", name="Meta", line=dict(color="#8B7A5A", width=1.5, dash="dot")
+            ))
+            fig_diario.update_layout(
+                barmode="group",
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                margin=dict(t=10,b=10,l=10,r=10),
+                xaxis=dict(tickfont=dict(family="Nunito", size=9, color=MARROM), showgrid=False),
+                yaxis=dict(showgrid=True, gridcolor="#E8DCC8",
+                           tickfont=dict(family="Nunito", size=9, color=MARROM),
+                           tickformat=",.0f", tickprefix="R$"),
+                legend=dict(font=dict(family="Nunito", size=9, color=MARROM),
+                            orientation="h", yanchor="bottom", y=1.02),
+                font=dict(family="Nunito"), height=340
+            )
+            st.plotly_chart(fig_diario, use_container_width=True, key="fig_diario_5sem")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Acumulado Semanal — Ultimas 5 Semanas vs Mesma Semana ISO Ano Anterior
+        with st.container(border=True):
+            st.markdown('<div class="section-title">Acumulado Semanal — Ultimas 5 Semanas vs Mesmo Periodo 2025</div>', unsafe_allow_html=True)
+            st.markdown('<div style="font-size:11px;color:#8B7A5A;margin-bottom:12px;">Comparativo por semana ISO. Semana corrente (parcial) indicada com padrao listrado. Linha tracejada = meta semanal.</div>', unsafe_allow_html=True)
+            _df_sem26 = df_vd[
+                (df_vd["data"].dt.date >= _ini_5sem) &
+                df_vd["filial_curta"].isin(filiais_sel)
+            ].copy()
+            _df_sem26["semana_iso"] = _df_sem26["data"].apply(lambda d: d.isocalendar()[1])
+            _df_sem_agg = _df_sem26.groupby("semana_iso").agg(
+                salao=("venda_salao","sum"), meta=("meta_venda","sum"), dias=("data","count")
+            ).reset_index().sort_values("semana_iso")
+            _semanas_iso = sorted(_df_sem_agg["semana_iso"].unique())
+            _df_sem25 = df_vd[
+                (df_vd["data"].dt.year == 2025) &
+                (df_vd["data"].apply(lambda d: d.isocalendar()[1]).isin(_semanas_iso)) &
+                df_vd["filial_curta"].isin(filiais_sel)
+            ].copy()
+            _df_sem25["semana_iso"] = _df_sem25["data"].apply(lambda d: d.isocalendar()[1])
+            _df_sem25_agg = _df_sem25.groupby("semana_iso")["venda_salao"].sum().reset_index()
+            _df_sem25_agg.columns = ["semana_iso","salao_25"]
+            _df_cmp = _df_sem_agg.merge(_df_sem25_agg, on="semana_iso", how="left")
+            _df_cmp["label"] = _df_cmp["semana_iso"].apply(lambda s: f"Sem {s}")
+            _df_cmp["parcial"] = _df_cmp["dias"] < 7
+            fig_sem = go.Figure()
+            fig_sem.add_trace(go.Bar(
+                x=_df_cmp["label"], y=_df_cmp["salao"],
+                name="2026", marker_color=VERDE,
+                text=_df_cmp["salao"].apply(lambda v: f"R${v/1000:.0f}k"),
+                textposition="outside",
+                textfont=dict(size=9, family="Nunito", color=VERDE)
+            ))
+            fig_sem.add_trace(go.Bar(
+                x=_df_cmp["label"], y=_df_cmp["salao_25"],
+                name="2025", marker_color="#8B7A5A", opacity=0.7,
+                text=_df_cmp["salao_25"].apply(lambda v: f"R${v/1000:.0f}k" if pd.notna(v) else ""),
+                textposition="outside",
+                textfont=dict(size=9, family="Nunito", color="#8B7A5A")
+            ))
+            fig_sem.add_trace(go.Scatter(
+                x=_df_cmp["label"], y=_df_cmp["meta"],
+                mode="lines+markers", name="Meta",
+                line=dict(color="#B8923A", width=2, dash="dot"),
+                marker=dict(size=7, color="#B8923A", symbol="diamond")
+            ))
+            fig_sem.update_layout(
+                barmode="group",
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                margin=dict(t=10,b=10,l=10,r=10),
+                xaxis=dict(tickfont=dict(family="Nunito", size=11, color=MARROM), showgrid=False),
+                yaxis=dict(showgrid=True, gridcolor="#E8DCC8",
+                           tickfont=dict(family="Nunito", size=10, color=MARROM),
+                           tickformat=",.0f", tickprefix="R$"),
+                legend=dict(font=dict(family="Nunito", size=10, color=MARROM),
+                            orientation="h", yanchor="bottom", y=1.02),
+                font=dict(family="Nunito"), height=340
+            )
+            st.plotly_chart(fig_sem, use_container_width=True, key="fig_sem_5sem")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
         # HDC por filial
         with st.container(border=True):
             st.markdown('<div class="section-title">Produtividade — Venda por HDC e por Assento</div>', unsafe_allow_html=True)
