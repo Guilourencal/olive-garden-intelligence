@@ -1162,7 +1162,7 @@ elif aba_sel == "Vendas":
             hdc_ve_fmt = f"R$ {hdc_ve:.0f}" if pd.notna(hdc_ve) else "—"
             if len(df_mes_ve) > 0:
                 proj_if_ve = (fat_if_mtd / _dias_realizados_ve * (_dias_no_mes_ve - _dias_realizados_ve)) if _dias_realizados_ve > 0 else 0
-                proj_total_ve = proj_total + fat_if_ytd + proj_if_ve if "proj_total" in dir() else fat_total_mtd
+                proj_total_ve = proj_total + proj_if_ve if "proj_total" in dir() else fat_total_mtd
                 # Budget fixo da tabela projecoes_gerenciais (nao oscila)
                 try:
                     _conn_budg = get_conn()
