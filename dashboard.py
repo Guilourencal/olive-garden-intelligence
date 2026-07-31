@@ -1124,7 +1124,12 @@ elif aba_sel == "Vendas":
                     _media_p = _dff_c["venda_salao"].mean()
                     _fdow_p = _dff_c.groupby("dow")["venda_salao"].mean() / _media_p
                     _fmes_p = _dff_c.groupby("mes_n")["venda_salao"].mean() / _media_p
-                    _frec_p = _dff_c[_dff_c["data"] >= _dff_c["data"].max() - pd.Timedelta(days=28)]["venda_salao"].mean() / _media_p
+                    # Tendencia recente: usa so o mes atual para evitar contaminacao por eventos passados (Copa etc)
+                    _df_mes_rec = _dff_c[(_dff_c["data"].dt.month == _mes_proj) & (_dff_c["data"].dt.year == _ano_proj)]
+                    if len(_df_mes_rec) >= 7:
+                        _frec_p = _df_mes_rec["venda_salao"].mean() / _media_p
+                    else:
+                        _frec_p = _dff_c[_dff_c["data"] >= _dff_c["data"].max() - pd.Timedelta(days=28)]["venda_salao"].mean() / _media_p
                     _frec_p = float(_np_proj.clip(_frec_p, 0.85, 1.15))
                     for _d in range(_dias_real_proj + 1, _dias_no_mes_proj + 1):
                         _dt = pd.Timestamp(_ano_proj, _mes_proj, _d)
