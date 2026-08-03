@@ -1791,7 +1791,10 @@ elif aba_sel == "Vendas":
                     dias_mes = calendar.monthrange(d_ini.year, d_ini.month)[1]
                     mes_map2 = {"01":"Jan","02":"Fev","03":"Mar","04":"Abr","05":"Mai","06":"Jun","07":"Jul","08":"Ago","09":"Set","10":"Out","11":"Nov","12":"Dez"}
                     mes_label2 = mes_map2.get(f"{d_ini.month:02d}", p)
-                    is_p = dias_dec < dias_mes
+                    from datetime import date as _dt_evo
+                    _hoje_evo = _dt_evo.today()
+                    # Mes parcial = mes corrente. Mes fechado = nao projetar
+                    is_p = (d_ini.month == _hoje_evo.month and d_ini.year == _hoje_evo.year) and dias_dec < dias_mes
                     fat_proj2 = fat_p / dias_dec * dias_mes if is_p else None
                     evolucao.append({"mes": mes_label2, "fat": fat_p, "proj": fat_proj2, "parcial": is_p})
                 except:
