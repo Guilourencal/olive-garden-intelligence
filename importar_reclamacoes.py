@@ -28,7 +28,7 @@ print('Tabela criada!')
 
 pasta = r'data\reclamacoes'
 os.makedirs(pasta, exist_ok=True)
-arquivos = [f for f in os.listdir(pasta) if f.endswith('.xlsx') or f.endswith('.xls')]
+arquivos = [f for f in os.listdir(pasta) if (f.endswith('.xlsx') or f.endswith('.xls')) and not f.startswith('~$')]
 print(f'Arquivos encontrados: {len(arquivos)}')
 
 UNIDADE_MAP = {
@@ -38,6 +38,13 @@ UNIDADE_MAP = {
     'OG_Shopping Aricanduva': 'Aricanduva',
     'OG_Aeroporto GRU T3': 'Guarulhos GRU3',
     'OG_Aeroporto GRU T2': 'Guarulhos GRU2',
+    'OG Morumbi': 'Morumbi',
+    'OG Center Norte': 'Center Norte',
+    'OG Dom Pedro': 'Dom Pedro',
+    'OG Aricanduva': 'Aricanduva',
+    'OG GRU T3': 'Guarulhos GRU3',
+    'OG GRU T2': 'Guarulhos GRU2',
+    'OG Tambor?': 'Tambor?',
 }
 
 total_ins = total_dup = 0
@@ -58,6 +65,19 @@ for arquivo in sorted(arquivos):
             partes = cats[0].split('_')
             tema = partes[1] if len(partes) > 1 else None
             subtema = partes[2] if len(partes) > 2 else None
+        def _norm_data(val, ano=2026):
+            import pandas as _pd
+            from datetime import datetime as _dt
+            if _pd.isna(val) or val is None: return None
+            s = str(val).strip()
+            for fmt in ('%d/%m/%Y','%Y-%m-%d','%d-%m-%Y'):
+                try: return _dt.strptime(s, fmt).date()
+                except: pass
+            try:
+                d,m = s.split('/')
+                return _dt(ano, int(m), int(d)).date()
+            except: pass
+            return None
         try:
             cur.execute("""
                 INSERT INTO reclamacoes_buzzmonitor
@@ -65,7 +85,7 @@ for arquivo in sorted(arquivos):
                 VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                 ON CONFLICT (data, comentario, unidade) DO NOTHING
             """, (
-                row.get('DATA'),
+                _norm_data(row.get('DATA')),
                 str(row.get('COMENTÁRIO', row.get('COMENTARIO','')))[:2000] if pd.notna(row.get('COMENTÁRIO', row.get('COMENTARIO',''))) else None,
                 str(row.get('CANAL','')) if pd.notna(row.get('CANAL')) else None,
                 str(row.get('SENTIMENTO','')) if pd.notna(row.get('SENTIMENTO')) else None,
