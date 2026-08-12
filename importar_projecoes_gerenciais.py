@@ -28,6 +28,7 @@ MAPA_FILIAIS = {
     "ARI":  "Olive Garden - Aricanduva",
     "MOR":  "Olive Garden - Morumbi",
     "CNO":  "Olive Garden - Center Norte",
+    "TAM":  "Olive Garden - Tambore",
 }
 
 def safe_num(v):

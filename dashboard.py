@@ -441,7 +441,7 @@ if aba_sel == "Reviews":
         st.markdown('<div class="section-title">Evolucao Mensal de Reclamacoes</div>', unsafe_allow_html=True)
         df_evo_recl = df_rf.copy()
         df_evo_recl["mes"] = df_evo_recl["data"].dt.to_period("M").astype(str)
-        cores_un = {"Morumbi":"#B8923A","Center Norte":"#4A90D9","Dom Pedro":"#2e6b3e","Aricanduva":"#c0392b","Guarulhos GRU3":"#8B7A5A","Guarulhos GRU2":"#9B59B6"}
+        cores_un = {"Morumbi":"#B8923A","Center Norte":"#4A90D9","Dom Pedro":"#2e6b3e","Aricanduva":"#c0392b","Guarulhos GRU3":"#8B7A5A","Guarulhos GRU2":"#9B59B6","Tambore":"#16A085"}
         # Total por mes (para calcular %)
         df_total_mes = df_evo_recl.groupby("mes").size().reset_index(name="total")
         fig_evo_recl = go.Figure()
@@ -1617,7 +1617,7 @@ elif aba_sel == "Vendas":
         # HDC por filial
         with st.container(border=True):
             st.markdown('<div class="section-title">Produtividade — Venda por HDC e por Assento</div>', unsafe_allow_html=True)
-            ASSENTOS = {"Aricanduva": 174, "Center Norte": 173, "Dom Pedro": 241, "Guarulhos GRU2": 212, "Guarulhos GRU3": 124, "Morumbi": 300}
+            ASSENTOS = {"Aricanduva": 174, "Center Norte": 173, "Dom Pedro": 241, "Guarulhos GRU2": 212, "Guarulhos GRU3": 124, "Morumbi": 300, "Tambore": 198}
             from datetime import date as _date
             _hoje = df_vd["data"].max()
             if len(df_vd_f) > 0:

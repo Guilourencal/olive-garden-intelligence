@@ -9,9 +9,10 @@ MAPA_FILIAIS = {
     'DPO': 'Olive Garden - Dom Pedro',
     'GRU2': 'Olive Garden - Guarulhos GRU2',
     'GRU3': 'Olive Garden - Guarulhos GRU3',
+    'TAM':  'Olive Garden - Tambore',
 }
 
-ARQUIVO = r'data/Vendas_Geral/DASH VENDAS 2026 _ 12.05 corrigido 2.xlsx'
+ARQUIVO = r'data/Vendas_Geral/DASH VENDAS 2026 09.08.xlsx'
 
 print('Lendo arquivo...')
 df = pd.read_excel(ARQUIVO, sheet_name='Dados', header=0)
