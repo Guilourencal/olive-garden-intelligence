@@ -405,7 +405,7 @@ if aba_sel == "Reviews":
     # BLOCO 2 — COMPARATIVO POR UNIDADE
     with st.container(border=True):
         st.markdown('<div class="section-title">Comparativo por Unidade</div>', unsafe_allow_html=True)
-        unidades_ord = ["Morumbi","Center Norte","Dom Pedro","Aricanduva","Guarulhos GRU3","Guarulhos GRU2"]
+        unidades_ord = ["Morumbi","Center Norte","Dom Pedro","Aricanduva","Guarulhos GRU3","Guarulhos GRU2","Tambore"]
         rows_tab = []
         for un in unidades_ord:
             df_un = df_recl[df_recl["unidade_curta"]==un]
