@@ -2638,190 +2638,104 @@ elif aba_sel == "Menu":
     if len(df_menu) == 0:
         st.warning("Sem dados de menu. Rode importar_menu_analysis.py.")
     else:
-        semanas_disp = sorted(df_menu["semana_ref"].unique(), reverse=True)
-        semana_sel = semanas_disp[0]
+        semana_sel = sorted(df_menu["semana_ref"].unique(), reverse=True)[0]
         df_m = df_menu[df_menu["semana_ref"] == semana_sel].copy()
+        df_m = df_m[df_m["type"].isin(["Star","Dog","Puzzle","Horse"])]
         df_m = df_m[~df_m["item"].str.upper().isin(["BROWNIE CORTESIA","SSB"])]
         df_m = df_m[~df_m["item"].str.upper().str.startswith("RF ")]
-        df_m = df_m[df_m["type"].isin(["Star","Dog","Puzzle","Horse"])]
+        df_m["gross_sales"] = pd.to_numeric(df_m["gross_sales"], errors="coerce").fillna(0)
+        df_m["profit"] = pd.to_numeric(df_m["profit"], errors="coerce").fillna(0)
+        df_m["total_quantity"] = pd.to_numeric(df_m["total_quantity"], errors="coerce").fillna(0)
+        gross_total = df_m["gross_sales"].sum() or 1
+        n_snaps = len(sorted(df_menu["semana_ref"].unique()))
+        st.markdown(f'<div style="font-size:11px;color:#8B7A5A;margin-bottom:16px;">Referencia: {semana_sel} | {n_snaps} snapshot(s) disponivel(is)</div>', unsafe_allow_html=True)
 
-        col_f1, col_f2 = st.columns(2)
-        with col_f1:
-            canal_sel = st.selectbox("Canal:", ["Ambos","POS","Delivery"], key="menu_canal")
-        with col_f2:
-            tipo_sel = st.selectbox("Tipo Boston:", ["Todos","Star","Dog","Puzzle","Horse"], key="menu_tipo")
-
-        df_mf = df_m.copy()
-        if canal_sel != "Ambos":
-            df_mf = df_mf[df_mf["canal"] == canal_sel]
-        if tipo_sel != "Todos":
-            df_mf = df_mf[df_mf["type"] == tipo_sel]
-
-        COR_BOSTON = {"Star": "#B8923A", "Dog": VERMELHO, "Puzzle": "#4A90D9", "Horse": VERDE}
-        stars = df_mf[df_mf["type"]=="Star"]
-        dogs = df_mf[df_mf["type"]=="Dog"]
-        puzzles = df_mf[df_mf["type"]=="Puzzle"]
-        horses = df_mf[df_mf["type"]=="Horse"]
-        gross_total = df_mf["gross_sales"].sum() if df_mf["gross_sales"].sum() > 0 else 1
-        df_bebs = df_mf[df_mf["item"].str.upper().str.contains("SCHW TONICA|SCHW CITRUS|FANTA GUARANA", na=False)]
-        qty_bebs = df_bebs["quantity_per_check"].mean() if len(df_bebs) > 0 else 0
-        uplift_medio = df_mf[df_mf["check_uplift"].notna()]["check_uplift"].mean() if df_mf["check_uplift"].notna().any() else 0
-
-        st.markdown(f'<div style="font-size:11px; color:#8B7A5A; margin-bottom:16px;">Referencia: {semana_sel} | {len(semanas_disp)} semana(s) de historico</div>', unsafe_allow_html=True)
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        # BLOCO 1 — KPIs
-        col_k1, col_k2, col_k3, col_k4 = st.columns(4)
-        with col_k1:
-            with st.container(border=True):
-                st.markdown('<div style="text-align:center;padding:8px;"><div style="font-size:9px;color:#8B7A5A;letter-spacing:2px;margin-bottom:4px;">GROSS SALES</div>' + f'<div style="font-size:24px;font-weight:500;color:#3D2B1F;">R$ {"  {:,.0f}".format(gross_total).replace(",",".")}</div>' + f'<div style="font-size:10px;color:#8B9A2E;">{stars["gross_sales"].sum()/gross_total*100:.0f}% Stars</div></div>', unsafe_allow_html=True)
-        with col_k2:
-            with st.container(border=True):
-                pct_star_mix = stars["number_of_checks"].sum()/df_mf["number_of_checks"].sum()*100 if df_mf["number_of_checks"].sum()>0 else 0
-                st.markdown('<div style="text-align:center;padding:8px;"><div style="font-size:9px;color:#8B7A5A;letter-spacing:2px;margin-bottom:4px;">STARS NO MIX</div>' + f'<div style="font-size:24px;font-weight:500;color:#B8923A;">{len(stars)} itens</div>' + f'<div style="font-size:10px;color:#8B7A5A;">{pct_star_mix:.0f}% dos checks</div></div>', unsafe_allow_html=True)
-        with col_k3:
-            with st.container(border=True):
-                pct_puz_mix = puzzles["number_of_checks"].sum()/df_mf["number_of_checks"].sum()*100 if df_mf["number_of_checks"].sum()>0 else 0
-                st.markdown('<div style="text-align:center;padding:8px;"><div style="font-size:9px;color:#8B7A5A;letter-spacing:2px;margin-bottom:4px;">PUZZLES</div>' + f'<div style="font-size:24px;font-weight:500;color:#4A90D9;">{len(puzzles)} itens</div>' + f'<div style="font-size:10px;color:#8B7A5A;">{pct_puz_mix:.0f}% dos checks</div></div>', unsafe_allow_html=True)
-        with col_k4:
-            with st.container(border=True):
-                cor_up = "#2e6b3e" if uplift_medio > 100 else "#B8923A"
-                st.markdown('<div style="text-align:center;padding:8px;"><div style="font-size:9px;color:#8B7A5A;letter-spacing:2px;margin-bottom:4px;">CHECK UPLIFT MEDIO</div>' + f'<div style="font-size:24px;font-weight:500;color:{cor_up};">R$ {uplift_medio:.0f}</div>' + '<div style="font-size:10px;color:#8B7A5A;">valor extra por check</div></div>', unsafe_allow_html=True)
+        # BLOCO 1 - RESUMO BCG
+        COR_BCG = {"Star":"#B8923A","Puzzle":"#4A90D9","Horse":"#2e6b3e","Dog":VERMELHO}
+        DESC_BCG = {"Star":"Alta receita · Alta margem","Puzzle":"Alta margem · Baixa venda","Horse":"Alta venda · Baixa margem","Dog":"Baixa venda · Baixa margem"}
+        col_b1, col_b2, col_b3, col_b4 = st.columns(4)
+        for col, tipo in zip([col_b1,col_b2,col_b3,col_b4],["Star","Puzzle","Horse","Dog"]):
+            df_t = df_m[df_m["type"]==tipo]
+            receita = df_t["gross_sales"].sum()
+            pct = receita / gross_total * 100
+            cor = COR_BCG[tipo]
+            receita_fmt = f"R$ {receita/1000:.0f}k"
+            with col:
+                with st.container(border=True):
+                    st.markdown(
+                        f'<div style="text-align:center;padding:6px;">'
+                        f'<div style="font-size:11px;font-weight:800;color:{cor};letter-spacing:0.1em;margin-bottom:6px;">{tipo.upper()}</div>'
+                        f'<div style="font-size:28px;font-weight:700;color:#3D2B1F;">{len(df_t)}</div>'
+                        f'<div style="font-size:10px;color:#8B7A5A;">itens</div>'
+                        f'<div style="margin:8px 0;background:#e8ddc8;border-radius:3px;height:4px;">'
+                        f'<div style="background:{cor};width:{min(pct*2,100):.0f}%;height:4px;border-radius:3px;"></div></div>'
+                        f'<div style="font-size:11px;color:{cor};font-weight:700;">{receita_fmt} · {pct:.0f}%</div>'
+                        f'<div style="font-size:9px;color:#8B7A5A;margin-top:2px;">{DESC_BCG[tipo]}</div>'
+                        f'</div>',
+                        unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # BLOCO 2 — TOP 5 POR TIPO
+        # BLOCO 2 - TOP 10 POR RECEITA
         with st.container(border=True):
-            st.markdown('<div class="section-title">Top 5 por Tipo Boston</div>', unsafe_allow_html=True)
-            col_s, col_h, col_p, col_d = st.columns(4)
-            for col_t, tipo, label in [(col_s,"Star","⭐ Stars"),(col_h,"Horse","🐴 Horses"),(col_p,"Puzzle","🔵 Puzzles"),(col_d,"Dog","🔴 Dogs")]:
-                df_tipo = df_mf[df_mf["type"]==tipo].sort_values("gross_sales", ascending=False).head(5)
-                cor = COR_BOSTON.get(tipo, MARROM)
-                with col_t:
-                    st.markdown(f'<div style="font-size:11px;font-weight:700;color:{cor};margin-bottom:8px;">{label}</div>', unsafe_allow_html=True)
-                    if len(df_tipo) == 0:
-                        st.markdown('<div style="font-size:11px;color:#8B7A5A;">Sem itens</div>', unsafe_allow_html=True)
-                    for _, r in df_tipo.iterrows():
-                        gs = "R$ {:,.0f}".format(r["gross_sales"]).replace(",",".")
-                        st.markdown(
-                            f'<div style="padding:6px 0;border-bottom:1px solid #e8ddc8;">' +
-                            f'<div style="font-size:11px;font-weight:500;color:#3D2B1F;">{r["item"][:28]}</div>' +
-                            f'<div style="font-size:10px;color:#8B7A5A;">{gs} | {int(r["number_of_checks"])} checks</div></div>',
-                            unsafe_allow_html=True)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        # BLOCO 3 — TABELA COMPLETA
-        with st.container(border=True):
-            st.markdown('<div class="section-title">Todos os Itens</div>', unsafe_allow_html=True)
-            df_tab = df_mf[["item","type","canal","gross_sales","number_of_checks","ct_gross_total_check_avg","check_uplift"]].copy()
-            df_tab = df_tab.sort_values("gross_sales", ascending=False)
-            df_tab["gross_sales"] = df_tab["gross_sales"].apply(lambda v: "R$ {:,.0f}".format(v).replace(",",".") if pd.notna(v) else "—")
-            df_tab["ct_gross_total_check_avg"] = df_tab["ct_gross_total_check_avg"].apply(lambda v: f"R$ {v:.0f}" if pd.notna(v) else "—")
-            df_tab["check_uplift"] = df_tab["check_uplift"].apply(lambda v: f"R$ {v:.0f}" if pd.notna(v) else "—")
-            df_tab["number_of_checks"] = df_tab["number_of_checks"].apply(lambda v: f"{int(v):,}".replace(",",".") if pd.notna(v) else "—")
-            df_tab.columns = ["Item","Tipo","Canal","Gross Sales","Checks","Check Completo","Uplift"]
-            st.dataframe(df_tab, use_container_width=True, hide_index=True)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        # BLOCO 3b — MATRIZ DE CRUZAMENTO
-        with st.container(border=True):
-            st.markdown('<div class="section-title">Matriz de Cruzamento — Uplift vs Volume</div>', unsafe_allow_html=True)
-            st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:12px;">Eixo X = volume de checks | Eixo Y = Check Uplift (R$) | Tamanho = Impacto Total (Uplift x Checks) | Cor = Tipo Boston</div>', unsafe_allow_html=True)
-            df_matriz = df_mf.copy()
-            df_matriz["uplift_calc"] = df_matriz["ct_gross_total_check_avg"] - df_matriz["gross_total_check_avg"]
-            df_matriz["impacto_total"] = df_matriz["uplift_calc"] * df_matriz["number_of_checks"]
-            df_matriz = df_matriz.dropna(subset=["uplift_calc","number_of_checks","impacto_total"])
-            if len(df_matriz) > 0:
-                med_up = df_matriz["uplift_calc"].median()
-                med_ch = df_matriz["number_of_checks"].median()
-                fig_mat = go.Figure()
-                for tipo in ["Star","Dog","Puzzle","Horse"]:
-                    dft = df_matriz[df_matriz["type"]==tipo]
-                    if len(dft) == 0:
-                        continue
-                    tamanho = dft["impacto_total"].apply(lambda v: max(8, min(50, abs(v)/50000)))
-                    fig_mat.add_trace(go.Scatter(
-                        x=dft["number_of_checks"],
-                        y=dft["uplift_calc"],
-                        mode="markers",
-                        name=tipo,
-                        marker=dict(size=tamanho, color=COR_BOSTON.get(tipo, MARROM), opacity=0.75, line=dict(width=1, color="white")),
-                        hovertemplate="<b>%{customdata[0]}</b><br>Checks: %{x}<br>Uplift: R$ %{y:.0f}<br>Impacto: R$ %{customdata[1]:,.0f}<extra></extra>",
-                        customdata=list(zip(dft["item"].str[:30], dft["impacto_total"]))
-                    ))
-                fig_mat.add_vline(x=med_ch, line_dash="dot", line_color="#8B7A5A", line_width=1)
-                fig_mat.add_hline(y=med_up, line_dash="dot", line_color="#8B7A5A", line_width=1)
-                anotacoes = [
-                    dict(x=df_matriz["number_of_checks"].max()*0.85, y=df_matriz["uplift_calc"].max()*0.90, text="Prioridade 1 — Proteger", showarrow=False, font=dict(size=9, color="#2e6b3e")),
-                    dict(x=df_matriz["number_of_checks"].min()*1.5, y=df_matriz["uplift_calc"].max()*0.90, text="Promover — Aumentar visibilidade", showarrow=False, font=dict(size=9, color="#4A90D9")),
-                    dict(x=df_matriz["number_of_checks"].max()*0.85, y=df_matriz["uplift_calc"].min()*0.90, text="Revisar preco", showarrow=False, font=dict(size=9, color="#B8923A")),
-                    dict(x=df_matriz["number_of_checks"].min()*1.5, y=df_matriz["uplift_calc"].min()*0.90, text="Avaliar — Monitorar ou cortar", showarrow=False, font=dict(size=9, color=VERMELHO)),
-                ]
-                fig_mat.update_layout(
-                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                    margin=dict(t=10,b=40,l=60,r=10),
-                    xaxis=dict(title="Numero de Checks", showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=10, color=MARROM)),
-                    yaxis=dict(title="Check Uplift (R$)", showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=10, color=MARROM)),
-                    legend=dict(font=dict(family="Nunito", size=11, color=MARROM), orientation="h", yanchor="bottom", y=1.02),
-                    annotations=anotacoes,
-                    font=dict(family="Nunito"), height=420
-                )
-                st.plotly_chart(fig_mat, use_container_width=True, key="fig_matriz_menu")
-                col_q1, col_q2, col_q3, col_q4 = st.columns(4)
-                for col_q, q_label, q_cor, q_desc, q_fn in [
-                    (col_q1, "Prioridade 1", "#2e6b3e", "Proteger e impulsionar", lambda r: r["uplift_calc"]>=med_up and r["number_of_checks"]>=med_ch),
-                    (col_q2, "Promover", "#4A90D9", "Aumentar visibilidade", lambda r: r["uplift_calc"]>=med_up and r["number_of_checks"]<med_ch),
-                    (col_q3, "Revisar preco", "#B8923A", "Avaliar precificacao", lambda r: r["uplift_calc"]<med_up and r["number_of_checks"]>=med_ch),
-                    (col_q4, "Avaliar", VERMELHO, "Monitorar ou cortar", lambda r: r["uplift_calc"]<med_up and r["number_of_checks"]<med_ch),
-                ]:
-                    df_q = df_matriz[df_matriz.apply(q_fn, axis=1)]
-                    with col_q:
-                        itens_html = "".join([f'<div style="font-size:10px;color:#3D2B1F;padding:2px 0;border-bottom:1px solid #e8ddc8;">{r["item"][:22]}</div>' for _, r in df_q.head(5).iterrows()])
-                        extra = f'<div style="font-size:9px;color:#8B7A5A;margin-top:4px;">+{len(df_q)-5} itens</div>' if len(df_q)>5 else ""
-                        st.markdown(
-                            f'<div style="background:#F5F0E8;border-radius:8px;padding:10px;border-left:3px solid {q_cor};">' +
-                            f'<div style="font-size:10px;font-weight:700;color:{q_cor};margin-bottom:4px;">{q_label}</div>' +
-                            f'<div style="font-size:9px;color:#8B7A5A;margin-bottom:6px;">{q_desc}</div>' +
-                            itens_html + extra + '</div>',
-                            unsafe_allow_html=True)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        # BLOCO 4 — BEBIDAS PUZZLE
-        with st.container(border=True):
-            st.markdown('<div class="section-title">Bebidas Puzzle — Script de Sugestao Ativa</div>', unsafe_allow_html=True)
-            st.markdown('<div style="font-size:12px;color:#8B7A5A;margin-bottom:12px;">Schw Tonica + Schw Citrus + Fanta Guarana. Baseline: 1,11 un/check | Meta: 1,50 un/check.</div>', unsafe_allow_html=True)
-            baseline_beb = 1.11
-            meta_beb = 1.50
-            pct_g = min((qty_bebs-baseline_beb)/(meta_beb-baseline_beb)*100,100) if qty_bebs>baseline_beb else 0
-            cor_g = "#2e6b3e" if qty_bebs>=meta_beb else "#B8923A" if qty_bebs>=baseline_beb else VERMELHO
-            status_g = "Meta atingida!" if qty_bebs>=meta_beb else f"Faltam {meta_beb-qty_bebs:.2f} un/check para a meta"
-            col_g1, col_g2 = st.columns([1,2])
-            with col_g1:
+            st.markdown('<div class="section-title">Top 10 Pratos por Receita</div>', unsafe_allow_html=True)
+            df_top10 = df_m.nlargest(10, "gross_sales")
+            for _, row in df_top10.iterrows():
+                cor = COR_BCG.get(str(row["type"]), MARROM)
+                day = str(row["most_popular_day"])[:3] if pd.notna(row.get("most_popular_day")) else ""
+                part = str(row["most_popular_day_part"]) if pd.notna(row.get("most_popular_day_part")) else ""
+                day_info = f"{day} · {part}" if day and part else (day or part)
+                receita_str = f"R$ {row['gross_sales']/1000:.0f}k"
+                qtd_str = f"{int(row['total_quantity']):,}".replace(",",".")
+                lucro_str = f"R$ {row['profit']/1000:.0f}k"
                 st.markdown(
-                    f'<div style="text-align:center;padding:20px;">' +
-                    f'<div style="font-size:56px;font-weight:800;color:{cor_g};line-height:1;">{qty_bebs:.2f}</div>' +
-                    f'<div style="font-size:11px;color:#8B7A5A;margin:6px 0;">un/check atual</div>' +
-                    f'<div style="background:#e8ddc8;border-radius:8px;height:10px;margin:12px 0;">' +
-                    f'<div style="background:{cor_g};width:{max(pct_g,3):.0f}%;height:10px;border-radius:8px;"></div></div>' +
-                    f'<div style="display:flex;justify-content:space-between;font-size:10px;color:#8B7A5A;">' +
-                    f'<span>Baseline: {baseline_beb}</span><span>Meta: {meta_beb}</span></div>' +
-                    f'<div style="font-size:12px;font-weight:500;color:{cor_g};margin-top:8px;">{status_g}</div></div>',
+                    f'<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid #e8ddc8;">'
+                    f'<div style="display:flex;align-items:center;gap:10px;">'
+                    f'<span style="font-size:10px;font-weight:800;color:#fff;background:{cor};padding:2px 7px;border-radius:4px;">{row["type"]}</span>'
+                    f'<span style="font-size:12px;font-weight:600;color:#3D2B1F;">{row["item"]}</span></div>'
+                    f'<div style="display:flex;gap:20px;text-align:right;">'
+                    f'<div><div style="font-size:11px;color:#8B7A5A;">Receita</div><div style="font-size:12px;font-weight:700;color:#3D2B1F;">{receita_str}</div></div>'
+                    f'<div><div style="font-size:11px;color:#8B7A5A;">Qtd</div><div style="font-size:12px;font-weight:700;color:#3D2B1F;">{qtd_str}</div></div>'
+                    f'<div><div style="font-size:11px;color:#8B7A5A;">Lucro</div><div style="font-size:12px;font-weight:700;color:#2e6b3e;">{lucro_str}</div></div>'
+                    f'<div><div style="font-size:11px;color:#8B7A5A;">Pico</div><div style="font-size:11px;color:#8B7A5A;">{day_info}</div></div>'
+                    f'</div></div>',
                     unsafe_allow_html=True)
-            with col_g2:
-                if len(df_bebs) > 0:
-                    for _, r in df_bebs.iterrows():
-                        cor_b = "#2e6b3e" if r["quantity_per_check"] >= meta_beb else "#B8923A" if r["quantity_per_check"] >= baseline_beb else VERMELHO
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # BLOCO 3 - BASKET ANALYSIS
+        with st.container(border=True):
+            st.markdown('<div class="section-title">Basket Analysis — O que pedem junto?</div>', unsafe_allow_html=True)
+            st.markdown('<div style="font-size:11px;color:#8B7A5A;margin-bottom:12px;">Selecione um prato para ver os itens mais pedidos juntos — oportunidade de upsell e treinamento de equipe.</div>', unsafe_allow_html=True)
+            itens_disp = sorted(df_m[df_m["basket_1"].notna()]["item"].unique().tolist())
+            item_sel = st.selectbox("Prato:", itens_disp, key="menu_basket_item")
+            df_row = df_m[df_m["item"]==item_sel]
+            if len(df_row) > 0:
+                row_b = df_row.iloc[0]
+                tipo_b = str(row_b["type"])
+                cor_b = COR_BCG.get(tipo_b, MARROM)
+                rec_b = f"R$ {row_b['gross_sales']/1000:.0f}k"
+                st.markdown(
+                    f'<div style="font-size:11px;color:#8B7A5A;margin-bottom:10px;">'
+                    f'Prato: <b>{item_sel}</b> &nbsp;|&nbsp; '
+                    f'<span style="color:{cor_b};font-weight:700;">{tipo_b}</span> &nbsp;|&nbsp; '
+                    f'Receita: {rec_b}</div>',
+                    unsafe_allow_html=True)
+                baskets = [(row_b.get(f"basket_{i}"), i) for i in range(1,6)
+                           if pd.notna(row_b.get(f"basket_{i}")) and str(row_b.get(f"basket_{i}","")).strip()]
+                if baskets:
+                    for b, rank in baskets:
+                        largura = max(95 - (rank-1)*15, 35)
                         st.markdown(
-                            f'<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #e8ddc8;">' +
-                            f'<div style="font-size:12px;font-weight:500;color:#3D2B1F;">{r["item"]}</div>' +
-                            f'<div style="font-size:12px;font-weight:700;color:{cor_b};">{r["quantity_per_check"]:.2f} un/check</div>' +
-                            f'<div style="font-size:11px;color:#8B7A5A;">{int(r["number_of_checks"])} checks</div></div>',
+                            f'<div style="display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:0.5px solid #e8ddc8;">'
+                            f'<span style="font-size:11px;font-weight:800;color:#8B9A2E;min-width:22px;">#{rank}</span>'
+                            f'<span style="font-size:12px;color:#3D2B1F;flex:1;">{b}</span>'
+                            f'<div style="background:#e8ddc8;border-radius:3px;height:5px;width:120px;">'
+                            f'<div style="background:#8B9A2E;border-radius:3px;height:5px;width:{largura}%;"></div></div>'
+                            f'</div>',
                             unsafe_allow_html=True)
                 else:
-                    st.markdown('<div style="font-size:12px;color:#8B7A5A;padding:20px;">Bebidas Puzzle nao encontradas nos dados filtrados.</div>', unsafe_allow_html=True)
+                    st.info("Sem dados de basket para este item.")
 
 
 elif aba_sel == "Fila":
