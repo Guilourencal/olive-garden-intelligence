@@ -908,6 +908,7 @@ elif aba_sel == "Pesquisa":
         if len(df_perf) > 1:
             df_perf_sm = df_perf[df_perf["restaurant"] != "nan"].copy()
             df_perf_sm["filial_curta"] = df_perf_sm["restaurant"].str.replace("Olive Garden - ", "")
+            df_perf_sm["filial_curta"] = df_perf_sm["filial_curta"].str.replace("Tambore", "Tambore Mall")
             df_perf_sm["periodo_curto"] = df_perf_sm["periodo"].str.extract(r"(FW\d+ to FW\d+)")
             df_perf_sm["fw_ini"] = df_perf_sm["periodo_curto"].str.extract(r"FW(\d+)").astype(float)
             metricas_sm = ["overall_experience", "value", "service", "taste", "speed_of_service", "clean", "soup_salad_refill", "breadstick_refill"]
@@ -920,8 +921,8 @@ elif aba_sel == "Pesquisa":
             df_perf_sm = df_perf_sm[df_perf_sm["periodo_curto"].isin(ultimos_10)]
             # Label curto — so FW inicial
             df_perf_sm["label_x"] = df_perf_sm["periodo_curto"].str.extract(r"^(FW\d+)")
-            # Layout 3 linhas x 2 colunas
-            for row_idx in range(3):
+            # Layout 4 linhas x 2 colunas
+            for row_idx in range(4):
                 cols_sm = st.columns(2)
                 for col_idx in range(2):
                     filial_idx = row_idx * 2 + col_idx
