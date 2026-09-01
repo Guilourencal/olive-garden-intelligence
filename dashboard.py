@@ -1301,6 +1301,9 @@ elif aba_sel == "Vendas":
                     _budg_fil = {}
                 df_rank_vd["budget_fix"] = df_rank_vd["filial_curta"].map(lambda f: _budg_fil.get(f, {}).get("budget") or df_rank_vd.loc[df_rank_vd["filial_curta"]==f, "meta_venda"].values[0])
                 df_rank_vd["proj_ger"]   = df_rank_vd["filial_curta"].map(lambda f: _budg_fil.get(f, {}).get("proj"))
+                df_rank_vd["budget_fix"] = pd.to_numeric(df_rank_vd["budget_fix"], errors="coerce")
+                df_rank_vd["budget_fix"] = df_rank_vd["budget_fix"].fillna(df_rank_vd["meta_venda"])
+                df_rank_vd["budget_fix"] = df_rank_vd["budget_fix"].replace(0, df_rank_vd["meta_venda"])
                 df_rank_vd["pct_meta"] = ((df_rank_vd["total_mes"]/df_rank_vd["budget_fix"]-1)*100).round(1)
                 df_rank_vd = df_rank_vd.sort_values("pct_meta", ascending=True)
                 for _, row in df_rank_vd.iterrows():
