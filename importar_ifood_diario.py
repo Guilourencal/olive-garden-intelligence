@@ -22,7 +22,7 @@ cur.execute("""
 conn.commit()
 print('Tabela criada!')
 
-pasta = r'data\ifood_diario'
+pasta = r'data\ifood_diario\Setembro'
 os.makedirs(pasta, exist_ok=True)
 arquivos = [f for f in os.listdir(pasta) if f.endswith('.xlsx') or f.endswith('.xls')]
 print(f'Arquivos encontrados: {len(arquivos)}')

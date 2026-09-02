@@ -5,7 +5,7 @@ import os
 import glob
 from datetime import datetime
 
-PASTA = "data/ifood_vendas"
+PASTA = "data/ifood_vendas/Setembro"
 
 conn = get_conn()
 cur = conn.cursor()
@@ -93,7 +93,7 @@ for arquivo in arquivos:
     # Ignorar arquivos diarios (periodo de 1 dia)
     try:
         df_test = pd.read_excel(caminho, sheet_name="Vendas", nrows=1)
-        periodo_test = str(df_test["Período"].iloc[0])
+        periodo_test = str(df_test.iloc[0, 0])
         partes_test = periodo_test.split("-")
         if len(partes_test) == 2 and partes_test[0].strip() == partes_test[1].strip():
             print(f"  Ignorando arquivo diario: {nome}")
@@ -121,6 +121,7 @@ for arquivo in arquivos:
     df.columns = ['periodo','marca','servico','logistica','id_loja','filial','estado','cidade','pedidos','faturamento','taxa_entrega','ticket_medio','novos_clientes']
     ins = dup = 0
     for _, row in df.iterrows():
+        cur.execute("SAVEPOINT sp_ins")
         try:
             cur.execute("""
                 INSERT INTO ifood_vendas (periodo, filial, logistica, pedidos, faturamento, taxa_entrega, ticket_medio, novos_clientes, arquivo_origem)
@@ -136,7 +137,7 @@ for arquivo in arquivos:
             if cur.rowcount > 0: ins += 1
             else: dup += 1
         except Exception as e:
-            conn.rollback()
+            cur.execute("ROLLBACK TO SAVEPOINT sp_ins")
     conn.commit()
     print(f"  Vendas: {ins} inseridos | {dup} duplicatas")
 
@@ -156,7 +157,7 @@ for arquivo in arquivos:
             if cur.rowcount > 0: ins += 1
             else: dup += 1
         except Exception as e:
-            conn.rollback()
+            cur.execute("ROLLBACK TO SAVEPOINT sp_ins")
     conn.commit()
     print(f"  Horarios: {ins} inseridos | {dup} duplicatas")
 
@@ -176,7 +177,7 @@ for arquivo in arquivos:
             if cur.rowcount > 0: ins += 1
             else: dup += 1
         except Exception as e:
-            conn.rollback()
+            cur.execute("ROLLBACK TO SAVEPOINT sp_ins")
     conn.commit()
     print(f"  Pagamentos: {ins} inseridos | {dup} duplicatas")
 
@@ -196,7 +197,7 @@ for arquivo in arquivos:
             if cur.rowcount > 0: ins += 1
             else: dup += 1
         except Exception as e:
-            conn.rollback()
+            cur.execute("ROLLBACK TO SAVEPOINT sp_ins")
     conn.commit()
     print(f"  Dias: {ins} inseridos | {dup} duplicatas")
 
