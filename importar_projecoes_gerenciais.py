@@ -76,6 +76,22 @@ def ler_projecao(caminho):
             except:
                 pass
 
+    # Fallback: usa nome do arquivo se mes da planilha estiver errado
+    import re as _re_fb, os as _os_fb
+    _meses_fb = {"JAN":1,"FEV":2,"MAR":3,"ABR":4,"MAI":5,"JUN":6,
+                 "JUL":7,"AGO":8,"SET":9,"OUT":10,"NOV":11,"DEZ":12,
+                 "JANEIRO":1,"FEVEREIRO":2,"MARCO":3,"ABRIL":4,"MAIO":5,"JUNHO":6,
+                 "JULHO":7,"AGOSTO":8,"SETEMBRO":9,"OUTUBRO":10,"NOVEMBRO":11,"DEZEMBRO":12}
+    _nome_fb = _os_fb.path.basename(caminho).upper()
+    _ano_fb = int(_re_fb.search(r"20\d{2}", _nome_fb).group()) if _re_fb.search(r"20\d{2}", _nome_fb) else None
+    _mes_fb = next((_v for _k,_v in _meses_fb.items() if _k in _nome_fb), None)
+    if _mes_fb and _ano_fb:
+        from datetime import date as _date_fb
+        _corr = _date_fb(_ano_fb, _mes_fb, 1)
+        if mes is None or mes != _corr:
+            if mes is not None:
+                print(f"  Aviso: data planilha ({mes}) corrigida para {_corr} (nome do arquivo)")
+            mes = _corr
     # Lê dias: linhas 31-61, cols 5(data), 7(meta_salao), 8(meta_dlv), 9(meta_dia)
     dias = []
     for i in range(31, 62):
