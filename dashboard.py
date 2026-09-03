@@ -1259,6 +1259,12 @@ elif aba_sel == "Vendas":
             fig_evo.add_trace(go.Scatter(x=df_evo["data"], y=df_evo["meta_venda"].cumsum(), mode="lines", name="Budget", line=dict(color="#B8923A", width=2, dash="dot")))
             if df_evo["venda_ano1"].sum() > 0:
                 fig_evo.add_trace(go.Scatter(x=df_evo["data"], y=df_evo["venda_ano1"].cumsum(), mode="lines", name="Ano Anterior", line=dict(color="#8B7A5A", width=1.5, dash="dash")))
+            # Linha 2026 sem Tambore (mesmas lojas do ano anterior = crescimento organico)
+            _filiais_sem_tam = [f for f in filiais_sel if f != "Tambore"]
+            if len(_filiais_sem_tam) < len(filiais_sel):  # so exibe se Tambore estiver selecionada
+                _df_evo_st = df_vd_f[df_vd_f["filial_curta"].isin(_filiais_sem_tam)].groupby("data").agg(venda_salao=("venda_salao","sum")).reset_index().sort_values("data")
+                if len(_df_evo_st) > 0:
+                    fig_evo.add_trace(go.Scatter(x=_df_evo_st["data"], y=_df_evo_st["venda_salao"].cumsum(), mode="lines", name="2026 s/ Tambore", line=dict(color="#4A90D9", width=1.5, dash="dot")))
             fig_evo.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), xaxis=dict(tickfont=dict(family="Nunito", size=10, color=MARROM)), yaxis=dict(showgrid=True, gridcolor="#E8DCC8", tickfont=dict(family="Nunito", size=10, color=MARROM)), legend=dict(font=dict(family="Nunito", size=11, color=MARROM), orientation="h", yanchor="bottom", y=1.02), font=dict(family="Nunito"), height=300)
             st.plotly_chart(fig_evo, use_container_width=True, key="fig_evo_vd")
 
