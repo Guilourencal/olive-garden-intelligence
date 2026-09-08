@@ -955,7 +955,9 @@ elif aba_sel == "Pesquisa":
                     if filial_idx >= len(filiais_sm):
                         break
                     filial = filiais_sm[filial_idx]
-                    df_fil = df_perf_sm[df_perf_sm["filial_curta"] == filial].sort_values("fw_ini")
+                    df_fil = df_perf_sm[df_perf_sm["filial_curta"] == filial].copy()
+                    df_fil["_data_sort"] = df_fil["periodo_curto"].map(_map_sm)
+                    df_fil = df_fil.sort_values("_data_sort")
                     fig_sm = go.Figure()
                     for m, lbl, cor in zip(metricas_sm, labels_sm, cores_sm):
                         fig_sm.add_trace(go.Scatter(
