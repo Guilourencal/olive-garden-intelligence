@@ -897,7 +897,9 @@ elif aba_sel == "Pesquisa":
             fig_ev = go.Figure()
             cores_filiais = ["#8B9A2E", "#B8923A", "#3D7A5C", "#7A3D3D", "#3D5A7A", "#7A5C3D"]
             for idx, filial in enumerate(df_perf_ev["filial_curta"].unique()):
-                df_fil = df_perf_ev[df_perf_ev["filial_curta"] == filial].sort_values("periodo_curto")
+                df_fil = df_perf_ev[df_perf_ev["filial_curta"] == filial].copy()
+                df_fil["_ev_sort"] = df_fil["periodo_curto"].map(lambda x: _ev_key(x))
+                df_fil = df_fil.sort_values("_ev_sort")
                 fig_ev.add_trace(go.Scatter(
                     x=df_fil["periodo_curto"],
                     y=df_fil[col_sel],
