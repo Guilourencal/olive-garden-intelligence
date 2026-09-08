@@ -943,8 +943,8 @@ elif aba_sel == "Pesquisa":
                 _m = _re_sm.search(r"(\d{2}/\d{2}/\d{4})", str(_full))
                 _map_sm[_pc] = pd.to_datetime(_m.group(1), format="%m/%d/%Y") if _m else pd.Timestamp("2000-01-01")
             periodos_disponiveis = sorted(df_perf_sm["periodo_curto"].dropna().unique(), key=lambda x: _map_sm.get(x, pd.Timestamp("2000-01-01")))
-            ultimos_10 = periodos_disponiveis[-10:]
-            df_perf_sm = df_perf_sm[df_perf_sm["periodo_curto"].isin(ultimos_10)]
+            ultimos_13 = periodos_disponiveis[-13:]
+            df_perf_sm = df_perf_sm[df_perf_sm["periodo_curto"].isin(ultimos_13)]
             # Label curto — so FW inicial
             df_perf_sm["label_x"] = df_perf_sm["periodo_curto"].str.extract(r"^(FW\d+)")
             # Layout 4 linhas x 2 colunas
