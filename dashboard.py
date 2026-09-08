@@ -937,16 +937,12 @@ elif aba_sel == "Pesquisa":
             filiais_sm = sorted(df_perf_sm["filial_curta"].unique())
             # Janela deslizante — ultimas 10 semanas
             import re as _re_sm
-            def _sm_key(pc):
-                rows = df_perf_sm[df_perf_sm["periodo_curto"]==pc]
-                if len(rows)==0: return pd.Timestamp("2000-01-01")
-                full = rows["periodo"].iloc[0]
-                m = _re_sm.search(r"(\d{2}/\d{2}/\d{4})", str(full))
-                if m:
-                    try: return pd.to_datetime(m.group(1), format="%m/%d/%Y")
-                    except: pass
-                return pd.Timestamp("2000-01-01")
-            periodos_disponiveis = sorted(df_perf_sm["periodo_curto"].dropna().unique(), key=_sm_key)
+            _map_sm = {}
+            for _pc, _grp in df_perf_sm.groupby("periodo_curto"):
+                _full = _grp["periodo"].iloc[0]
+                _m = _re_sm.search(r"(\d{2}/\d{2}/\d{4})", str(_full))
+                _map_sm[_pc] = pd.to_datetime(_m.group(1), format="%m/%d/%Y") if _m else pd.Timestamp("2000-01-01")
+            periodos_disponiveis = sorted(df_perf_sm["periodo_curto"].dropna().unique(), key=lambda x: _map_sm.get(x, pd.Timestamp("2000-01-01")))
             ultimos_10 = periodos_disponiveis[-10:]
             df_perf_sm = df_perf_sm[df_perf_sm["periodo_curto"].isin(ultimos_10)]
             # Label curto — so FW inicial
