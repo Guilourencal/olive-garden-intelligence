@@ -837,7 +837,8 @@ elif aba_sel == "Pesquisa":
             df_perf_f["filial_curta"] = df_perf_f["restaurant"].str.replace("Olive Garden - ", "")
             df_perf_f["periodo_curto"] = df_perf_f["periodo"].str.extract(r"(FW\d+ to FW\d+)")
             df_perf_f["fw_num"] = df_perf_f["periodo_curto"].str.extract(r"FW(\d+)").astype(float)
-            ultimo_periodo = df_perf_f.loc[df_perf_f["fw_num"].idxmax(), "periodo_curto"] if len(df_perf_f) > 0 else ""
+            df_perf_f["fw_sort"] = (df_perf_f["fw_num"] + 100) % 153
+            ultimo_periodo = df_perf_f.loc[df_perf_f["fw_sort"].idxmax(), "periodo_curto"] if len(df_perf_f) > 0 else ""
             df_perf_f = df_perf_f[df_perf_f["periodo_curto"] == ultimo_periodo]
             metricas = ["overall_experience", "value", "service", "taste", "speed_of_service", "clean", "soup_salad_refill", "breadstick_refill"]
             pivot = df_perf_f.set_index("filial_curta")[metricas]
@@ -872,7 +873,7 @@ elif aba_sel == "Pesquisa":
             df_perf_ev["filial_curta"] = df_perf_ev["restaurant"].str.replace("Olive Garden - ", "")
             df_perf_ev["periodo_curto"] = df_perf_ev["periodo"].str.extract(r"(FW\d+ to FW\d+)")
             df_perf_ev["fw_ini_ev"] = df_perf_ev["periodo_curto"].str.extract(r"FW(\d+)").astype(float)
-            _periodos_ev = sorted(df_perf_ev["periodo_curto"].dropna().unique(), key=lambda p: df_perf_ev[df_perf_ev["periodo_curto"]==p]["fw_ini_ev"].values[0] if len(df_perf_ev[df_perf_ev["periodo_curto"]==p])>0 else 0)
+            _periodos_ev = sorted(df_perf_ev["periodo_curto"].dropna().unique(), key=lambda x: (int(df_perf_ev[df_perf_ev["periodo_curto"]==x]["fw_ini_ev"].values[0]) + 100) % 153 if len(df_perf_ev[df_perf_ev["periodo_curto"]==x])>0 else 0)
             df_perf_ev = df_perf_ev[df_perf_ev["periodo_curto"].isin(_periodos_ev[-13:])]
             metricas_ev = {"overall_experience": "Experiencia Geral", "value": "Valor", "service": "Atendimento", "taste": "Sabor", "speed_of_service": "Velocidade", "clean": "Limpeza", "soup_salad_refill": "Refil Sopa/Salada", "breadstick_refill": "Refil Breadstick"}
             dim_sel = st.selectbox("Selecione a dimensao:", list(metricas_ev.values()), key="dim_sel")
@@ -919,7 +920,7 @@ elif aba_sel == "Pesquisa":
             cores_sm = ["#3D2B1F","#4A90D9","#B8923A","#2e6b3e","#c0392b","#8B7A5A","#E67E22","#9B59B6"]
             filiais_sm = sorted(df_perf_sm["filial_curta"].unique())
             # Janela deslizante — ultimas 10 semanas
-            periodos_disponiveis = sorted(df_perf_sm["periodo_curto"].dropna().unique(), key=lambda p: df_perf_sm[df_perf_sm["periodo_curto"]==p]["fw_ini"].values[0] if len(df_perf_sm[df_perf_sm["periodo_curto"]==p])>0 else 0)
+            periodos_disponiveis = sorted(df_perf_sm["periodo_curto"].dropna().unique(), key=lambda x: (int(df_perf_sm[df_perf_sm["periodo_curto"]==x]["fw_ini"].values[0]) + 100) % 153 if len(df_perf_sm[df_perf_sm["periodo_curto"]==x])>0 else 0)
             ultimos_10 = periodos_disponiveis[-10:]
             df_perf_sm = df_perf_sm[df_perf_sm["periodo_curto"].isin(ultimos_10)]
             # Label curto — so FW inicial
