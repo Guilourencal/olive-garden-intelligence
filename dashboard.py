@@ -871,6 +871,9 @@ elif aba_sel == "Pesquisa":
             df_perf_ev = df_perf[df_perf["restaurant"] != "nan"].copy()
             df_perf_ev["filial_curta"] = df_perf_ev["restaurant"].str.replace("Olive Garden - ", "")
             df_perf_ev["periodo_curto"] = df_perf_ev["periodo"].str.extract(r"(FW\d+ to FW\d+)")
+            df_perf_ev["fw_ini_ev"] = df_perf_ev["periodo_curto"].str.extract(r"FW(\d+)").astype(float)
+            _periodos_ev = sorted(df_perf_ev["periodo_curto"].dropna().unique(), key=lambda p: df_perf_ev[df_perf_ev["periodo_curto"]==p]["fw_ini_ev"].values[0] if len(df_perf_ev[df_perf_ev["periodo_curto"]==p])>0 else 0)
+            df_perf_ev = df_perf_ev[df_perf_ev["periodo_curto"].isin(_periodos_ev[-13:])]
             metricas_ev = {"overall_experience": "Experiencia Geral", "value": "Valor", "service": "Atendimento", "taste": "Sabor", "speed_of_service": "Velocidade", "clean": "Limpeza", "soup_salad_refill": "Refil Sopa/Salada", "breadstick_refill": "Refil Breadstick"}
             dim_sel = st.selectbox("Selecione a dimensao:", list(metricas_ev.values()), key="dim_sel")
             col_sel = [k for k, v in metricas_ev.items() if v == dim_sel][0]
