@@ -12,7 +12,7 @@ MAPA_FILIAIS = {
     'TAM':  'Olive Garden - Tambore',
 }
 
-ARQUIVO = r'data/Vendas_Geral/DASH VENDAS 2026 09.08.xlsx'
+ARQUIVO = r'data/Vendas_Geral/DASH VENDAS 2026 07.09_updating.xlsx'
 
 print('Lendo arquivo...')
 df = pd.read_excel(ARQUIVO, sheet_name='Dados', header=0)

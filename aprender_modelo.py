@@ -107,25 +107,48 @@ print(f'  {atualizados} projecoes atualizadas com valores realizados')
 # ETAPA 2 — Gerar e salvar projecoes para os proximos 28 dias
 print('ETAPA 2 — Gerando projecoes para proximos 28 dias...')
 inseridos = 0
-# Carregar datas de eventos por filial
+# Carregar eventos: datas (excluir do treino) + tipos (ajustar projecao)
+FILIAIS_TODAS = ['Aricanduva','Center Norte','Dom Pedro','Guarulhos GRU2','Guarulhos GRU3','Morumbi']
 conn_ev = get_conn()
 cur_ev = conn_ev.cursor()
-cur_ev.execute("SELECT filial, data_inicio, data_fim FROM calendario_eventos")
+cur_ev.execute("SELECT filial, data_inicio, data_fim, tipo, impacto_estimado_pct FROM calendario_eventos")
 eventos_db = cur_ev.fetchall()
 cur_ev.close()
 conn_ev.close()
-from datetime import date as _date
 eventos_por_filial = {}
-for fil_ev, d_ini, d_fim in eventos_db:
+tipo_por_filial_data = {}
+semente_por_tipo = {}
+for fil_ev, d_ini, d_fim, tipo_ev, imp_ev in eventos_db:
     fil_curta = fil_ev.replace("Olive Garden - ", "") if fil_ev else None
+    fils = [fil_curta] if fil_curta else FILIAIS_TODAS
+    if tipo_ev and imp_ev is not None:
+        semente_por_tipo[tipo_ev] = 1.0 + float(imp_ev) / 100.0
     d = d_ini
     while d <= d_fim:
-        if fil_curta:
-            eventos_por_filial.setdefault(fil_curta, set()).add(d)
-        else:
-            for _f in ['Aricanduva','Center Norte','Dom Pedro','Guarulhos GRU2','Guarulhos GRU3','Morumbi']:
-                eventos_por_filial.setdefault(_f, set()).add(d)
-        d = _date(d.year, d.month, d.day + 1) if d.day < 28 else (_date(d.year, d.month+1, 1) if d.month < 12 else _date(d.year+1, 1, 1))
+        for _f in fils:
+            eventos_por_filial.setdefault(_f, set()).add(d)
+            if tipo_ev:
+                tipo_por_filial_data[(_f, d)] = tipo_ev
+        d = d + timedelta(days=1)
+
+# Aprender o fator empirico por tipo de evento (mediana de real / projecao-base)
+fator_por_tipo = {}
+MIN_AMOSTRAS_TIPO = 6
+hist = pd.read_sql("""
+    SELECT DISTINCT ON (filial, data_alvo) filial, data_alvo, valor_projetado_base, valor_realizado
+    FROM projecoes_historico
+    WHERE valor_realizado IS NOT NULL AND valor_projetado_base > 0
+    ORDER BY filial, data_alvo, data_projecao DESC
+""", conn)
+if len(hist):
+    hist["data_alvo"] = pd.to_datetime(hist["data_alvo"]).dt.date
+    hist["filial_curta"] = hist["filial"].str.replace("Olive Garden - ", "", regex=False)
+    hist["tipo"] = hist.apply(lambda r: tipo_por_filial_data.get((r["filial_curta"], r["data_alvo"])), axis=1)
+    hist["ratio"] = hist["valor_realizado"] / hist["valor_projetado_base"]
+    for tp, grp in hist.dropna(subset=["tipo"]).groupby("tipo"):
+        if len(grp) >= MIN_AMOSTRAS_TIPO:
+            fator_por_tipo[tp] = float(grp["ratio"].median())
+print("  Fatores de evento aprendidos:", {k: round(v,3) for k,v in fator_por_tipo.items()})
 
 for filial in sorted(df['filial_curta'].unique()):
     dff = df[df['filial_curta'] == filial].copy().sort_values('data')
@@ -148,12 +171,15 @@ for filial in sorted(df['filial_curta'].unique()):
             p_final = p_stl * m['peso_stl'] + p_a1 * m['peso_a1']
         else:
             p_final = p_stl
+        base = float(max(p_final, 0))
+        tipo_ev = tipo_por_filial_data.get((filial, data_alvo.date()))
+        fator_ev = fator_por_tipo.get(tipo_ev, semente_por_tipo.get(tipo_ev, 1.0)) if tipo_ev else 1.0
+        valor_proj = base * fator_ev
         try:
-            sql_ins = "INSERT INTO projecoes_historico (data_projecao, filial, data_alvo, valor_projetado, fator_dow, fator_mes, fator_rec, peso_stl, peso_a1) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (data_projecao, filial, data_alvo) DO NOTHING"
-            cur.execute(sql_ins, (hoje.date(), filial, data_alvo.date(), float(max(p_final,0)),
+            sql_ins = "INSERT INTO projecoes_historico (data_projecao, filial, data_alvo, valor_projetado, valor_projetado_base, fator_dow, fator_mes, fator_rec, peso_stl, peso_a1) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (data_projecao, filial, data_alvo) DO NOTHING"
+            cur.execute(sql_ins, (hoje.date(), filial, data_alvo.date(), float(valor_proj), float(base),
                 float(m["fator_dow"].get(dow_d,1.0)), float(m["fator_mes"].get(mes_d,1.0)),
                 float(m["fator_rec"]), float(m["peso_stl"]), float(m["peso_a1"])))
-            if cur.rowcount > 0: inseridos += 1
             if cur.rowcount > 0: inseridos += 1
         except Exception as e:
             conn.rollback()

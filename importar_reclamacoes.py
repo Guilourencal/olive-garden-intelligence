@@ -52,7 +52,7 @@ for arquivo in sorted(arquivos):
     caminho = os.path.join(pasta, arquivo)
     print(f'\nImportando: {arquivo}')
     df = pd.read_excel(caminho)
-    df.columns = [c.strip() for c in df.columns]
+    df.columns = [c.strip().upper() for c in df.columns]
     ins = dup = 0
     for _, row in df.iterrows():
         unidade_raw = str(row.get('UNIDADE','')) if pd.notna(row.get('UNIDADE')) else ''
