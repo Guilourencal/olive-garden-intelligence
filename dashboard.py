@@ -1697,7 +1697,7 @@ elif aba_sel == "Vendas":
         def _sort_periodo(per):
             try:
                 from datetime import datetime as _dtp
-                return _dtp.strptime(per.split("-")[0].strip(), "%d/%m/%Y")
+                return _dtp.strptime(per.split(" - ")[0].strip(), "%d/%m/%Y")
             except:
                 return per
         periodos = sorted(
