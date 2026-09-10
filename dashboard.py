@@ -1694,7 +1694,15 @@ elif aba_sel == "Vendas":
         from datetime import datetime
         df_v = df_ifood_vendas[df_ifood_vendas["logistica"] == "Entrega parceira"].copy()
         df_v["filial_curta"] = df_v["filial"].str.replace("Olive Garden - ", "", regex=False)
-        periodos = sorted(df_v["periodo"].unique())
+        def _sort_periodo(per):
+            try:
+                from datetime import datetime as _dtp
+                return _dtp.strptime(per.split("-")[0].strip(), "%d/%m/%Y")
+            except:
+                return per
+        periodos = sorted(
+            [p for p in df_v["periodo"].unique() if "2026" in str(p)],
+            key=_sort_periodo)
 
         # Cards executivos iFood
         with st.container(border=True):
