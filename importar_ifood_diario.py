@@ -22,7 +22,10 @@ cur.execute("""
 conn.commit()
 print('Tabela criada!')
 
-pasta = r'data\ifood_diario\Setembro'
+import datetime as _dt2
+_meses_pt2 = {1:'Janeiro',2:'Fevereiro',3:'Marco',4:'Abril',5:'Maio',6:'Junho',
+              7:'Julho',8:'Agosto',9:'Setembro',10:'Outubro',11:'Novembro',12:'Dezembro'}
+pasta = f'data/ifood_diario/{_meses_pt2[_dt2.datetime.now().month]}'
 os.makedirs(pasta, exist_ok=True)
 arquivos = [f for f in os.listdir(pasta) if f.endswith('.xlsx') or f.endswith('.xls')]
 print(f'Arquivos encontrados: {len(arquivos)}')

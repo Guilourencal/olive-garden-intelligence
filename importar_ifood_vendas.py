@@ -5,7 +5,10 @@ import os
 import glob
 from datetime import datetime
 
-PASTA = "data/ifood_vendas/Setembro"
+import datetime as _dt
+_meses_pt = {1:"Janeiro",2:"Fevereiro",3:"Marco",4:"Abril",5:"Maio",6:"Junho",
+             7:"Julho",8:"Agosto",9:"Setembro",10:"Outubro",11:"Novembro",12:"Dezembro"}
+PASTA = f"data/ifood_vendas/{_meses_pt[_dt.datetime.now().month]}"
 
 conn = get_conn()
 cur = conn.cursor()
