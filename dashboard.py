@@ -1,4 +1,4 @@
-import streamlit as st
+﻿import streamlit as st
 from db import get_conn, get_conn_ro
 import os
 from dotenv import load_dotenv
@@ -33,7 +33,7 @@ from datetime import datetime, timedelta
 import anthropic
 
 st.set_page_config(
-    page_title="Olive Garden — Brand Intelligence",
+    page_title="Olive Garden â€” Brand Intelligence",
     page_icon=None,
     layout="wide",
     initial_sidebar_state="expanded"
@@ -50,10 +50,10 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap');
 * { font-family: 'Nunito', sans-serif; }
 [data-testid="stAppViewContainer"] { background-color: #F5F0E8; }
-/* ── SIDEBAR BASE ── */
+/* â”€â”€ SIDEBAR BASE â”€â”€ */
 [data-testid="stSidebar"] { background-color: #3D2710; border-right: 2px solid rgba(139,154,46,0.35); }
 [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label { color: #C8BFB0 !important; }
-/* ── BOTÕES DE NAVEGAÇÃO ── */
+/* â”€â”€ BOTÃ•ES DE NAVEGAÃ‡ÃƒO â”€â”€ */
 [data-testid="stSidebar"] button {
   border-radius: 6px !important;
   border: none !important;
@@ -73,7 +73,7 @@ st.markdown("""
   color: #C8D870 !important;
   border-left: 2px solid #8B9A2E !important;
 }
-/* ── SELECTBOX ── */
+/* â”€â”€ SELECTBOX â”€â”€ */
 [data-testid="stSidebar"] .stSelectbox > div > div {
   background-color: rgba(255,255,255,0.05) !important;
   color: #E8DCC8 !important;
@@ -85,12 +85,12 @@ st.markdown("""
 }
 [data-baseweb="select"] [data-baseweb="popover"] ul { max-height: 400px !important; overflow-y: auto !important; }
 [data-baseweb="popover"] { z-index: 9999 !important; }
-/* ── ABA ATIVA ── */
+/* â”€â”€ ABA ATIVA â”€â”€ */
 .nav-ativo { background:rgba(139,154,46,0.15); border-left:3px solid #8B9A2E !important;
   border-radius:6px; padding:7px 12px; margin-bottom:1px;
   font-size:11px; font-weight:800; letter-spacing:0.1em;
   text-transform:uppercase; color:#8B9A2E; display:block; }
-/* ── SIDEBAR LABEL ── */
+/* â”€â”€ SIDEBAR LABEL â”€â”€ */
 .sidebar-label { font-size:9px; letter-spacing:0.18em; text-transform:uppercase;
   color:rgba(139,154,46,0.7); margin:14px 0 3px; font-weight:700; }
 [data-testid="stMetricLabel"] { font-size: 11px !important; letter-spacing: 0.1em; text-transform: uppercase; color: #5C3D1E !important; }
@@ -159,7 +159,7 @@ STOPWORDS_PT = {
     "not", "all", "one", "two", "its", "our", "your", "more", "very", "also",
     "after", "about", "just", "like", "time", "really", "came", "said",
     "went", "come", "good", "great", "place", "food", "service", "told",
-    "back", "well", "even", "never", "always", "got", "duas", "vontade", "principal", "porém",
+    "back", "well", "even", "never", "always", "got", "duas", "vontade", "principal", "porÃ©m",
     "recomendo",
 }
 
@@ -311,7 +311,7 @@ with st.sidebar:
     sent_social_sel = "Todos"
     post_sel = "Todos"
     cat_sel = "Todas"
-    periodo_sel = "Últimos 30 dias"
+    periodo_sel = "Ãšltimos 30 dias"
     idioma_sel = "Todos"
     plataforma_sel = "Todas"
     filial_sel = "Todas"
@@ -334,13 +334,13 @@ with st.sidebar:
         posts_unicos = ["Todos"] + [f"Post {i+1}" for i in range(df_social["post_url"].nunique())]
         post_sel = st.selectbox("Post", posts_unicos, key="post_sel", label_visibility="collapsed")
 
-    elif aba_sel == "Notícias":
+    elif aba_sel == "NotÃ­cias":
         st.markdown('<div class="sidebar-label">Categoria</div>', unsafe_allow_html=True)
         cat_sel = st.selectbox("Categoria", ["Todas", "Olive Garden Global", "Olive Garden Brasil", "Mercado A&B Brasil", "Mercado Global"], key="cat_news_side", label_visibility="collapsed")
-        st.markdown('<div class="sidebar-label">Período</div>', unsafe_allow_html=True)
-        periodo_sel = st.selectbox("Período", ["Últimos 30 dias", "Últimos 15 dias", "Últimos 7 dias"], key="periodo_news", label_visibility="collapsed")
+        st.markdown('<div class="sidebar-label">PerÃ­odo</div>', unsafe_allow_html=True)
+        periodo_sel = st.selectbox("PerÃ­odo", ["Ãšltimos 30 dias", "Ãšltimos 15 dias", "Ãšltimos 7 dias"], key="periodo_news", label_visibility="collapsed")
         st.markdown('<div class="sidebar-label">Idioma</div>', unsafe_allow_html=True)
-        idioma_sel = st.selectbox("Idioma", ["Todos", "Português", "Inglês"], key="idioma_news", label_visibility="collapsed")
+        idioma_sel = st.selectbox("Idioma", ["Todos", "PortuguÃªs", "InglÃªs"], key="idioma_news", label_visibility="collapsed")
 
     st.markdown('<div style="height:1px; background:rgba(255,255,255,0.1); margin:10px 0;"></div>', unsafe_allow_html=True)
     st.markdown(
@@ -376,7 +376,7 @@ if aba_sel == "Reviews":
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # BLOCO 1 — RADAR DA REDE
+    # BLOCO 1 â€” RADAR DA REDE
     with st.container(border=True):
         st.markdown('<div class="section-title">Radar da Rede</div>', unsafe_allow_html=True)
         total_recl = len(df_rf)
@@ -386,7 +386,7 @@ if aba_sel == "Reviews":
         recl_mes = total_recl / meses_periodo
         nota_media = df_rf["avaliacao"].mean() if df_rf["avaliacao"].notna().any() else 0
         pct_google = len(df_rf[df_rf["canal"]=="google_my_business"]) / total_recl * 100 if total_recl > 0 else 0
-        tema_top = df_rf["tema"].value_counts().index[0] if len(df_rf) > 0 and df_rf["tema"].notna().any() else "—"
+        tema_top = df_rf["tema"].value_counts().index[0] if len(df_rf) > 0 and df_rf["tema"].notna().any() else "â€”"
         col_r1, col_r2, col_r3, col_r4, col_r5 = st.columns(5)
         with col_r1:
             st.metric("Reclamacoes", total_recl)
@@ -402,7 +402,7 @@ if aba_sel == "Reviews":
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # BLOCO 2 — COMPARATIVO POR UNIDADE
+    # BLOCO 2 â€” COMPARATIVO POR UNIDADE
     with st.container(border=True):
         st.markdown('<div class="section-title">Comparativo por Unidade</div>', unsafe_allow_html=True)
         unidades_ord = ["Morumbi","Center Norte","Dom Pedro","Aricanduva","Guarulhos GRU3","Guarulhos GRU2","Tambore"]
@@ -417,8 +417,8 @@ if aba_sel == "Reviews":
             meses_un = max(1, (d_max - d_min).days / 30)
             rpm = n / meses_un
             nota_un = df_un["avaliacao"].mean() if df_un["avaliacao"].notna().any() else 0
-            tema_un = df_un["tema"].value_counts().index[0] if df_un["tema"].notna().any() else "—"
-            subtema_un = df_un["subtema"].value_counts().index[0] if df_un["subtema"].notna().any() else "—"
+            tema_un = df_un["tema"].value_counts().index[0] if df_un["tema"].notna().any() else "â€”"
+            subtema_un = df_un["subtema"].value_counts().index[0] if df_un["subtema"].notna().any() else "â€”"
             rows_tab.append({"Unidade": un, "Recl.": n, "Recl./Mes": f"{rpm:.1f}", "Nota": nota_un, "Tema #1": tema_un, "Dor Principal": subtema_un})
         df_tab_un = pd.DataFrame(rows_tab)
         for _, row in df_tab_un.iterrows():
@@ -436,7 +436,7 @@ if aba_sel == "Reviews":
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # BLOCO 3 — EVOLUCAO MENSAL
+    # BLOCO 3 â€” EVOLUCAO MENSAL
     with st.container(border=True):
         st.markdown('<div class="section-title">Evolucao Mensal de Reclamacoes</div>', unsafe_allow_html=True)
         df_evo_recl = df_rf.copy()
@@ -483,7 +483,7 @@ if aba_sel == "Reviews":
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # BLOCO 4 — MIX DE TEMAS
+    # BLOCO 4 â€” MIX DE TEMAS
     with st.container(border=True):
         st.markdown('<div class="section-title">Mix de Temas</div>', unsafe_allow_html=True)
         col_t1, col_t2 = st.columns(2)
@@ -505,7 +505,7 @@ if aba_sel == "Reviews":
                 font=dict(family="Nunito"), height=280)
             st.plotly_chart(fig_temas, use_container_width=True, key="fig_temas_recl")
         with col_t2:
-            st.markdown('<div style="font-size:11px;font-weight:700;color:#8B9A2E;margin-bottom:8px;">Subtemas — Top 10</div>', unsafe_allow_html=True)
+            st.markdown('<div style="font-size:11px;font-weight:700;color:#8B9A2E;margin-bottom:8px;">Subtemas â€” Top 10</div>', unsafe_allow_html=True)
             subtemas_rede = df_rf["subtema"].dropna().value_counts().head(10).reset_index()
             subtemas_rede.columns = ["subtema","n"]
             fig_sub = go.Figure(go.Bar(
@@ -524,24 +524,24 @@ if aba_sel == "Reviews":
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # BLOCO 5 — VOZ DO CLIENTE
+    # BLOCO 5 â€” VOZ DO CLIENTE
     with st.container(border=True):
         st.markdown('<div class="section-title">Voz do Cliente</div>', unsafe_allow_html=True)
-        st.markdown('<div style="font-size:12px;color:#8B7A5A;margin-bottom:12px;">Reclamacoes reais do Buzzmonitor (Google + Instagram) — filtradas por unidade, tema e canal acima.</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-size:12px;color:#8B7A5A;margin-bottom:12px;">Reclamacoes reais do Buzzmonitor (Google + Instagram) â€” filtradas por unidade, tema e canal acima.</div>', unsafe_allow_html=True)
         df_voz = df_rf.sort_values("data", ascending=False).head(100)
         html_voz = ""
         for _, row in df_voz.iterrows():
             nota_v = row["avaliacao"]
             cor_nota_v = "#2e6b3e" if pd.notna(nota_v) and nota_v >= 3 else "#B8923A" if pd.notna(nota_v) and nota_v >= 2 else VERMELHO
-            estrelas = "★" * int(nota_v) if pd.notna(nota_v) else "—"
-            canal_icon = "📱 Instagram" if row["canal"] == "instagram" else "🔍 Google"
+            estrelas = "â˜…" * int(nota_v) if pd.notna(nota_v) else "â€”"
+            canal_icon = "ðŸ“± Instagram" if row["canal"] == "instagram" else "ðŸ” Google"
             tema_badge = row["tema"] if pd.notna(row["tema"]) else ""
             subtema_badge = row["subtema"] if pd.notna(row["subtema"]) else ""
             html_voz += (
                 f'<div style="padding:12px 0;border-bottom:1px solid #e8ddc8;">' +
                 f'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
                 f'<div style="display:flex;gap:8px;align-items:center;">' +
-                f'<span style="font-size:11px;font-weight:800;color:#fff;background:{"#3D2B1F" if row["unidade_curta"] else "#8B7A5A"};padding:2px 8px;border-radius:4px;letter-spacing:0.03em;">{row["unidade_curta"] if row["unidade_curta"] else "Não Identificada"}</span>' +
+                f'<span style="font-size:11px;font-weight:800;color:#fff;background:{"#3D2B1F" if row["unidade_curta"] else "#8B7A5A"};padding:2px 8px;border-radius:4px;letter-spacing:0.03em;">{row["unidade_curta"] if row["unidade_curta"] else "NÃ£o Identificada"}</span>' +
                 f'<span style="font-size:9px;background:#e8ddc8;color:#3D2B1F;padding:2px 6px;border-radius:4px;">{tema_badge}</span>' +
                 (f'<span style="font-size:9px;background:#f5e8e8;color:#8B2E2E;padding:2px 6px;border-radius:4px;">{subtema_badge}</span>' if subtema_badge else "") +
                 f'</div>' +
@@ -553,10 +553,10 @@ if aba_sel == "Reviews":
             )
         st.markdown(f'<div style="height:420px;overflow-y:auto;padding-right:8px;">{html_voz}</div>', unsafe_allow_html=True)
 
-    # BLOCO 6 — REPUTACAO DIGITAL
+    # BLOCO 6 â€” REPUTACAO DIGITAL
     with st.container(border=True):
-        st.markdown('<div class="section-title">Reputacao Digital — iFood, Google e TripAdvisor</div>', unsafe_allow_html=True)
-        st.markdown('<div style="font-size:12px;color:#8B7A5A;margin-bottom:12px;">Reviews coletados das plataformas digitais — complemento às reclamacoes do Buzzmonitor.</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Reputacao Digital â€” iFood, Google e TripAdvisor</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-size:12px;color:#8B7A5A;margin-bottom:12px;">Reviews coletados das plataformas digitais â€” complemento Ã s reclamacoes do Buzzmonitor.</div>', unsafe_allow_html=True)
 
         df_rev = df.copy()
         df_rev = df_rev[df_rev["sentimento"].notna()]
@@ -574,7 +574,7 @@ if aba_sel == "Reviews":
                     st.markdown(
                         f'<div style="text-align:center;padding:8px;">' +
                         f'<div style="font-size:9px;color:#8B7A5A;letter-spacing:2px;margin-bottom:6px;">{plat.upper()}</div>' +
-                        f'<div style="font-size:28px;font-weight:800;color:{cor};">{"★"*int(round(nota))}</div>' +
+                        f'<div style="font-size:28px;font-weight:800;color:{cor};">{"â˜…"*int(round(nota))}</div>' +
                         f'<div style="font-size:20px;font-weight:700;color:{cor};">{nota:.1f}</div>' +
                         f'<div style="font-size:10px;color:#8B7A5A;">{n} reviews | {pct_pos:.0f}% positivos</div></div>',
                         unsafe_allow_html=True)
@@ -604,9 +604,9 @@ if aba_sel == "Reviews":
         for _, row in df_rev_f.head(30).iterrows():
             nota_r = row["nota"]
             cor_r = "#2e6b3e" if pd.notna(nota_r) and nota_r >= 4 else "#B8923A" if pd.notna(nota_r) and nota_r >= 3 else VERMELHO
-            estrelas_r = "★" * int(nota_r) if pd.notna(nota_r) else "—"
-            filial_r = str(row["filial"]).replace("Olive Garden - ","") if pd.notna(row["filial"]) else "—"
-            texto_r = str(row.get("texto","")) if pd.notna(row.get("texto","")) else "—"
+            estrelas_r = "â˜…" * int(nota_r) if pd.notna(nota_r) else "â€”"
+            filial_r = str(row["filial"]).replace("Olive Garden - ","") if pd.notna(row["filial"]) else "â€”"
+            texto_r = str(row.get("texto","")) if pd.notna(row.get("texto","")) else "â€”"
             st.markdown(
                 f'<div style="padding:10px 0;border-bottom:1px solid #e8ddc8;">' +
                 f'<div style="display:flex;justify-content:space-between;margin-bottom:4px;">' +
@@ -641,7 +641,7 @@ elif aba_sel == "Social":
 
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        st.metric("Total de Comentários", f"{total_s:,}")
+        st.metric("Total de ComentÃ¡rios", f"{total_s:,}")
     with c2:
         st.metric("Total de Likes", f"{total_likes:,}")
     with c3:
@@ -654,7 +654,7 @@ elif aba_sel == "Social":
 
     with col_s1:
         with st.container(border=True):
-            st.markdown('<div class="section-title">Polaridade dos Comentários</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">Polaridade dos ComentÃ¡rios</div>', unsafe_allow_html=True)
             contagem_s = df_social_f["sentimento"].value_counts().reset_index()
             contagem_s.columns = ["Sentimento", "Total"]
             fig_s1 = px.pie(contagem_s, values="Total", names="Sentimento", color="Sentimento", color_discrete_map=CORES_SENT, hole=0.6)
@@ -664,7 +664,7 @@ elif aba_sel == "Social":
 
     with col_s2:
         with st.container(border=True):
-            st.markdown('<div class="section-title">Top 10 Posts por Comentários</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">Top 10 Posts por ComentÃ¡rios</div>', unsafe_allow_html=True)
             post_engagement = df_social.groupby("post_url").agg(
                 comentarios=("texto", "count"),
                 likes_total=("likes", "sum")
@@ -676,7 +676,7 @@ elif aba_sel == "Social":
                 pct = int(row["comentarios"] / post_engagement["comentarios"].max() * 100)
                 html_posts += f"""<div style="margin-bottom:10px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                        <a href="{row['post_url']}" target="_blank" style="font-size:12px; font-weight:700; color:#5C3D1E; text-decoration:none;">{row['label']} ↗</a>
+                        <a href="{row['post_url']}" target="_blank" style="font-size:12px; font-weight:700; color:#5C3D1E; text-decoration:none;">{row['label']} â†—</a>
                         <span style="font-size:12px; font-weight:700; color:#3D2B1F;">{int(row['comentarios'])} comentarios</span>
                     </div>
                     <div style="background:#e8ddc8; border-radius:4px; height:8px;">
@@ -689,30 +689,30 @@ elif aba_sel == "Social":
 
     with col_s3:
         with st.container(border=True):
-            st.markdown('<div class="section-title">Comentários Positivos</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">ComentÃ¡rios Positivos</div>', unsafe_allow_html=True)
             pos = df_social_f[df_social_f["sentimento"] == "Positivo"].sort_values("likes", ascending=False).head(5)
             for _, row in pos.iterrows():
-                st.markdown(f'<div class="comment-card"><div class="comment-autor">@{row["autor"]}</div><div class="comment-texto">{row["texto"]}</div><div class="comment-meta">❤️ {int(row["likes"])} likes</div></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="comment-card"><div class="comment-autor">@{row["autor"]}</div><div class="comment-texto">{row["texto"]}</div><div class="comment-meta">â¤ï¸ {int(row["likes"])} likes</div></div>', unsafe_allow_html=True)
 
     with col_s4:
         with st.container(border=True):
-            st.markdown('<div class="section-title">Comentários Negativos</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">ComentÃ¡rios Negativos</div>', unsafe_allow_html=True)
             neg = df_social_f[df_social_f["sentimento"] == "Negativo"].sort_values("likes", ascending=False).head(5)
             for _, row in neg.iterrows():
-                st.markdown(f'<div class="comment-card neg"><div class="comment-autor">@{row["autor"]}</div><div class="comment-texto">{row["texto"]}</div><div class="comment-meta">❤️ {int(row["likes"])} likes</div></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="comment-card neg"><div class="comment-autor">@{row["autor"]}</div><div class="comment-texto">{row["texto"]}</div><div class="comment-meta">â¤ï¸ {int(row["likes"])} likes</div></div>', unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     with st.container(border=True):
-        st.markdown('<div class="section-title">Top Comentários por Engajamento</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Top ComentÃ¡rios por Engajamento</div>', unsafe_allow_html=True)
         top_comments = df_social_f.sort_values("likes", ascending=False).head(10).copy()
-        top_comments["Post"] = top_comments["post_url"].apply(lambda url: f'<a href="{url}" target="_blank" style="color:#5C3D1E; font-weight:700;">Ver post ↗</a>')
+        top_comments["Post"] = top_comments["post_url"].apply(lambda url: f'<a href="{url}" target="_blank" style="color:#5C3D1E; font-weight:700;">Ver post â†—</a>')
         top_comments_display = top_comments[["autor", "texto", "sentimento", "likes", "Post"]].copy()
-        top_comments_display.columns = ["Autor", "Comentário", "Sentimento", "Likes", "Post"]
+        top_comments_display.columns = ["Autor", "ComentÃ¡rio", "Sentimento", "Likes", "Post"]
         st.write(top_comments_display.to_html(escape=False, index=False), unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     with st.container(border=True):
-        st.markdown('<div class="section-title">Horário de Maior Engajamento</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">HorÃ¡rio de Maior Engajamento</div>', unsafe_allow_html=True)
         df_social_hora = df_social_f.copy()
         df_social_hora["hora"] = pd.to_datetime(df_social_hora["data_original"], errors="coerce", utc=True).dt.hour
         df_social_hora = df_social_hora.dropna(subset=["hora"])
@@ -725,23 +725,23 @@ elif aba_sel == "Social":
             fig_hora.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=10, b=10, l=10, r=10), coloraxis_showscale=False, xaxis=dict(title="", tickfont=dict(family="Nunito", size=11, color=MARROM)), yaxis=dict(title="", showgrid=False, tickfont=dict(family="Nunito", size=11)), font=dict(family="Nunito"))
             st.plotly_chart(fig_hora, use_container_width=True, key="fig_hora")
         else:
-            st.info("Dados insuficientes para análise de horário.")
+            st.info("Dados insuficientes para anÃ¡lise de horÃ¡rio.")
 
-elif aba_sel == "Notícias":
+elif aba_sel == "NotÃ­cias":
     df_news_f = df_news.copy()
     if cat_sel != "Todas":
         df_news_f = df_news_f[df_news_f["categoria"] == cat_sel]
-    dias = {"Últimos 30 dias": 30, "Últimos 15 dias": 15, "Últimos 7 dias": 7}
+    dias = {"Ãšltimos 30 dias": 30, "Ãšltimos 15 dias": 15, "Ãšltimos 7 dias": 7}
     dias_sel = dias[periodo_sel]
     data_corte = (datetime.now() - timedelta(days=dias_sel)).strftime("%Y-%m-%d")
     df_news_f = df_news_f[pd.to_datetime(df_news_f["publicado_em"], errors="coerce", utc=True) >= pd.Timestamp(data_corte, tz="UTC")]
-    if idioma_sel == "Português":
+    if idioma_sel == "PortuguÃªs":
         df_news_f = df_news_f[df_news_f["categoria"].str.contains("Brasil", na=False)]
-    elif idioma_sel == "Inglês":
+    elif idioma_sel == "InglÃªs":
         df_news_f = df_news_f[~df_news_f["categoria"].str.contains("Brasil", na=False)]
 
     st.markdown(
-        '<div style="font-weight:800; font-size:26px; color:#3D2B1F; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:4px;">Notícias</div>'
+        '<div style="font-weight:800; font-size:26px; color:#3D2B1F; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:4px;">NotÃ­cias</div>'
         '<div style="font-size:13px; color:#8B9A2E; letter-spacing:0.1em; margin-bottom:20px;">OLIVE GARDEN & MERCADO DE A&B</div>',
         unsafe_allow_html=True
     )
@@ -753,7 +753,7 @@ elif aba_sel == "Notícias":
 
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        st.metric("Total de Notícias", f"{total_news}")
+        st.metric("Total de NotÃ­cias", f"{total_news}")
     with c2:
         st.metric("Fontes Diferentes", f"{fontes_unicas}")
     with c3:
@@ -766,7 +766,7 @@ elif aba_sel == "Notícias":
 
     with col_n1:
         with st.container(border=True):
-            st.markdown('<div class="section-title">Notícias por Categoria</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">NotÃ­cias por Categoria</div>', unsafe_allow_html=True)
             cat_count = df_news_f["categoria"].value_counts().reset_index()
             cat_count.columns = ["Categoria", "Total"]
             fig_cat = px.bar(cat_count, x="Total", y="Categoria", orientation="h", color="Total", color_continuous_scale=[[0, BEGE], [1, VERDE]], text="Total")
@@ -800,11 +800,11 @@ elif aba_sel == "Notícias":
 elif aba_sel == "Pesquisa":
     st.markdown(
         '<div style="font-weight:800; font-size:26px; color:#3D2B1F; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:4px;">Pesquisa Interna</div>'
-        '<div style="font-size:13px; color:#8B9A2E; letter-spacing:0.1em; margin-bottom:20px;">SATISFAÇÃO DO CLIENTE — DADOS INTERNOS</div>',
+        '<div style="font-size:13px; color:#8B9A2E; letter-spacing:0.1em; margin-bottom:20px;">SATISFAÃ‡ÃƒO DO CLIENTE â€” DADOS INTERNOS</div>',
         unsafe_allow_html=True
     )
 
-    # Métricas gerais
+    # MÃ©tricas gerais
     total_p = len(df_comments)
     pct_hs = len(df_comments[df_comments["overall_rating"] == "Highly Satisfied"]) / total_p * 100 if total_p > 0 else 0
     pct_s = len(df_comments[df_comments["overall_rating"] == "Satisfied"]) / total_p * 100 if total_p > 0 else 0
@@ -812,9 +812,9 @@ elif aba_sel == "Pesquisa":
     data_min = pd.to_datetime(df_comments["survey_date"], errors="coerce").min()
     data_max = pd.to_datetime(df_comments["survey_date"], errors="coerce").max()
     df_comments_f = df_comments[df_comments["filial"].notna() & (df_comments["filial"] != "nan")].copy()
-    periodo_p = f"{data_min.strftime('%d/%m/%Y')} a {data_max.strftime('%d/%m/%Y')}" if pd.notna(data_min) else "—"
+    periodo_p = f"{data_min.strftime('%d/%m/%Y')} a {data_max.strftime('%d/%m/%Y')}" if pd.notna(data_min) else "â€”"
 
-    st.markdown(f'<div style="font-size:11px; color:#7a5c3a; background:#e8ddc8; padding:4px 12px; border-radius:20px; display:inline-block; margin-bottom:20px;">Período: {periodo_p}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="font-size:11px; color:#7a5c3a; background:#e8ddc8; padding:4px 12px; border-radius:20px; display:inline-block; margin-bottom:20px;">PerÃ­odo: {periodo_p}</div>', unsafe_allow_html=True)
 
     c1, c2, c3, c4 = st.columns(4)
     with c1:
@@ -829,9 +829,9 @@ elif aba_sel == "Pesquisa":
     st.markdown("<br>", unsafe_allow_html=True)
 
 
-    # Análise cruzada 2 — Heatmap de Performance
+    # AnÃ¡lise cruzada 2 â€” Heatmap de Performance
     with st.container(border=True):
-        st.markdown('<div class="section-title">Performance por Dimensão e Filial (% Topbox)</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Performance por DimensÃ£o e Filial (% Topbox)</div>', unsafe_allow_html=True)
         if len(df_perf) > 0:
             df_perf_f = df_perf[df_perf["restaurant"] != "nan"].copy()
             df_perf_f["filial_curta"] = df_perf_f["restaurant"].str.replace("Olive Garden - ", "")
@@ -871,7 +871,7 @@ elif aba_sel == "Pesquisa":
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Opcao A — Evolucao por dimensao com filtro
+    # Opcao A â€” Evolucao por dimensao com filtro
     with st.container(border=True):
         st.markdown('<div class="section-title">Evolucao por Dimensao e Filial</div>', unsafe_allow_html=True)
         if len(df_perf) > 1:
@@ -924,9 +924,9 @@ elif aba_sel == "Pesquisa":
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Opcao C — Small multiples por filial
+    # Opcao C â€” Small multiples por filial
     with st.container(border=True):
-        st.markdown('<div class="section-title">Evolucao por Filial — Todas as Dimensoes</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Evolucao por Filial â€” Todas as Dimensoes</div>', unsafe_allow_html=True)
         if len(df_perf) > 1:
             df_perf_sm = df_perf[df_perf["restaurant"] != "nan"].copy()
             df_perf_sm["filial_curta"] = df_perf_sm["restaurant"].str.replace("Olive Garden - ", "")
@@ -937,7 +937,7 @@ elif aba_sel == "Pesquisa":
             labels_sm = ["Exp. Geral", "Valor", "Atend.", "Sabor", "Velocidade", "Limpeza", "Refil Sopa", "Refil Bread"]
             cores_sm = ["#3D2B1F","#4A90D9","#B8923A","#2e6b3e","#c0392b","#8B7A5A","#E67E22","#9B59B6"]
             filiais_sm = sorted(df_perf_sm["filial_curta"].unique())
-            # Janela deslizante — ultimas 10 semanas
+            # Janela deslizante â€” ultimas 10 semanas
             import re as _re_sm
             _map_sm = {}
             for _pc, _grp in df_perf_sm.groupby("periodo_curto"):
@@ -947,7 +947,7 @@ elif aba_sel == "Pesquisa":
             periodos_disponiveis = sorted(df_perf_sm["periodo_curto"].dropna().unique(), key=lambda x: _map_sm.get(x, pd.Timestamp("2000-01-01")))
             ultimos_13 = periodos_disponiveis[-13:]
             df_perf_sm = df_perf_sm[df_perf_sm["periodo_curto"].isin(ultimos_13)]
-            # Label curto — so FW inicial
+            # Label curto â€” so FW inicial
             df_perf_sm["label_x"] = df_perf_sm["periodo_curto"].str.extract(r"^(FW\d+)")
             # Layout 4 linhas x 2 colunas
             for row_idx in range(4):
@@ -985,7 +985,7 @@ elif aba_sel == "Pesquisa":
     st.markdown("<br>", unsafe_allow_html=True)
 
     with st.container(border=True):
-        st.markdown('<div class="section-title">Satisfação por Filial (% Highly Satisfied)</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">SatisfaÃ§Ã£o por Filial (% Highly Satisfied)</div>', unsafe_allow_html=True)
         sat_filial = df_comments_f.groupby("filial").apply(
             lambda x: len(x[x["overall_rating"] == "Highly Satisfied"]) / len(x) * 100
         ).reset_index()
@@ -1025,11 +1025,11 @@ elif aba_sel == "Pesquisa":
 
         st.markdown("<br>", unsafe_allow_html=True)
     with st.container(border=True):
-        st.markdown('<div class="section-title">Comentários Recentes da Pesquisa</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">ComentÃ¡rios Recentes da Pesquisa</div>', unsafe_allow_html=True)
         df_com_tab = df_comments[["survey_date", "filial", "overall_rating", "comentario"]].copy()
         df_com_tab["survey_date"] = pd.to_datetime(df_com_tab["survey_date"], errors="coerce").dt.strftime("%d/%m/%Y")
         df_com_tab["filial"] = df_com_tab["filial"].str.replace("Olive Garden - ", "")
-        df_com_tab.columns = ["Data", "Filial", "Avaliação", "Comentário"]
+        df_com_tab.columns = ["Data", "Filial", "AvaliaÃ§Ã£o", "ComentÃ¡rio"]
         st.dataframe(df_com_tab.head(30), use_container_width=True, hide_index=True)
 
 elif aba_sel == "Vendas":
@@ -1096,7 +1096,7 @@ elif aba_sel == "Vendas":
             if len(df_if_mtd) == 0:
                 df_if_mtd = df_ifood_vendas[df_ifood_vendas["periodo"].str.contains(f"/{_hoje_ve.month:02d}/{_hoje_ve.year}")] if len(df_ifood_vendas) > 0 else pd.DataFrame()
             fat_if_mtd = df_if_mtd["faturamento"].sum() if len(df_if_mtd) > 0 else 0
-            # iFood filtrado — mesmo periodo do salao (anos e meses selecionados)
+            # iFood filtrado â€” mesmo periodo do salao (anos e meses selecionados)
             if len(df_ifood_vendas) > 0:
                 df_if_ytd = df_ifood_vendas[df_ifood_vendas["logistica"] == "Entrega parceira"].copy()
                 # Filtrar por ano
@@ -1167,7 +1167,7 @@ elif aba_sel == "Vendas":
                         _proj_rest += _media_p * _fdow_p.get(_dt.dayofweek, 1.0) * _fmes_p.get(_mes_proj, 1.0) * _frec_p
                 proj_total = _venda_real_proj + _proj_rest
 
-            # Layout 2x3 — grid CSS
+            # Layout 2x3 â€” grid CSS
             import calendar as _cal_ve
             from datetime import date as _date_ve2
             _hoje_ve2 = _date_ve2.today()
@@ -1185,12 +1185,12 @@ elif aba_sel == "Vendas":
             pct_if2 = fat_if_ytd / fat_total_mtd * 100 if fat_total_mtd > 0 else 0
             ped_if2 = int(df_if_ytd["pedidos"].sum()) if len(df_if_ytd) > 0 else 0
             tm_if2 = fat_if_ytd / ped_if2 if ped_if2 > 0 else 0
-            seta_m2 = "▲" if pct_meta >= 0 else "▼"
+            seta_m2 = "â–²" if pct_meta >= 0 else "â–¼"
             cor_m2 = "#4CAF7D" if pct_meta >= 0 else "#E57373"
-            seta_a2 = "▲" if pct_ano1 >= 0 else "▼"
+            seta_a2 = "â–²" if pct_ano1 >= 0 else "â–¼"
             cor_a2 = "#4CAF7D" if pct_ano1 >= 0 else "#E57373"
             hdc_ve = df_vd_f["venda_por_hdc"].mean() if len(df_vd_f) > 0 else 0
-            hdc_ve_fmt = f"R$ {hdc_ve:.0f}" if pd.notna(hdc_ve) else "—"
+            hdc_ve_fmt = f"R$ {hdc_ve:.0f}" if pd.notna(hdc_ve) else "â€”"
             if len(df_mes_ve) > 0:
                 proj_if_ve = (fat_if_mtd / _dias_realizados_ve * (_dias_no_mes_ve - _dias_realizados_ve)) if _dias_realizados_ve > 0 else 0
                 # proj_total = salao (realizado + projetado)
@@ -1213,7 +1213,7 @@ elif aba_sel == "Vendas":
                     budget_ve = df_mes_ve["meta_venda"].sum() / _dias_realizados_ve * _dias_no_mes_ve if _dias_realizados_ve > 0 else 0
                 pct_proj_ve = (proj_total_ve / budget_ve - 1) * 100 if budget_ve > 0 else 0
                 cor_pv2 = "#4CAF7D" if pct_proj_ve >= 0 else "#E57373"
-                seta_pv2 = "▲" if pct_proj_ve >= 0 else "▼"
+                seta_pv2 = "â–²" if pct_proj_ve >= 0 else "â–¼"
                 proj_ve_fmt = f"R$ {proj_total_ve:,.0f}".replace(",",".")
                 budget_ve_fmt = f"R$ {budget_ve:,.0f}".replace(",",".")
                 _proj_html = (
@@ -1282,7 +1282,7 @@ elif aba_sel == "Vendas":
 
         # Evolucao acumulada
         with st.container(border=True):
-            st.markdown('<div class="section-title">Evolucao Acumulada — Salao</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">Evolucao Acumulada â€” Salao</div>', unsafe_allow_html=True)
             df_evo = df_vd_f.groupby("data").agg(venda_salao=("venda_salao","sum"), meta_venda=("meta_venda","sum"), venda_ano1=("venda_ano1","sum")).reset_index().sort_values("data")
             fig_evo = go.Figure()
             fig_evo.add_trace(go.Scatter(x=df_evo["data"], y=df_evo["venda_salao"].cumsum(), mode="lines", name="Realizado", line=dict(color=VERDE, width=3)))
@@ -1344,7 +1344,7 @@ elif aba_sel == "Vendas":
                 df_rank_vd = df_rank_vd.sort_values("pct_meta", ascending=True)
                 for _, row in df_rank_vd.iterrows():
                     cor_b = "#2e6b3e" if row["pct_meta"] >= 0 else "#c0392b"
-                    seta_b = "▲" if row["pct_meta"] >= 0 else "▼"
+                    seta_b = "â–²" if row["pct_meta"] >= 0 else "â–¼"
                     vd_fmt = f"R$ {row['total_mes']:,.0f}".replace(",",".")
                     proj_str = f" | Proj: R$ {row['proj_ger']:,.0f}".replace(",",".") if row["proj_ger"] else ""
                     st.markdown(f'<div style="padding:8px 0; border-bottom:1px solid #e8ddc8; display:flex; justify-content:space-between; align-items:center;"><span style="font-size:12px; font-weight:700; color:#3D2B1F;">{row["filial_curta"]}</span><div style="text-align:right;"><div style="font-size:12px; color:#3D2B1F;">{vd_fmt}{proj_str}</div><div style="font-size:12px; color:{cor_b}; font-weight:700;">{seta_b} {row["pct_meta"]:+.1f}% vs Budget</div></div></div>', unsafe_allow_html=True)
@@ -1385,12 +1385,12 @@ elif aba_sel == "Vendas":
 
         # MTD / YTD Performance vs Budget por Filial
         with st.container(border=True):
-            st.markdown('<div class="section-title">Performance por Filial — Salao + iFood vs Meta</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">Performance por Filial â€” Salao + iFood vs Meta</div>', unsafe_allow_html=True)
             _visao_mtd_ytd = st.radio("", ["MTD", "YTD"], horizontal=True, key="visao_mtd_ytd")
             from datetime import date as _dt_my
             _hoje_my = _dt_my.today()
             if _visao_mtd_ytd == "MTD":
-                _label_my = f"MTD — 01/{_hoje_my.month:02d}/{_hoje_my.year} a {_hoje_my.strftime('%d/%m/%Y')}"
+                _label_my = f"MTD â€” 01/{_hoje_my.month:02d}/{_hoje_my.year} a {_hoje_my.strftime('%d/%m/%Y')}"
                 _df_ytd_s = df_vd[
                     (df_vd["data"].dt.month == _hoje_my.month) &
                     (df_vd["data"].dt.year == _hoje_my.year) &
@@ -1400,7 +1400,7 @@ elif aba_sel == "Vendas":
                     meta_ytd=("meta_venda","sum")
                 ).reset_index()
             else:
-                _label_my = f"YTD — 01/01/{_hoje_my.year} a {_hoje_my.strftime('%d/%m/%Y')}"
+                _label_my = f"YTD â€” 01/01/{_hoje_my.year} a {_hoje_my.strftime('%d/%m/%Y')}"
                 _df_ytd_s = df_vd[
                     (df_vd["data"].dt.year == _hoje_my.year) &
                     df_vd["filial_curta"].isin(filiais_sel)
@@ -1408,7 +1408,7 @@ elif aba_sel == "Vendas":
                     salao=("venda_salao","sum"),
                     meta_ytd=("meta_venda","sum")
                 ).reset_index()
-            st.markdown(f'<div style="font-size:11px;color:#8B7A5A;margin-bottom:12px;">{_label_my} — venda realizada (salao + iFood) vs meta do periodo.</div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="font-size:11px;color:#8B7A5A;margin-bottom:12px;">{_label_my} â€” venda realizada (salao + iFood) vs meta do periodo.</div>', unsafe_allow_html=True)
             _filiais_if_ytd = ["Olive Garden - " + f for f in filiais_sel if f in ["Morumbi","Center Norte","Dom Pedro","Aricanduva"]]
             if len(df_ifood_vendas) > 0 and _filiais_if_ytd:
                 # Filtro de periodo: MTD = mes corrente, YTD = ano inteiro
@@ -1441,7 +1441,7 @@ elif aba_sel == "Vendas":
                 _half_bar = min(abs(_row["pct_ytd"]) / _escala * 50, 50)
                 _vd_ytd   = f"R$ {_row['total_ytd']:,.0f}".replace(",",".")
                 _mt_ytd   = f"R$ {_row['meta_ytd']:,.0f}".replace(",",".")
-                _seta_ytd = "▲" if _pos_ytd else "▼"
+                _seta_ytd = "â–²" if _pos_ytd else "â–¼"
                 _bar_html = (f'<div style="position:absolute;left:50%;top:0;height:100%;width:{_half_bar:.1f}%;background:{_cor_ytd};border-radius:0 3px 3px 0;"></div>'
                             if _pos_ytd else
                             f'<div style="position:absolute;right:50%;top:0;height:100%;width:{_half_bar:.1f}%;background:{_cor_ytd};border-radius:3px 0 0 3px;"></div>')
@@ -1459,7 +1459,7 @@ elif aba_sel == "Vendas":
   </div>
 </div>''', unsafe_allow_html=True)
             _cor_r  = "#2e6b3e" if _rede_pct_ytd >= 0 else "#c0392b"
-            _seta_r = "▲" if _rede_pct_ytd >= 0 else "▼"
+            _seta_r = "â–²" if _rede_pct_ytd >= 0 else "â–¼"
             st.markdown(f'''<div style="padding:10px 0;margin-top:4px;border-top:2px solid #3D2B1F;">
   <div style="display:flex;justify-content:space-between;align-items:center;">
     <span style="font-size:13px;font-weight:800;color:#3D2B1F;">REDE TOTAL</span>
@@ -1528,9 +1528,9 @@ elif aba_sel == "Vendas":
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # Visao Diaria — Ultimas 5 Semanas
+        # Visao Diaria â€” Ultimas 5 Semanas
         with st.container(border=True):
-            st.markdown('<div class="section-title">Visao Diaria — Ultimas 5 Semanas</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">Visao Diaria â€” Ultimas 5 Semanas</div>', unsafe_allow_html=True)
             st.markdown('<div style="font-size:11px;color:#8B7A5A;margin-bottom:12px;">Venda diaria do salao + iFood nas ultimas 5 semanas ISO. Linha tracejada = meta diaria.</div>', unsafe_allow_html=True)
             from datetime import date as _dt_sem, timedelta as _td_sem
             _hoje_sem = _dt_sem.today()
@@ -1593,9 +1593,9 @@ elif aba_sel == "Vendas":
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # Acumulado Semanal — Ultimas 5 Semanas vs Mesma Semana ISO Ano Anterior
+        # Acumulado Semanal â€” Ultimas 5 Semanas vs Mesma Semana ISO Ano Anterior
         with st.container(border=True):
-            st.markdown('<div class="section-title">Acumulado Semanal — Ultimas 5 Semanas vs Mesmo Periodo 2025</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">Acumulado Semanal â€” Ultimas 5 Semanas vs Mesmo Periodo 2025</div>', unsafe_allow_html=True)
             st.markdown('<div style="font-size:11px;color:#8B7A5A;margin-bottom:12px;">Comparativo por semana ISO. Semana corrente (parcial) indicada com padrao listrado. Linha tracejada = meta semanal.</div>', unsafe_allow_html=True)
             _df_sem26 = df_vd[
                 (df_vd["data"].dt.date >= _ini_5sem) &
@@ -1656,7 +1656,7 @@ elif aba_sel == "Vendas":
 
         # HDC por filial
         with st.container(border=True):
-            st.markdown('<div class="section-title">Produtividade — Venda por HDC e por Assento</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">Produtividade â€” Venda por HDC e por Assento</div>', unsafe_allow_html=True)
             ASSENTOS = {"Aricanduva": 174, "Center Norte": 173, "Dom Pedro": 241, "Guarulhos GRU2": 212, "Guarulhos GRU3": 124, "Morumbi": 300, "Tambore": 198}
             from datetime import date as _date
             _hoje = df_vd["data"].max()
@@ -1926,7 +1926,7 @@ elif aba_sel == "Vendas":
             st.plotly_chart(fig_evo_fil, use_container_width=True, key="fig_evo_fil_ifood")
 
         with st.container(border=True):
-            st.markdown('<div class="section-title">Vendas Diarias — Mes Corrente</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">Vendas Diarias â€” Mes Corrente</div>', unsafe_allow_html=True)
             st.markdown('<div style="font-size:12px;color:#8B7A5A;margin-bottom:12px;">Faturamento iFood por dia do mes corrente. Atualizado diariamente.</div>', unsafe_allow_html=True)
             if len(df_ifood_diario) > 0:
                 df_id = df_ifood_diario.copy()
@@ -2190,45 +2190,45 @@ elif aba_sel == "OlivIA":
     OLIVIA_SYSTEM = """Voce e a OlivIA, analista de dados virtual do Olive Garden Brasil.
 Voce tem acesso ao banco de dados PostgreSQL (Supabase) com as seguintes tabelas:
 
-1. vendas_diarias — colunas: data, filial, ano, mes, venda_salao, meta_venda, venda_ano1, gc_salao, ticket_total, hdc, venda_por_hdc
+1. vendas_diarias â€” colunas: data, filial, ano, mes, venda_salao, meta_venda, venda_ano1, gc_salao, ticket_total, hdc, venda_por_hdc
    Filiais: Olive Garden - Morumbi, Olive Garden - Center Norte, Olive Garden - Dom Pedro, Olive Garden - Aricanduva, Olive Garden - Guarulhos GRU2, Olive Garden - Guarulhos GRU3
    Siglas: MOR=Morumbi, CNO=Center Norte, DPO=Dom Pedro, ARI=Aricanduva, GRU2=Guarulhos GRU2, GRU3=Guarulhos GRU3
 
-2. ifood_vendas — colunas: periodo, filial, logistica, pedidos, faturamento, taxa_entrega, ticket_medio, novos_clientes
+2. ifood_vendas â€” colunas: periodo, filial, logistica, pedidos, faturamento, taxa_entrega, ticket_medio, novos_clientes
    Apenas 4 filiais tem iFood: Morumbi, Center Norte, Dom Pedro, Aricanduva
 
-3. ifood_diario — colunas: data, filial, pedidos, faturamento, taxa_entrega, ticket_medio, novos_clientes
+3. ifood_diario â€” colunas: data, filial, pedidos, faturamento, taxa_entrega, ticket_medio, novos_clientes
    Dados diarios do iFood do mes corrente
 
-4. reclamacoes_buzzmonitor — colunas: data, comentario, canal, sentimento, avaliacao, unidade, unidade_curta, tema, subtema
+4. reclamacoes_buzzmonitor â€” colunas: data, comentario, canal, sentimento, avaliacao, unidade, unidade_curta, tema, subtema
    Canal: google_my_business ou instagram. Periodo: jan-jun 2026
 
-5. reviews — colunas: filial, plataforma, nota, sentimento, texto, data
+5. reviews â€” colunas: filial, plataforma, nota, sentimento, texto, data
    Plataformas: iFood (761 reviews, nota 4.8), Google Reviews (30), TripAdvisor (113)
 
-6. pesquisa_performance — colunas: periodo, restaurant, overall_experience, value, service, taste, speed_of_service, clean, soup_salad_refill, breadstick_refill
+6. pesquisa_performance â€” colunas: periodo, restaurant, overall_experience, value, service, taste, speed_of_service, clean, soup_salad_refill, breadstick_refill
    Metricas em percentual (0-100)
 
-7. pesquisa_comments — colunas: survey_date, filial, overall_rating, verbatim, period
+7. pesquisa_comments â€” colunas: survey_date, filial, overall_rating, verbatim, period
    overall_rating: Highly Satisfied, Satisfied, Dissatisfied, Highly Dissatisfied
 
-8. fila_espera — colunas: dia_chegada, hora_chegada, pessoas, duracao_minutos, status, unidade
+8. fila_espera â€” colunas: dia_chegada, hora_chegada, pessoas, duracao_minutos, status, unidade
    Status: Sentado, Cancelado por solicitacao do cliente, Cancelado pelo cliente, Cancelado por no-show do cliente
 
-9. menu_analysis — colunas: semana_ref, item, type, number_of_checks, gross_sales, ct_gross_total_check_avg, check_uplift, revenue_score
+9. menu_analysis â€” colunas: semana_ref, item, type, number_of_checks, gross_sales, ct_gross_total_check_avg, check_uplift, revenue_score
    type (Boston): Star, Plow Horse, Puzzle, Dog
 
-10. projecoes_historico — colunas: data_alvo, filial, valor_projetado, valor_realizado, erro_pct
+10. projecoes_historico â€” colunas: data_alvo, filial, valor_projetado, valor_realizado, erro_pct
     Projecoes de vendas dos proximos 28 dias
 
-11. calendario_eventos — colunas: data_inicio, data_fim, filial, nome_evento, tipo, observacao
+11. calendario_eventos â€” colunas: data_inicio, data_fim, filial, nome_evento, tipo, observacao
 
 Regras:
 - Responda SEMPRE em portugues brasileiro
 - Para perguntas sobre dados, gere uma query SQL e apresente os resultados em tabela markdown + analise
 - Use linguagem executiva, direta e objetiva
 - Quando nao souber, diga claramente
-- Nunca execute UPDATE, DELETE, DROP ou INSERT — apenas SELECT
+- Nunca execute UPDATE, DELETE, DROP ou INSERT â€” apenas SELECT
 - Contexto atual: junho 2026, Copa do Mundo em andamento, rede com 6 filiais em SP
 
 Formato da resposta:
@@ -2236,7 +2236,7 @@ Formato da resposta:
 2. Tabela com os dados (markdown)
 3. Analise executiva (3-5 bullets com insights)
 Regras SQL importantes para PostgreSQL/Supabase:
-- Use ROUND(valor::numeric, 2) para arredondamento — NUNCA ROUND(double_precision, integer)
+- Use ROUND(valor::numeric, 2) para arredondamento â€” NUNCA ROUND(double_precision, integer)
 - Para percentuais: ROUND((a::numeric / NULLIF(b::numeric,0)) * 100, 1)
 - Datas: EXTRACT(year FROM data), EXTRACT(month FROM data)
 - Filiais sempre com nome completo: "Olive Garden - Morumbi" etc
@@ -2245,7 +2245,7 @@ Regras SQL importantes para PostgreSQL/Supabase:
 - Sempre use aliases claros nas colunas (AS faturamento_total, etc)
 - Limite resultados com LIMIT 50 quando nao for agregacao
 - Para cruzar vendas_diarias com ifood_vendas, use EXTRACT(month FROM data) para o mes de vendas_diarias e extraia o mes do campo periodo de ifood_vendas com EXTRACT(month FROM TO_DATE(SPLIT_PART(periodo, ' - ', 1), 'DD/MM/YYYY'))
-- O campo mes em vendas_diarias e VARCHAR (ex: "jan", "fev") — nunca faca join direto com numeros
+- O campo mes em vendas_diarias e VARCHAR (ex: "jan", "fev") â€” nunca faca join direto com numeros
 - Para cruzar por mes/ano entre tabelas, sempre use EXTRACT nas datas
 - Exemplo de join correto entre vendas e ifood:
   SELECT EXTRACT(month FROM v.data) as mes_num, SUM(v.venda_salao) as salao, SUM(i.faturamento) as ifood
@@ -2259,11 +2259,11 @@ Regras SQL importantes para PostgreSQL/Supabase:
 VALORES REAIS DO BANCO (use como referencia para validar suas queries):
 - Venda Salao YTD 2026 Morumbi: ~R$ 13.3M | Aricanduva: ~R$ 4.1M
 - iFood YTD 2026 (Entrega parceira apenas): Morumbi R$ 446k | Aricanduva R$ 232k | Center Norte R$ 348k | Dom Pedro R$ 173k
-- NUNCA some venda_salao como faturamento iFood — sao tabelas diferentes
+- NUNCA some venda_salao como faturamento iFood â€” sao tabelas diferentes
 - Para faturamento iFood use SEMPRE: SELECT SUM(faturamento) FROM ifood_vendas WHERE logistica = 'Entrega parceira'
 - Para share iFood: faturamento_ifood / (venda_salao + faturamento_ifood) * 100
 - ifood_vendas tem apenas 4 filiais: Morumbi, Center Norte, Dom Pedro, Aricanduva
-- GRU2 e GRU3 NAO tem iFood — nunca inclua no calculo de share iFood
+- GRU2 e GRU3 NAO tem iFood â€” nunca inclua no calculo de share iFood
 - Queries de share devem filtrar vendas_diarias apenas para as 4 filiais com iFood quando comparando com iFood
 
 QUERY CORRETA para share iFood por filial YTD 2026:
@@ -2299,19 +2299,19 @@ ORDER BY share_ifood DESC
 
     # Exibir historico
     for msg in st.session_state.olivia_messages:
-        with st.chat_message(msg["role"], avatar="🫒" if msg["role"] == "assistant" else "👤"):
+        with st.chat_message(msg["role"], avatar="ðŸ«’" if msg["role"] == "assistant" else "ðŸ‘¤"):
             st.markdown(msg["content"])
 
     # Input do usuario
-    pergunta = st.chat_input("Faça uma pergunta sobre os dados do Olive Garden...")
+    pergunta = st.chat_input("FaÃ§a uma pergunta sobre os dados do Olive Garden...")
 
     if pergunta:
         # Adicionar pergunta ao historico
         st.session_state.olivia_messages.append({"role": "user", "content": pergunta})
-        with st.chat_message("user", avatar="👤"):
+        with st.chat_message("user", avatar="ðŸ‘¤"):
             st.markdown(pergunta)
 
-        with st.chat_message("assistant", avatar="🫒"):
+        with st.chat_message("assistant", avatar="ðŸ«’"):
             with st.spinner("OlivIA analisando..."):
                 try:
                     client = _anthropic.Anthropic()
@@ -2321,7 +2321,7 @@ ORDER BY share_ifood DESC
                     for m in st.session_state.olivia_messages[:-1]:
                         messages_llm.append({"role": m["role"], "content": m["content"]})
 
-                    # Primeira chamada — gerar SQL
+                    # Primeira chamada â€” gerar SQL
                     messages_llm.append({
                         "role": "user",
                         "content": f"""{pergunta}
@@ -2348,7 +2348,7 @@ Depois apresente a analise. Se nao precisar de SQL, responda diretamente."""
                         sql_match = _re.search(r"`sql\s*(.*?)\s*`", resposta1, _re.DOTALL | _re.IGNORECASE)
                         if sql_match:
                             sql = sql_match.group(1).strip()
-                            # Seguranca — apenas SELECT
+                            # Seguranca â€” apenas SELECT
                             sql_upper = sql.upper().strip()
                             if any(sql_upper.startswith(w) for w in ["UPDATE","DELETE","DROP","INSERT","ALTER","TRUNCATE"]):
                                 resposta_final = "Nao posso executar operacoes de escrita no banco."
@@ -2360,7 +2360,7 @@ Depois apresente a analise. Se nao precisar de SQL, responda diretamente."""
                                     tabela += "| " + " | ".join(["---"]*len(cols)) + " |\n"
                                     for row in rows[:50]:
                                         tabela += "| " + " | ".join([str(v) if v is not None else "\u2014" for v in row]) + " |\n"
-                                    # Segunda chamada — analise com os dados
+                                    # Segunda chamada â€” analise com os dados
                                     messages_llm2 = messages_llm + [
                                         {"role": "assistant", "content": resposta1},
                                         {"role": "user", "content": "Aqui estao os dados retornados pelo banco:\n\n" + tabela + "\nAgora apresente a analise executiva completa com a tabela e insights."}
@@ -2386,7 +2386,7 @@ Depois apresente a analise. Se nao precisar de SQL, responda diretamente."""
     # Botao limpar historico
     if st.session_state.olivia_messages:
         st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("🗑️ Limpar conversa", key="limpar_olivia"):
+        if st.button("ðŸ—‘ï¸ Limpar conversa", key="limpar_olivia"):
             st.session_state.olivia_messages = []
             st.rerun()
 
@@ -2408,9 +2408,9 @@ elif aba_sel == "Analises":
     rep_pub["filial_curta"] = rep_pub["filial"].str.replace("Olive Garden - ", "", regex=False)
 
 
-    # BLOCO 3 — Score Preditivo de Risco
+    # BLOCO 3 â€” Score Preditivo de Risco
     with st.container(border=True):
-        st.markdown('<div class="section-title">Score Preditivo de Risco — Proximos 30 Dias</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Score Preditivo de Risco â€” Proximos 30 Dias</div>', unsafe_allow_html=True)
         st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Combina tendencia de vendas, trajetoria GSS e sentimento publico para identificar filiais com risco de deterioracao antes que os indicadores lagging sinalizem. Quanto maior o score, maior o risco.</div>', unsafe_allow_html=True)
 
         with st.expander("Metodologia do Score Preditivo de Risco"):
@@ -2418,18 +2418,18 @@ elif aba_sel == "Analises":
 **O que e?** Um indice composto (0-100) que combina tres dimensoes de saude operacional para antecipar deterioracao antes que ela apareca nos indicadores tradicionais.
 
 **Composicao:**
-- **Tendencia de Vendas (50%)** — compara a media diaria das ultimas 8 semanas vs o mesmo periodo do ano anterior. Queda > 5% gera risco proporcional.
-- **GSS Experiencia Interna (30%)** — usa o % de insatisfacao do periodo mais recente. Quanto menor o GSS, maior o risco.
-- **Reputacao Publica (20%)** — complemento do indice de reputacao publico. Reputacao degradada amplifica o risco.
+- **Tendencia de Vendas (50%)** â€” compara a media diaria das ultimas 8 semanas vs o mesmo periodo do ano anterior. Queda > 5% gera risco proporcional.
+- **GSS Experiencia Interna (30%)** â€” usa o % de insatisfacao do periodo mais recente. Quanto menor o GSS, maior o risco.
+- **Reputacao Publica (20%)** â€” complemento do indice de reputacao publico. Reputacao degradada amplifica o risco.
 
 **Niveis de risco:**
-- Score < 12 — BAIXO: operacao saudavel, monitoramento padrao
-- Score 12-25 — MEDIO: atencao requerida, investigar causa raiz
-- Score > 25 — ALTO: acao imediata, risco real de deterioracao acelerada
+- Score < 12 â€” BAIXO: operacao saudavel, monitoramento padrao
+- Score 12-25 â€” MEDIO: atencao requerida, investigar causa raiz
+- Score > 25 â€” ALTO: acao imediata, risco real de deterioracao acelerada
 
 **Por que esses pesos?** Vendas e o indicador mais sensivel e de resposta mais rapida (dados diarios). GSS captura a experiencia antes que vire review publico. Reputacao e o mais lagging dos tres, por isso tem menor peso.
 
-**Limitacoes:** base historica de ~17 meses — pesos e limiares serao refinados conforme mais dados acumulam. Nao prevê eventos externos (feriados, obras, eventos no shopping).
+**Limitacoes:** base historica de ~17 meses â€” pesos e limiares serao refinados conforme mais dados acumulam. Nao prevÃª eventos externos (feriados, obras, eventos no shopping).
             """)
         @st.cache_data(ttl=3600)
         def carregar_vendas_risco():
@@ -2497,9 +2497,9 @@ elif aba_sel == "Analises":
     st.markdown("<br>", unsafe_allow_html=True)
 
 
-    # BLOCO 6 — Projecao de Vendas 4 Semanas (Ensemble STL + Ano Anterior)
+    # BLOCO 6 â€” Projecao de Vendas 4 Semanas (Ensemble STL + Ano Anterior)
     with st.container(border=True):
-        st.markdown('<div class="section-title">Projecao de Vendas — Proximas 4 Semanas</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Projecao de Vendas â€” Proximas 4 Semanas</div>', unsafe_allow_html=True)
         st.markdown('<div style="font-size:12px; color:#8B7A5A; margin-bottom:16px;">Modelo ensemble: STL (sazonalidade semanal + mensal + tendencia) combinado com ano anterior. Pesos calculados automaticamente por backtest de 3 janelas por filial. MAPE mediano da rede: ~20%.</div>', unsafe_allow_html=True)
 
         from datetime import timedelta
@@ -2618,7 +2618,7 @@ elif aba_sel == "Analises":
                 st.markdown(f'''<div style="background:#3D2B1F; border-radius:10px; padding:14px; text-align:center; border-top:4px solid {cor_f}; margin-bottom:8px;">
                     <div style="font-size:9px; color:#D8CFC0; letter-spacing:2px; margin-bottom:6px;">{res["filial"].upper()}</div>
                     <div style="font-size:20px; font-weight:800; color:#F5F0E8; margin-bottom:4px;">R$ {total/1000:.0f}k</div>
-                    <div style="font-size:10px; color:#D8CFC0; margin-bottom:6px;">[{low/1000:.0f}k — {high/1000:.0f}k]</div>
+                    <div style="font-size:10px; color:#D8CFC0; margin-bottom:6px;">[{low/1000:.0f}k â€” {high/1000:.0f}k]</div>
                     <div style="font-size:10px; color:#8B9A2E;">STL {peso_stl:.0%} / Ano Ant {res["peso_a1"]:.0%}</div>
                     </div>''', unsafe_allow_html=True)
 
@@ -2700,7 +2700,7 @@ elif aba_sel == "Menu":
 
         # BLOCO 1 - RESUMO BCG
         COR_BCG = {"Star":"#B8923A","Puzzle":"#4A90D9","Horse":"#2e6b3e","Dog":VERMELHO}
-        DESC_BCG = {"Star":"Alta receita · Alta margem","Puzzle":"Alta margem · Baixa venda","Horse":"Alta venda · Baixa margem","Dog":"Baixa venda · Baixa margem"}
+        DESC_BCG = {"Star":"Alta receita Â· Alta margem","Puzzle":"Alta margem Â· Baixa venda","Horse":"Alta venda Â· Baixa margem","Dog":"Baixa venda Â· Baixa margem"}
         col_b1, col_b2, col_b3, col_b4 = st.columns(4)
         for col, tipo in zip([col_b1,col_b2,col_b3,col_b4],["Star","Puzzle","Horse","Dog"]):
             df_t = df_m[df_m["type"]==tipo]
@@ -2717,7 +2717,7 @@ elif aba_sel == "Menu":
                         f'<div style="font-size:10px;color:#8B7A5A;">itens</div>'
                         f'<div style="margin:8px 0;background:#e8ddc8;border-radius:3px;height:4px;">'
                         f'<div style="background:{cor};width:{min(pct*2,100):.0f}%;height:4px;border-radius:3px;"></div></div>'
-                        f'<div style="font-size:11px;color:{cor};font-weight:700;">{receita_fmt} · {pct:.0f}%</div>'
+                        f'<div style="font-size:11px;color:{cor};font-weight:700;">{receita_fmt} Â· {pct:.0f}%</div>'
                         f'<div style="font-size:9px;color:#8B7A5A;margin-top:2px;">{DESC_BCG[tipo]}</div>'
                         f'</div>',
                         unsafe_allow_html=True)
@@ -2732,7 +2732,7 @@ elif aba_sel == "Menu":
                 cor = COR_BCG.get(str(row["type"]), MARROM)
                 day = str(row["most_popular_day"])[:3] if pd.notna(row.get("most_popular_day")) else ""
                 part = str(row["most_popular_day_part"]) if pd.notna(row.get("most_popular_day_part")) else ""
-                day_info = f"{day} · {part}" if day and part else (day or part)
+                day_info = f"{day} Â· {part}" if day and part else (day or part)
                 receita_str = f"R$ {row['gross_sales']/1000:.0f}k"
                 qtd_str = f"{int(row['total_quantity']):,}".replace(",",".")
                 lucro_str = f"R$ {row['profit']/1000:.0f}k"
@@ -2753,8 +2753,8 @@ elif aba_sel == "Menu":
 
         # BLOCO 3 - BASKET ANALYSIS
         with st.container(border=True):
-            st.markdown('<div class="section-title">Basket Analysis — O que pedem junto?</div>', unsafe_allow_html=True)
-            st.markdown('<div style="font-size:11px;color:#8B7A5A;margin-bottom:12px;">Selecione um prato para ver os itens mais pedidos juntos — oportunidade de upsell e treinamento de equipe.</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">Basket Analysis â€” O que pedem junto?</div>', unsafe_allow_html=True)
+            st.markdown('<div style="font-size:11px;color:#8B7A5A;margin-bottom:12px;">Selecione um prato para ver os itens mais pedidos juntos â€” oportunidade de upsell e treinamento de equipe.</div>', unsafe_allow_html=True)
             itens_disp = sorted(df_m[df_m["basket_1"].notna()]["item"].unique().tolist())
             item_sel = st.selectbox("Prato:", itens_disp, key="menu_basket_item")
             df_row = df_m[df_m["item"]==item_sel]
@@ -2822,7 +2822,7 @@ elif aba_sel == "Fila":
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # BLOCO 1 — KPIs
+        # BLOCO 1 â€” KPIs
         with st.container(border=True):
             st.markdown('<div class="section-title">Resumo Executivo</div>', unsafe_allow_html=True)
             total = len(df_ff)
@@ -2842,11 +2842,11 @@ elif aba_sel == "Fila":
             with col_k5: st.metric("No-show", noshow)
             with col_k6:
                 cor_esp = "#2e6b3e" if pd.notna(espera_media) and espera_media<=15 else "#B8923A" if pd.notna(espera_media) and espera_media<=30 else VERMELHO
-                st.markdown(f'<div style="text-align:center;"><div style="font-size:12px;color:#8B7A5A;">Espera Media</div><div style="font-size:24px;font-weight:700;color:{cor_esp};">{espera_media:.0f} min</div></div>' if pd.notna(espera_media) else '<div style="text-align:center;"><div style="font-size:12px;color:#8B7A5A;">Espera Media</div><div style="font-size:24px;font-weight:700;color:#8B7A5A;">—</div></div>', unsafe_allow_html=True)
+                st.markdown(f'<div style="text-align:center;"><div style="font-size:12px;color:#8B7A5A;">Espera Media</div><div style="font-size:24px;font-weight:700;color:{cor_esp};">{espera_media:.0f} min</div></div>' if pd.notna(espera_media) else '<div style="text-align:center;"><div style="font-size:12px;color:#8B7A5A;">Espera Media</div><div style="font-size:24px;font-weight:700;color:#8B7A5A;">â€”</div></div>', unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # BLOCO 2 — CONVERSAO E ESPERA
+        # BLOCO 2 â€” CONVERSAO E ESPERA
         with st.container(border=True):
             st.markdown('<div class="section-title">Conversao e Tempo de Espera</div>', unsafe_allow_html=True)
             col_c1, col_c2 = st.columns(2)
@@ -2854,7 +2854,7 @@ elif aba_sel == "Fila":
                 st.markdown('<div style="font-size:11px;font-weight:700;color:#8B9A2E;margin-bottom:8px;">Status da Fila</div>', unsafe_allow_html=True)
                 status_cnt = df_ff["status"].value_counts().reset_index()
                 status_cnt.columns = ["status","n"]
-                cores_status = {"Sentado":"#2e6b3e","Cancelado por solicitação do cliente":"#B8923A","Cancelado pelo cliente":VERMELHO,"Cancelado por no-show do cliente":"#8B7A5A"}
+                cores_status = {"Sentado":"#2e6b3e","Cancelado por solicitaÃ§Ã£o do cliente":"#B8923A","Cancelado pelo cliente":VERMELHO,"Cancelado por no-show do cliente":"#8B7A5A"}
                 fig_status = go.Figure(go.Pie(
                     labels=status_cnt["status"], values=status_cnt["n"],
                     marker_colors=[cores_status.get(s, MARROM) for s in status_cnt["status"]],
@@ -2879,9 +2879,9 @@ elif aba_sel == "Fila":
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # BLOCO 3 — HEATMAP HORA x DIA
+        # BLOCO 3 â€” HEATMAP HORA x DIA
         with st.container(border=True):
-            st.markdown('<div class="section-title">Heatmap — Volume de Filas por Hora e Dia</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">Heatmap â€” Volume de Filas por Hora e Dia</div>', unsafe_allow_html=True)
             df_heat = df_ff.dropna(subset=["hora_num","dow"]).copy()
             df_heat["dow_label"] = df_heat["dow"].map(dias_label)
             pivot_heat = df_heat.groupby(["hora_num","dow"]).size().reset_index(name="n")
@@ -2905,7 +2905,7 @@ elif aba_sel == "Fila":
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # BLOCO 4 — ESPERA POR DIA E TURNO
+        # BLOCO 4 â€” ESPERA POR DIA E TURNO
         with st.container(border=True):
             st.markdown('<div class="section-title">Tempo Medio de Espera por Dia e Turno</div>', unsafe_allow_html=True)
             col_d1, col_d2 = st.columns(2)
@@ -2944,7 +2944,7 @@ elif aba_sel == "Fila":
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # BLOCO 5 — TAMANHO DO GRUPO
+        # BLOCO 5 â€” TAMANHO DO GRUPO
         with st.container(border=True):
             st.markdown('<div class="section-title">Tamanho do Grupo</div>', unsafe_allow_html=True)
             col_g1, col_g2 = st.columns(2)
@@ -2985,7 +2985,7 @@ elif aba_sel == "Fila":
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # BLOCO 6 — EVOLUCAO MENSAL
+        # BLOCO 6 â€” EVOLUCAO MENSAL
         with st.container(border=True):
             st.markdown('<div class="section-title">Evolucao Mensal</div>', unsafe_allow_html=True)
             evo_mes = df_fe.groupby("mes").agg(
@@ -3014,9 +3014,10 @@ elif aba_sel == "Fila":
 
 st.markdown(
     '<div style="text-align:center; font-size:10px; color:#B8A898; letter-spacing:0.1em; padding-top:20px;">'
-    'OLIVE GARDEN BRAND INTELLIGENCE © 2026</div>',
+    'OLIVE GARDEN BRAND INTELLIGENCE Â© 2026</div>',
     unsafe_allow_html=True
 )
+
 
 
 
