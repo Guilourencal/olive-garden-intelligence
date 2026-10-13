@@ -298,7 +298,7 @@ with st.sidebar:
     st.markdown('<div style="height:1px; background:rgba(255,255,255,0.1); margin-bottom:10px;"></div>', unsafe_allow_html=True)
 
     aba_sel = st.session_state.aba_sel
-    for aba in ["Reviews", "Social", "Pesquisa", "Analises", "Vendas", "OlivIA", "Menu", "Fila", "Keeta"]:
+    for aba in ["Reviews", "Social", "Pesquisa", "Analises", "Vendas", "OlivIA", "Menu", "Fila"]:
         if aba == aba_sel:
             st.markdown(f'<span class="nav-ativo">{aba}</span>', unsafe_allow_html=True)
         else:
@@ -1036,7 +1036,7 @@ elif aba_sel == "Vendas":
     st.markdown('''<div style="font-weight:800; font-size:26px; color:#3D2B1F; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:4px;">Vendas</div>
     <div style="font-size:13px; color:#8B9A2E; letter-spacing:0.1em; margin-bottom:20px;">PERFORMANCE FINANCEIRA</div>''', unsafe_allow_html=True)
 
-    visao_sel = st.radio("", ["Operacao Geral", "iFood"], horizontal=True, key="visao_vendas")
+    visao_sel = st.radio("", ["Operacao Geral", "iFood", "Keeta"], horizontal=True, key="visao_vendas")
     st.markdown("<br>", unsafe_allow_html=True)
 
     if visao_sel == "Operacao Geral":
@@ -2102,6 +2102,118 @@ elif aba_sel == "Vendas":
                 fig_pag = go.Figure(go.Pie(labels=df_pag["forma_pagamento"], values=df_pag["pedidos"], hole=0.5, textinfo="label+percent", textfont=dict(family="Nunito", size=12), marker=dict(colors=[VERDE,"#B8923A","#3D7A5C","#7A3D3D","#3D5A7A","#7A5C3D","#5C7A3D","#7A6B3D"])))
                 fig_pag.update_layout(paper_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), legend=dict(font=dict(family="Nunito", size=11, color=MARROM)), font=dict(family="Nunito"), height=320)
                 st.plotly_chart(fig_pag, use_container_width=True, key="fig_pag_v")
+    elif visao_sel == "Keeta":
+        import calendar as _kcal
+        from datetime import datetime as _kdt, date as _kdate
+        _khoje = _kdate.today()
+        _kmes, _kano = _khoje.month, _khoje.year
+        _kdias_mes = _kcal.monthrange(_kano, _kmes)[1]
+
+        with get_conn() as _kconn:
+            _df_kt = pd.read_sql(f"""
+                SELECT data, filial,
+                       vendas_itens as gmv,
+                       ganhos_liquidos as liquido,
+                       comissao, despesa, outras_despesas
+                FROM keeta_diario
+                WHERE EXTRACT(month FROM data)={_kmes}
+                  AND EXTRACT(year FROM data)={_kano}
+                ORDER BY data
+            """, _kconn)
+            _df_kt_hist = pd.read_sql("""
+                SELECT DATE_TRUNC('month', data)::date as mes,
+                       SUM(ganhos_liquidos) as liquido,
+                       SUM(vendas_itens) as gmv
+                FROM keeta_diario
+                GROUP BY 1 ORDER BY 1
+            """, _kconn)
+
+        with st.container(border=True):
+            st.markdown('<div class="section-title">Visao Executiva — Keeta</div>', unsafe_allow_html=True)
+
+            if _df_kt.empty:
+                st.info("Nenhum dado Keeta importado para este mes.")
+            else:
+                _ktot_gmv  = float(_df_kt["gmv"].sum())
+                _ktot_liq  = float(_df_kt["liquido"].sum())
+                _ktot_com  = float(_df_kt["comissao"].sum())
+                _ktot_desp = float((_df_kt["despesa"] + _df_kt["outras_despesas"]).sum())
+                _kdias_real = int(_df_kt["data"].nunique())
+                _kmedia_liq = _ktot_liq / _kdias_real if _kdias_real > 0 else 0
+                _kproj_liq  = _ktot_liq + _kmedia_liq * (_kdias_mes - _kdias_real)
+                _kmargem    = _ktot_liq / _ktot_gmv * 100 if _ktot_gmv > 0 else 0
+                _kproj_gmv  = _ktot_gmv + (_ktot_gmv / _kdias_real * (_kdias_mes - _kdias_real)) if _kdias_real > 0 else 0
+
+                _kcols = st.columns(2)
+                with _kcols[0]:
+                    _kproj_html = ""
+                    if _kdias_real < _kdias_mes:
+                        _kproj_html = (
+                            '<div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1);">'
+                            + '<div style="font-size:9px;color:#B8923A;letter-spacing:2px;margin-bottom:6px;">PROJECAO MES COMPLETO (' + str(_kdias_mes) + ' dias)</div>'
+                            + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
+                            + '<div><div style="font-size:9px;color:#D8CFC0;margin-bottom:2px;">GMV</div>'
+                            + '<div style="font-size:14px;font-weight:700;color:#B8923A;">R$ ' + f"{_kproj_gmv:,.0f}".replace(",",".") + '</div></div>'
+                            + '<div><div style="font-size:9px;color:#D8CFC0;margin-bottom:2px;">LIQUIDO</div>'
+                            + '<div style="font-size:14px;font-weight:700;color:#B8923A;">R$ ' + f"{_kproj_liq:,.0f}".replace(",",".") + '</div></div>'
+                            + '</div>'
+                            + '<div style="font-size:9px;color:#8B7A5A;margin-top:4px;">Parcial: ' + str(_kdias_real) + ' de ' + str(_kdias_mes) + ' dias</div></div>'
+                        )
+                    st.markdown(
+                        '<div style="background:#1a1209;border-radius:12px;padding:20px;color:#F5F0E8;margin-bottom:8px;border:1px solid #8B9A2E;">'
+                        + '<div style="font-size:10px;letter-spacing:3px;color:#8B9A2E;text-transform:uppercase;margin-bottom:14px;">MTD — ' + _kdt.now().strftime("%b/%Y").upper() + '</div>'
+                        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">'
+                        + '<div><div style="font-size:9px;color:#D8CFC0;margin-bottom:4px;">GMV</div>'
+                        + '<div style="font-size:22px;font-weight:800;">R$ ' + f"{_ktot_gmv:,.0f}".replace(",",".") + '</div></div>'
+                        + '<div><div style="font-size:9px;color:#D8CFC0;margin-bottom:4px;">LIQUIDO</div>'
+                        + '<div style="font-size:22px;font-weight:800;color:#8B9A2E;">R$ ' + f"{_ktot_liq:,.0f}".replace(",",".") + '</div></div>'
+                        + '<div><div style="font-size:9px;color:#D8CFC0;margin-bottom:4px;">MARGEM</div>'
+                        + '<div style="font-size:18px;font-weight:700;color:#8B9A2E;">' + f"{_kmargem:.1f}%" + '</div></div>'
+                        + '<div><div style="font-size:9px;color:#D8CFC0;margin-bottom:4px;">COMISSAO + DESP</div>'
+                        + '<div style="font-size:18px;font-weight:700;color:#E74C3C;">R$ ' + f"{abs(_ktot_com+_ktot_desp):,.0f}".replace(",",".") + '</div></div>'
+                        + '</div>' + _kproj_html + '</div>',
+                        unsafe_allow_html=True)
+
+                with _kcols[1]:
+                    import plotly.graph_objects as _kgo
+                    _kfig = _kgo.Figure()
+                    _kfig.add_trace(_kgo.Bar(
+                        x=_df_kt["data"].astype(str), y=_df_kt["gmv"],
+                        name="GMV", marker_color="rgba(139,154,46,0.4)",
+                        hovertemplate="GMV: R$%{y:,.0f}<extra></extra>"
+                    ))
+                    _kfig.add_trace(_kgo.Bar(
+                        x=_df_kt["data"].astype(str), y=_df_kt["liquido"],
+                        name="Liquido", marker_color="#8B9A2E",
+                        hovertemplate="Liquido: R$%{y:,.0f}<extra></extra>"
+                    ))
+                    _kfig.update_layout(
+                        barmode="overlay", height=220,
+                        plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+                        font=dict(color="#C8BFB0", size=10),
+                        legend=dict(orientation="h", y=1.1, font=dict(size=9)),
+                        margin=dict(l=30,r=10,t=10,b=30),
+                        xaxis=dict(gridcolor="rgba(255,255,255,0.04)", tickfont=dict(size=8)),
+                        yaxis=dict(gridcolor="rgba(255,255,255,0.04)",
+                                   tickprefix="R$", tickformat=",.0f", tickfont=dict(size=9))
+                    )
+                    st.plotly_chart(_kfig, use_container_width=True)
+
+        # Tabela detalhada
+        with st.container(border=True):
+            st.markdown('<div class="section-title">Detalhe Diario</div>', unsafe_allow_html=True)
+            if not _df_kt.empty:
+                _df_show = _df_kt.copy()
+                _df_show["Margem"] = (_df_show["liquido"] / _df_show["gmv"] * 100).round(1).astype(str) + "%"
+                _df_show["Deducoes"] = _df_show["comissao"] + _df_show["despesa"] + _df_show["outras_despesas"]
+                _df_show["data"] = _df_show["data"].astype(str)
+                _df_show["filial"] = _df_show["filial"].str.replace("Olive Garden - ","")
+                for col in ["gmv","liquido","Deducoes"]:
+                    _df_show[col] = _df_show[col].apply(lambda x: f"R$ {float(x):,.0f}".replace(",","."))
+                _df_show = _df_show.rename(columns={"data":"Data","filial":"Filial","gmv":"GMV","liquido":"Liquido"})
+                st.dataframe(_df_show[["Data","Filial","GMV","Liquido","Margem","Deducoes"]], use_container_width=True, hide_index=True)
+
+
 elif aba_sel == "OlivIA":
     import anthropic as _anthropic
     import json as _json
@@ -3041,119 +3153,4 @@ st.markdown(
 
 
 
-
-
-# ============================================================
-# ABA KEETA
-# ============================================================
-if aba_sel == "Keeta":
-    st.markdown('''<div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
-        <span style="font-size:22px;font-weight:700;color:#C8BFB0;letter-spacing:0.05em;">KEETA DELIVERY</span>
-        <span style="font-size:11px;color:#8B9A2E;background:rgba(139,154,46,0.12);border:1px solid rgba(139,154,46,0.3);border-radius:4px;padding:2px 8px;">NOVO</span>
-    </div>''', unsafe_allow_html=True)
-
-    import calendar as _cal
-    _hoje = __import__("datetime").date.today()
-    _mes, _ano = _hoje.month, _hoje.year
-    _dias_mes = _cal.monthrange(_ano, _mes)[1]
-
-    with get_conn() as _conn:
-        # MTD outubro
-        _df_kt = pd.read_sql(f"""
-            SELECT data, filial, vendas_itens as gmv, ganhos_liquidos as liquido,
-                   comissao, despesa, outras_despesas
-            FROM keeta_diario
-            WHERE EXTRACT(month FROM data)={_mes} AND EXTRACT(year FROM data)={_ano}
-            ORDER BY data
-        """, _conn)
-
-        # Historico completo
-        _df_hist = pd.read_sql("""
-            SELECT data, filial, vendas_itens as gmv, ganhos_liquidos as liquido
-            FROM keeta_diario ORDER BY data
-        """, _conn)
-
-    if _df_kt.empty:
-        st.info("Nenhum dado Keeta importado para este mes.")
-    else:
-        _tot_gmv  = float(_df_kt["gmv"].sum())
-        _tot_liq  = float(_df_kt["liquido"].sum())
-        _tot_com  = float(_df_kt["comissao"].sum())
-        _tot_desp = float((_df_kt["despesa"] + _df_kt["outras_despesas"]).sum())
-        _dias_real = int(_df_kt["data"].nunique())
-        _media_liq = _tot_liq / _dias_real if _dias_real > 0 else 0
-        _proj_liq  = _tot_liq + _media_liq * (_dias_mes - _dias_real)
-        _margem    = _tot_liq / _tot_gmv * 100 if _tot_gmv > 0 else 0
-
-        # KPI row
-        _k1, _k2, _k3, _k4 = st.columns(4)
-        with _k1:
-            st.markdown(f'''<div style="background:#1e1e1e;border-radius:8px;padding:14px 16px;border-left:3px solid #8B9A2E;">
-                <div style="font-size:10px;color:#8B9A2E;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">GMV MTD</div>
-                <div style="font-size:20px;font-weight:700;color:#C8BFB0;">R$ {_tot_gmv:,.0f}</div>
-                <div style="font-size:10px;color:#8B9A2E;margin-top:3px;">{_dias_real}/{_dias_mes} dias</div>
-            </div>'''.replace(",","."), unsafe_allow_html=True)
-        with _k2:
-            st.markdown(f'''<div style="background:#1e1e1e;border-radius:8px;padding:14px 16px;border-left:3px solid #2ECC71;">
-                <div style="font-size:10px;color:#8B9A2E;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">LIQUIDO MTD</div>
-                <div style="font-size:20px;font-weight:700;color:#2ECC71;">R$ {_tot_liq:,.0f}</div>
-                <div style="font-size:10px;color:#8B9A2E;margin-top:3px;">margem {_margem:.1f}%</div>
-            </div>'''.replace(",","."), unsafe_allow_html=True)
-        with _k3:
-            st.markdown(f'''<div style="background:#1e1e1e;border-radius:8px;padding:14px 16px;border-left:3px solid #E74C3C;">
-                <div style="font-size:10px;color:#8B9A2E;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">COMISSAO + DESP</div>
-                <div style="font-size:20px;font-weight:700;color:#E74C3C;">R$ {abs(_tot_com+_tot_desp):,.0f}</div>
-                <div style="font-size:10px;color:#8B9A2E;margin-top:3px;">{abs(_tot_com+_tot_desp)/_tot_gmv*100:.1f}% do GMV</div>
-            </div>'''.replace(",","."), unsafe_allow_html=True)
-        with _k4:
-            st.markdown(f'''<div style="background:#1e1e1e;border-radius:8px;padding:14px 16px;border-left:3px solid #F39C12;">
-                <div style="font-size:10px;color:#8B9A2E;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">PROJ MES LIQUIDO</div>
-                <div style="font-size:20px;font-weight:700;color:#F39C12;">R$ {_proj_liq:,.0f}</div>
-                <div style="font-size:10px;color:#8B9A2E;margin-top:3px;">media R$ {_media_liq:,.0f}/dia</div>
-            </div>'''.replace(",","."), unsafe_allow_html=True)
-
-        st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
-
-        # Grafico diario GMV vs Liquido
-        import plotly.graph_objects as go
-        _fig = go.Figure()
-        _fig.add_trace(go.Bar(
-            x=_df_kt["data"].astype(str), y=_df_kt["gmv"],
-            name="GMV", marker_color="rgba(139,154,46,0.5)",
-            hovertemplate="GMV: R$%{y:,.0f}<extra></extra>"
-        ))
-        _fig.add_trace(go.Bar(
-            x=_df_kt["data"].astype(str), y=_df_kt["liquido"],
-            name="Liquido", marker_color="#2ECC71",
-            hovertemplate="Liquido: R$%{y:,.0f}<extra></extra>"
-        ))
-        _fig.update_layout(
-            title="GMV vs Liquido por dia — Outubro 2026",
-            barmode="overlay", height=320,
-            plot_bgcolor="#1a1a1a", paper_bgcolor="#1a1a1a",
-            font=dict(color="#C8BFB0", size=11),
-            legend=dict(orientation="h", y=1.08),
-            margin=dict(l=40,r=20,t=50,b=40),
-            xaxis=dict(gridcolor="rgba(255,255,255,0.05)"),
-            yaxis=dict(gridcolor="rgba(255,255,255,0.05)",
-                       tickprefix="R$", tickformat=",.0f")
-        )
-        st.plotly_chart(_fig, use_container_width=True)
-
-        # Tabela detalhada
-        st.markdown('<div style="font-size:11px;color:#8B9A2E;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;">DETALHE DIARIO</div>', unsafe_allow_html=True)
-        _df_show = _df_kt.copy()
-        _df_show["margem"] = (_df_show["liquido"] / _df_show["gmv"] * 100).round(1).astype(str) + "%"
-        _df_show["data"] = _df_show["data"].astype(str)
-        _df_show = _df_show[["data","filial","gmv","liquido","margem","comissao","despesa","outras_despesas"]]
-        _df_show.columns = ["Data","Filial","GMV","Liquido","Margem","Comissao","Despesa","Outras Desp"]
-        _df_show["Filial"] = _df_show["Filial"].str.replace("Olive Garden - ","")
-        for col in ["GMV","Liquido","Comissao","Despesa","Outras Desp"]:
-            _df_show[col] = _df_show[col].apply(lambda x: f"R$ {float(x):,.0f}".replace(",","."))
-        st.dataframe(_df_show, use_container_width=True, hide_index=True)
-
-        # Nota resultado geral
-        st.markdown(f'''<div style="background:rgba(139,154,46,0.08);border:1px solid rgba(139,154,46,0.25);border-radius:6px;padding:10px 14px;margin-top:12px;font-size:11px;color:#C8BFB0;">
-            <b style="color:#8B9A2E;">Resultado Geral:</b> Keeta liquido MTD de <b>R$ {_tot_liq:,.0f}</b> ja incluido no faturamento total da rede na Visao Executiva.
-        </div>'''.replace(",","."), unsafe_allow_html=True)
 
