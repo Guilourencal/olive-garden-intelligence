@@ -1036,7 +1036,7 @@ elif aba_sel == "Vendas":
     st.markdown('''<div style="font-weight:800; font-size:26px; color:#3D2B1F; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:4px;">Vendas</div>
     <div style="font-size:13px; color:#8B9A2E; letter-spacing:0.1em; margin-bottom:20px;">PERFORMANCE FINANCEIRA</div>''', unsafe_allow_html=True)
 
-    visao_sel = st.radio("", ["Operacao Geral", "iFood", "Keeta"], horizontal=True, key="visao_vendas")
+    visao_sel = st.radio("", ["Operacao Geral", "iFood"], horizontal=True, key="visao_vendas")
     st.markdown("<br>", unsafe_allow_html=True)
 
     if visao_sel == "Operacao Geral":
@@ -1196,25 +1196,7 @@ elif aba_sel == "Vendas":
                 # proj_total = salao (realizado + projetado)
                 # fat_if_mtd = iFood realizado no mes corrente
                 # proj_if_ve = iFood projetado para dias restantes
-                # Keeta: liquido realizado + projecao resto do mes
-                try:
-                    _conn_kt = get_conn()
-                    _cur_kt = _conn_kt.cursor()
-                    _cur_kt.execute("""
-                        SELECT COALESCE(SUM(ganhos_liquidos),0) as liq,
-                               COUNT(DISTINCT data) as dias
-                        FROM keeta_diario
-                        WHERE EXTRACT(month FROM data)=EXTRACT(month FROM %s::date)
-                          AND EXTRACT(year FROM data)=EXTRACT(year FROM %s::date)
-                    """, (str(_hoje_ve2), str(_hoje_ve2)))
-                    _kt_row = _cur_kt.fetchone()
-                    _conn_kt.close()
-                    _kt_liq_mtd = float(_kt_row[0]) if _kt_row else 0
-                    _kt_dias = int(_kt_row[1]) if _kt_row else 0
-                    _kt_proj = _kt_liq_mtd + (_kt_liq_mtd / _kt_dias * (_dias_no_mes_ve - _kt_dias)) if _kt_dias > 0 else 0
-                except:
-                    _kt_proj = 0
-                proj_total_ve = proj_total + fat_if_mtd + proj_if_ve + _kt_proj if "proj_total" in dir() else fat_total_mtd
+                proj_total_ve = proj_total + fat_if_mtd + proj_if_ve if "proj_total" in dir() else fat_total_mtd
                 # Budget fixo da tabela projecoes_gerenciais (nao oscila)
                 try:
                     _conn_budg = get_conn()
@@ -2102,118 +2084,6 @@ elif aba_sel == "Vendas":
                 fig_pag = go.Figure(go.Pie(labels=df_pag["forma_pagamento"], values=df_pag["pedidos"], hole=0.5, textinfo="label+percent", textfont=dict(family="Nunito", size=12), marker=dict(colors=[VERDE,"#B8923A","#3D7A5C","#7A3D3D","#3D5A7A","#7A5C3D","#5C7A3D","#7A6B3D"])))
                 fig_pag.update_layout(paper_bgcolor="rgba(0,0,0,0)", margin=dict(t=10,b=10,l=10,r=10), legend=dict(font=dict(family="Nunito", size=11, color=MARROM)), font=dict(family="Nunito"), height=320)
                 st.plotly_chart(fig_pag, use_container_width=True, key="fig_pag_v")
-    elif visao_sel == "Keeta":
-        import calendar as _kcal
-        from datetime import datetime as _kdt, date as _kdate
-        _khoje = _kdate.today()
-        _kmes, _kano = _khoje.month, _khoje.year
-        _kdias_mes = _kcal.monthrange(_kano, _kmes)[1]
-
-        with get_conn() as _kconn:
-            _df_kt = pd.read_sql(f"""
-                SELECT data, filial,
-                       vendas_itens as gmv,
-                       ganhos_liquidos as liquido,
-                       comissao, despesa, outras_despesas
-                FROM keeta_diario
-                WHERE EXTRACT(month FROM data)={_kmes}
-                  AND EXTRACT(year FROM data)={_kano}
-                ORDER BY data
-            """, _kconn)
-            _df_kt_hist = pd.read_sql("""
-                SELECT DATE_TRUNC('month', data)::date as mes,
-                       SUM(ganhos_liquidos) as liquido,
-                       SUM(vendas_itens) as gmv
-                FROM keeta_diario
-                GROUP BY 1 ORDER BY 1
-            """, _kconn)
-
-        with st.container(border=True):
-            st.markdown('<div class="section-title">Visao Executiva — Keeta</div>', unsafe_allow_html=True)
-
-            if _df_kt.empty:
-                st.info("Nenhum dado Keeta importado para este mes.")
-            else:
-                _ktot_gmv  = float(_df_kt["gmv"].sum())
-                _ktot_liq  = float(_df_kt["liquido"].sum())
-                _ktot_com  = float(_df_kt["comissao"].sum())
-                _ktot_desp = float((_df_kt["despesa"] + _df_kt["outras_despesas"]).sum())
-                _kdias_real = int(_df_kt["data"].nunique())
-                _kmedia_liq = _ktot_liq / _kdias_real if _kdias_real > 0 else 0
-                _kproj_liq  = _ktot_liq + _kmedia_liq * (_kdias_mes - _kdias_real)
-                _kmargem    = _ktot_liq / _ktot_gmv * 100 if _ktot_gmv > 0 else 0
-                _kproj_gmv  = _ktot_gmv + (_ktot_gmv / _kdias_real * (_kdias_mes - _kdias_real)) if _kdias_real > 0 else 0
-
-                _kcols = st.columns(2)
-                with _kcols[0]:
-                    _kproj_html = ""
-                    if _kdias_real < _kdias_mes:
-                        _kproj_html = (
-                            '<div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1);">'
-                            + '<div style="font-size:9px;color:#B8923A;letter-spacing:2px;margin-bottom:6px;">PROJECAO MES COMPLETO (' + str(_kdias_mes) + ' dias)</div>'
-                            + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
-                            + '<div><div style="font-size:9px;color:#D8CFC0;margin-bottom:2px;">GMV</div>'
-                            + '<div style="font-size:14px;font-weight:700;color:#B8923A;">R$ ' + f"{_kproj_gmv:,.0f}".replace(",",".") + '</div></div>'
-                            + '<div><div style="font-size:9px;color:#D8CFC0;margin-bottom:2px;">LIQUIDO</div>'
-                            + '<div style="font-size:14px;font-weight:700;color:#B8923A;">R$ ' + f"{_kproj_liq:,.0f}".replace(",",".") + '</div></div>'
-                            + '</div>'
-                            + '<div style="font-size:9px;color:#8B7A5A;margin-top:4px;">Parcial: ' + str(_kdias_real) + ' de ' + str(_kdias_mes) + ' dias</div></div>'
-                        )
-                    st.markdown(
-                        '<div style="background:#1a1209;border-radius:12px;padding:20px;color:#F5F0E8;margin-bottom:8px;border:1px solid #8B9A2E;">'
-                        + '<div style="font-size:10px;letter-spacing:3px;color:#8B9A2E;text-transform:uppercase;margin-bottom:14px;">MTD — ' + _kdt.now().strftime("%b/%Y").upper() + '</div>'
-                        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">'
-                        + '<div><div style="font-size:9px;color:#D8CFC0;margin-bottom:4px;">GMV</div>'
-                        + '<div style="font-size:22px;font-weight:800;">R$ ' + f"{_ktot_gmv:,.0f}".replace(",",".") + '</div></div>'
-                        + '<div><div style="font-size:9px;color:#D8CFC0;margin-bottom:4px;">LIQUIDO</div>'
-                        + '<div style="font-size:22px;font-weight:800;color:#8B9A2E;">R$ ' + f"{_ktot_liq:,.0f}".replace(",",".") + '</div></div>'
-                        + '<div><div style="font-size:9px;color:#D8CFC0;margin-bottom:4px;">MARGEM</div>'
-                        + '<div style="font-size:18px;font-weight:700;color:#8B9A2E;">' + f"{_kmargem:.1f}%" + '</div></div>'
-                        + '<div><div style="font-size:9px;color:#D8CFC0;margin-bottom:4px;">COMISSAO + DESP</div>'
-                        + '<div style="font-size:18px;font-weight:700;color:#E74C3C;">R$ ' + f"{abs(_ktot_com+_ktot_desp):,.0f}".replace(",",".") + '</div></div>'
-                        + '</div>' + _kproj_html + '</div>',
-                        unsafe_allow_html=True)
-
-                with _kcols[1]:
-                    import plotly.graph_objects as _kgo
-                    _kfig = _kgo.Figure()
-                    _kfig.add_trace(_kgo.Bar(
-                        x=_df_kt["data"].astype(str), y=_df_kt["gmv"],
-                        name="GMV", marker_color="rgba(139,154,46,0.4)",
-                        hovertemplate="GMV: R$%{y:,.0f}<extra></extra>"
-                    ))
-                    _kfig.add_trace(_kgo.Bar(
-                        x=_df_kt["data"].astype(str), y=_df_kt["liquido"],
-                        name="Liquido", marker_color="#8B9A2E",
-                        hovertemplate="Liquido: R$%{y:,.0f}<extra></extra>"
-                    ))
-                    _kfig.update_layout(
-                        barmode="overlay", height=220,
-                        plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
-                        font=dict(color="#C8BFB0", size=10),
-                        legend=dict(orientation="h", y=1.1, font=dict(size=9)),
-                        margin=dict(l=30,r=10,t=10,b=30),
-                        xaxis=dict(gridcolor="rgba(255,255,255,0.04)", tickfont=dict(size=8)),
-                        yaxis=dict(gridcolor="rgba(255,255,255,0.04)",
-                                   tickprefix="R$", tickformat=",.0f", tickfont=dict(size=9))
-                    )
-                    st.plotly_chart(_kfig, use_container_width=True)
-
-        # Tabela detalhada
-        with st.container(border=True):
-            st.markdown('<div class="section-title">Detalhe Diario</div>', unsafe_allow_html=True)
-            if not _df_kt.empty:
-                _df_show = _df_kt.copy()
-                _df_show["Margem"] = (_df_show["liquido"] / _df_show["gmv"] * 100).round(1).astype(str) + "%"
-                _df_show["Deducoes"] = _df_show["comissao"] + _df_show["despesa"] + _df_show["outras_despesas"]
-                _df_show["data"] = _df_show["data"].astype(str)
-                _df_show["filial"] = _df_show["filial"].str.replace("Olive Garden - ","")
-                for col in ["gmv","liquido","Deducoes"]:
-                    _df_show[col] = _df_show[col].apply(lambda x: f"R$ {float(x):,.0f}".replace(",","."))
-                _df_show = _df_show.rename(columns={"data":"Data","filial":"Filial","gmv":"GMV","liquido":"Liquido"})
-                st.dataframe(_df_show[["Data","Filial","GMV","Liquido","Margem","Deducoes"]], use_container_width=True, hide_index=True)
-
-
 elif aba_sel == "OlivIA":
     import anthropic as _anthropic
     import json as _json
@@ -3147,7 +3017,6 @@ st.markdown(
     'OLIVE GARDEN BRAND INTELLIGENCE Â© 2026</div>',
     unsafe_allow_html=True
 )
-
 
 
 
