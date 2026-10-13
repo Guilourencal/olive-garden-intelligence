@@ -1044,8 +1044,6 @@ elif aba_sel == "Vendas":
         from datetime import datetime, timedelta
         df_vd = df_vendas_diarias.copy()
         df_vd["data"] = pd.to_datetime(df_vd["data"])
-        df_vd["ano"] = df_vd["data"].dt.year
-        df_vd["mes"] = df_vd["data"].dt.strftime("%b").str.lower()
         df_vd["filial_curta"] = df_vd["filial"].str.replace("Olive Garden - ", "", regex=False)
 
         # Filtros
@@ -1378,7 +1376,7 @@ elif aba_sel == "Vendas":
                     venda=("venda_salao", "sum"),
                     gc=("gc_salao", "sum")
                 ).reset_index()
-                df_tm["ticket_medio"] = (df_tm["venda"] / df_tm["gc"]).round(2)
+                df_tm["ticket_medio"] = (df_tm["venda"] / df_tm["gc"].replace(0, float("nan"))).round(2)
                 df_tm = df_tm[df_tm["gc"] > 0].sort_values("ticket_medio", ascending=False)
                 tm_media = df_tm["ticket_medio"].mean()
                 fig_tm = go.Figure(go.Bar(
