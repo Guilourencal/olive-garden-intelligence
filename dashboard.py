@@ -1185,9 +1185,9 @@ elif aba_sel == "Vendas":
             pct_if2 = fat_if_ytd / fat_total_mtd * 100 if fat_total_mtd > 0 else 0
             ped_if2 = int(df_if_ytd["pedidos"].sum()) if len(df_if_ytd) > 0 else 0
             tm_if2 = fat_if_ytd / ped_if2 if ped_if2 > 0 else 0
-            seta_m2 = "â–²" if pct_meta >= 0 else "â–¼"
+            seta_m2 = "▲" if pct_meta >= 0 else "▼"
             cor_m2 = "#4CAF7D" if pct_meta >= 0 else "#E57373"
-            seta_a2 = "â–²" if pct_ano1 >= 0 else "â–¼"
+            seta_a2 = "▲" if pct_ano1 >= 0 else "▼"
             cor_a2 = "#4CAF7D" if pct_ano1 >= 0 else "#E57373"
             hdc_ve = df_vd_f["venda_por_hdc"].mean() if len(df_vd_f) > 0 else 0
             hdc_ve_fmt = f"R$ {hdc_ve:.0f}" if pd.notna(hdc_ve) else "â€”"
@@ -1213,7 +1213,7 @@ elif aba_sel == "Vendas":
                     budget_ve = df_mes_ve["meta_venda"].sum() / _dias_realizados_ve * _dias_no_mes_ve if _dias_realizados_ve > 0 else 0
                 pct_proj_ve = (proj_total_ve / budget_ve - 1) * 100 if budget_ve > 0 else 0
                 cor_pv2 = "#4CAF7D" if pct_proj_ve >= 0 else "#E57373"
-                seta_pv2 = "â–²" if pct_proj_ve >= 0 else "â–¼"
+                seta_pv2 = "▲" if pct_proj_ve >= 0 else "▼"
                 proj_ve_fmt = f"R$ {proj_total_ve:,.0f}".replace(",",".")
                 budget_ve_fmt = f"R$ {budget_ve:,.0f}".replace(",",".")
                 _proj_html = (
@@ -1344,7 +1344,7 @@ elif aba_sel == "Vendas":
                 df_rank_vd = df_rank_vd.sort_values("pct_meta", ascending=True)
                 for _, row in df_rank_vd.iterrows():
                     cor_b = "#2e6b3e" if row["pct_meta"] >= 0 else "#c0392b"
-                    seta_b = "â–²" if row["pct_meta"] >= 0 else "â–¼"
+                    seta_b = "▲" if row["pct_meta"] >= 0 else "▼"
                     vd_fmt = f"R$ {row['total_mes']:,.0f}".replace(",",".")
                     proj_str = f" | Proj: R$ {row['proj_ger']:,.0f}".replace(",",".") if row["proj_ger"] else ""
                     st.markdown(f'<div style="padding:8px 0; border-bottom:1px solid #e8ddc8; display:flex; justify-content:space-between; align-items:center;"><span style="font-size:12px; font-weight:700; color:#3D2B1F;">{row["filial_curta"]}</span><div style="text-align:right;"><div style="font-size:12px; color:#3D2B1F;">{vd_fmt}{proj_str}</div><div style="font-size:12px; color:{cor_b}; font-weight:700;">{seta_b} {row["pct_meta"]:+.1f}% vs Budget</div></div></div>', unsafe_allow_html=True)
@@ -1441,7 +1441,7 @@ elif aba_sel == "Vendas":
                 _half_bar = min(abs(_row["pct_ytd"]) / _escala * 50, 50)
                 _vd_ytd   = f"R$ {_row['total_ytd']:,.0f}".replace(",",".")
                 _mt_ytd   = f"R$ {_row['meta_ytd']:,.0f}".replace(",",".")
-                _seta_ytd = "â–²" if _pos_ytd else "â–¼"
+                _seta_ytd = "▲" if _pos_ytd else "▼"
                 _bar_html = (f'<div style="position:absolute;left:50%;top:0;height:100%;width:{_half_bar:.1f}%;background:{_cor_ytd};border-radius:0 3px 3px 0;"></div>'
                             if _pos_ytd else
                             f'<div style="position:absolute;right:50%;top:0;height:100%;width:{_half_bar:.1f}%;background:{_cor_ytd};border-radius:3px 0 0 3px;"></div>')
@@ -1459,7 +1459,7 @@ elif aba_sel == "Vendas":
   </div>
 </div>''', unsafe_allow_html=True)
             _cor_r  = "#2e6b3e" if _rede_pct_ytd >= 0 else "#c0392b"
-            _seta_r = "â–²" if _rede_pct_ytd >= 0 else "â–¼"
+            _seta_r = "▲" if _rede_pct_ytd >= 0 else "▼"
             st.markdown(f'''<div style="padding:10px 0;margin-top:4px;border-top:2px solid #3D2B1F;">
   <div style="display:flex;justify-content:space-between;align-items:center;">
     <span style="font-size:13px;font-weight:800;color:#3D2B1F;">REDE TOTAL</span>
