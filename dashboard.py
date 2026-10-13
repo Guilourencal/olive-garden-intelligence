@@ -1044,6 +1044,9 @@ elif aba_sel == "Vendas":
         from datetime import datetime, timedelta
         df_vd = df_vendas_diarias.copy()
         df_vd["data"] = pd.to_datetime(df_vd["data"])
+        df_vd["ano"] = df_vd["data"].dt.year
+        _meses_pt = {1:"jan",2:"fev",3:"mar",4:"abr",5:"mai",6:"jun",7:"jul",8:"ago",9:"set",10:"out",11:"nov",12:"dez"}
+        df_vd["mes"] = df_vd["data"].dt.month.map(_meses_pt)
         df_vd["filial_curta"] = df_vd["filial"].str.replace("Olive Garden - ", "", regex=False)
 
         # Filtros
