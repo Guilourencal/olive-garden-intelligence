@@ -2109,7 +2109,18 @@ elif aba_sel == "Vendas":
         import calendar as _kcal
         from datetime import datetime as _kdt, date as _kdate
         _khoje = _kdate.today()
-        _kmes, _kano = _khoje.month, _khoje.year
+        _kmeses_nome = {1:"Jan",2:"Fev",3:"Mar",4:"Abr",5:"Mai",6:"Jun",7:"Jul",8:"Ago",9:"Set",10:"Out",11:"Nov",12:"Dez"}
+        try:
+            with get_conn() as _kconn0:
+                _kmeses_df = pd.read_sql("SELECT DISTINCT DATE_TRUNC('month', data)::date AS mes FROM keeta_diario WHERE vendas_itens > 0 ORDER BY 1 DESC", _kconn0)
+            _kmeses_opts = [pd.Timestamp(m).date() for m in _kmeses_df["mes"]]
+        except Exception:
+            _kmeses_opts = []
+        if not _kmeses_opts:
+            _kmeses_opts = [_khoje.replace(day=1)]
+        _kmes_sel = st.selectbox("Mes", _kmeses_opts, index=0, format_func=lambda d: f"{_kmeses_nome[d.month]}/{d.year}", key="keeta_mes_sel")
+        _kmes, _kano = _kmes_sel.month, _kmes_sel.year
+        _klabel_mes = f"{_kmeses_nome[_kmes].upper()}/{_kano}" + ("" if (_kmes, _kano) == (_khoje.month, _khoje.year) else " (FECHADO)")
         _kdias_mes = _kcal.monthrange(_kano, _kmes)[1]
 
         with get_conn() as _kconn:
@@ -2164,7 +2175,7 @@ elif aba_sel == "Vendas":
                         )
                     st.markdown(
                         '<div style="background:#1a1209;border-radius:12px;padding:20px;color:#F5F0E8;margin-bottom:8px;border:1px solid #8B9A2E;">'
-                        + '<div style="font-size:10px;letter-spacing:3px;color:#8B9A2E;text-transform:uppercase;margin-bottom:14px;">MTD — ' + _kdt.now().strftime("%b/%Y").upper() + '</div>'
+                        + '<div style="font-size:10px;letter-spacing:3px;color:#8B9A2E;text-transform:uppercase;margin-bottom:14px;">MTD — ' + _klabel_mes + '</div>'
                         + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">'
                         + '<div><div style="font-size:9px;color:#D8CFC0;margin-bottom:4px;">GMV</div>'
                         + '<div style="font-size:22px;font-weight:800;">R$ ' + f"{_ktot_gmv:,.0f}".replace(",",".") + '</div></div>'
@@ -2201,6 +2212,106 @@ elif aba_sel == "Vendas":
                                    tickprefix="R$", tickformat=",.0f", tickfont=dict(size=9))
                     )
                     st.plotly_chart(_kfig, use_container_width=True)
+
+        # Visao mensal Keeta (todos os meses com venda)
+        with st.container(border=True):
+            st.markdown('<div class="section-title">Visao Mensal \u2014 Keeta</div>', unsafe_allow_html=True)
+            try:
+                with get_conn() as _kconn_m:
+                    _df_km = pd.read_sql("""
+                        SELECT DATE_TRUNC('month', data)::date AS mes,
+                               COUNT(*) FILTER (WHERE vendas_itens > 0) AS dias_venda,
+                               SUM(vendas_itens) AS gmv,
+                               SUM(ganhos_liquidos) AS liquido,
+                               SUM(comissao) AS comissao,
+                               SUM(despesa) AS despesa,
+                               SUM(outras_despesas) AS outras_despesas,
+                               SUM(outros_ganhos) AS outros_ganhos
+                        FROM keeta_diario
+                        GROUP BY 1
+                        HAVING SUM(vendas_itens) > 0
+                        ORDER BY 1
+                    """, _kconn_m)
+            except Exception as _e_km:
+                _df_km = pd.DataFrame()
+                st.warning(f"Erro ao carregar a visao mensal Keeta: {_e_km}")
+            if _df_km.empty:
+                st.info("Nenhum mes com vendas Keeta.")
+            else:
+                import plotly.graph_objects as _kgo2
+                _df_km["mes"] = pd.to_datetime(_df_km["mes"])
+                for _kc in ["gmv", "liquido", "comissao", "despesa", "outras_despesas", "outros_ganhos"]:
+                    _df_km[_kc] = _df_km[_kc].astype(float)
+                _df_km["dias_venda"] = _df_km["dias_venda"].astype(int)
+                _df_km["rotulo"] = _df_km["mes"].apply(lambda d: f"{_kmeses_nome[d.month]}/{d.year}")
+                _df_km["gmv_dia"] = _df_km["gmv"] / _df_km["dias_venda"].where(_df_km["dias_venda"] > 0)
+                _df_km["margem"] = _df_km["liquido"] / _df_km["gmv"] * 100
+                _df_km["var_gmv_dia"] = _df_km["gmv_dia"].pct_change() * 100
+                def _kstatus(r):
+                    if (r["mes"].month, r["mes"].year) == (_khoje.month, _khoje.year):
+                        return f"Parcial ({int(r['dias_venda'])} dias)"
+                    if r.name == _df_km.index[0] and r["dias_venda"] < _kcal.monthrange(r["mes"].year, r["mes"].month)[1]:
+                        return "Inicio da operacao"
+                    return "Fechado"
+                _df_km["status"] = _df_km.apply(_kstatus, axis=1)
+                _kfmt = lambda x: "-" if pd.isna(x) else f"R$ {x:,.0f}".replace(",", ".")
+
+                _kfig_m = _kgo2.Figure()
+                _kfig_m.add_trace(_kgo2.Bar(
+                    x=_df_km["rotulo"], y=_df_km["gmv"], name="GMV",
+                    marker_color="rgba(139,154,46,0.4)",
+                    text=[_kfmt(v) for v in _df_km["gmv"]], textposition="outside",
+                    hovertemplate="GMV: R$%{y:,.0f}<extra></extra>"))
+                _kfig_m.add_trace(_kgo2.Bar(
+                    x=_df_km["rotulo"], y=_df_km["liquido"], name="Liquido",
+                    marker_color="#8B9A2E",
+                    hovertemplate="Liquido: R$%{y:,.0f}<extra></extra>"))
+                _kfig_m.add_trace(_kgo2.Scatter(
+                    x=_df_km["rotulo"], y=_df_km["gmv_dia"], name="GMV/dia com venda", yaxis="y2",
+                    mode="lines+markers+text", line=dict(color="#B8923A", width=2),
+                    text=[_kfmt(v) + "/dia" for v in _df_km["gmv_dia"]], textposition="top center",
+                    textfont=dict(color="#B8923A", size=10),
+                    hovertemplate="GMV/dia: R$%{y:,.0f}<extra></extra>"))
+                _kfig_m.update_layout(
+                    barmode="overlay", height=320,
+                    plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+                    font=dict(color="#C8BFB0", size=10),
+                    legend=dict(orientation="h", y=1.12, font=dict(size=9)),
+                    margin=dict(l=40, r=50, t=30, b=30),
+                    xaxis=dict(gridcolor="rgba(255,255,255,0.04)"),
+                    yaxis=dict(gridcolor="rgba(255,255,255,0.04)", tickprefix="R$", tickformat=",.0f",
+                               range=[0, float(_df_km["gmv"].max()) * 1.2]),
+                    yaxis2=dict(overlaying="y", side="right", showgrid=False, tickprefix="R$", tickformat=",.0f",
+                                range=[0, float(_df_km["gmv_dia"].max()) * 1.35]))
+                st.plotly_chart(_kfig_m, use_container_width=True, key="keeta_mensal_fig")
+
+                _ktab = pd.DataFrame({
+                    "Mes": _df_km["rotulo"],
+                    "Status": _df_km["status"],
+                    "Dias c/ venda": _df_km["dias_venda"],
+                    "GMV": _df_km["gmv"].apply(_kfmt),
+                    "GMV/dia": _df_km["gmv_dia"].apply(_kfmt),
+                    "Var. GMV/dia": _df_km["var_gmv_dia"].apply(lambda x: "-" if pd.isna(x) else f"{x:+.0f}%"),
+                    "Liquido": _df_km["liquido"].apply(_kfmt),
+                    "Margem": _df_km["margem"].apply(lambda x: f"{x:.1f}%"),
+                    "Comissao": _df_km["comissao"].apply(_kfmt),
+                    "Despesa": _df_km["despesa"].apply(_kfmt),
+                    "Outras desp.": _df_km["outras_despesas"].apply(_kfmt),
+                    "Outros ganhos": _df_km["outros_ganhos"].apply(_kfmt),
+                })
+                _ktg, _ktd = float(_df_km["gmv"].sum()), int(_df_km["dias_venda"].sum())
+                _ktab = pd.concat([_ktab, pd.DataFrame([{
+                    "Mes": "Total", "Status": "", "Dias c/ venda": _ktd,
+                    "GMV": _kfmt(_ktg), "GMV/dia": _kfmt(_ktg / _ktd if _ktd else float("nan")), "Var. GMV/dia": "",
+                    "Liquido": _kfmt(float(_df_km["liquido"].sum())),
+                    "Margem": f"{float(_df_km['liquido'].sum()) / _ktg * 100:.1f}%" if _ktg else "-",
+                    "Comissao": _kfmt(float(_df_km["comissao"].sum())),
+                    "Despesa": _kfmt(float(_df_km["despesa"].sum())),
+                    "Outras desp.": _kfmt(float(_df_km["outras_despesas"].sum())),
+                    "Outros ganhos": _kfmt(float(_df_km["outros_ganhos"].sum())),
+                }])], ignore_index=True)
+                st.dataframe(_ktab, use_container_width=True, hide_index=True)
+                st.caption("Compare os meses pelo GMV/dia com venda: o primeiro mes tem poucos dias de operacao e o mes corrente e parcial.")
 
         # Tabela detalhada
         with st.container(border=True):
